@@ -67,19 +67,23 @@ export default function SupplierLayout({
         if (res.ok) {
           const data = await res.json();
           setSupplier(data);
-        } else if (res.status === 401) {
+
+          // Fetch expiry alerts only if authenticated
+          const alertRes = await fetch('/api/supplier/expiring-documents');
+          if (alertRes.ok) {
+            const alertData = await alertRes.json();
+            setExpiryAlert(alertData.alert);
+          }
+        } else {
+          // Any non-OK response (401, 403, etc.) - redirect to login
           router.push('/supplier/login');
           return;
         }
-
-        // Fetch expiry alerts
-        const alertRes = await fetch('/api/supplier/expiring-documents');
-        if (alertRes.ok) {
-          const alertData = await alertRes.json();
-          setExpiryAlert(alertData.alert);
-        }
       } catch (error) {
         console.error('Error fetching supplier info:', error);
+        // On error, redirect to login as well
+        router.push('/supplier/login');
+        return;
       } finally {
         setLoading(false);
       }
