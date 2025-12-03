@@ -225,16 +225,16 @@ export default function Home() {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8">
-              <a href="#how-it-works" className={`nav-link ${isScrolled ? 'text-gray-700' : 'text-white'}`}>
+              <a href="#how-it-works" className="nav-link text-gray-700">
                 How It Works
               </a>
-              <a href="#vehicles" className={`nav-link ${isScrolled ? 'text-gray-700' : 'text-white'}`}>
+              <a href="#vehicles" className="nav-link text-gray-700">
                 Vehicles
               </a>
-              <a href="#reviews" className={`nav-link ${isScrolled ? 'text-gray-700' : 'text-white'}`}>
+              <a href="#reviews" className="nav-link text-gray-700">
                 Reviews
               </a>
-              <Link href="/supplier/login" className={`nav-link ${isScrolled ? 'text-gray-700' : 'text-white'}`}>
+              <Link href="/supplier/login" className="nav-link text-gray-700">
                 Partner Login
               </Link>
               <Link href="/agency/login" className="btn-primary btn-sm">
@@ -245,7 +245,7 @@ export default function Home() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`lg:hidden p-2 rounded-lg ${isScrolled ? 'text-gray-700' : 'text-white'}`}
+              className="lg:hidden p-2 rounded-lg text-gray-700"
             >
               {mobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
             </button>
