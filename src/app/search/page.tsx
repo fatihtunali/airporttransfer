@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -38,7 +38,7 @@ interface SearchResult {
   options: TransferOption[];
 }
 
-const vehicleIcons: Record<string, JSX.Element> = {
+const vehicleIcons: Record<string, React.ReactNode> = {
   SEDAN: <FaCar className="w-8 h-8" />,
   VAN: <FaShuttleVan className="w-8 h-8" />,
   MINIBUS: <FaBus className="w-8 h-8" />,
