@@ -4,7 +4,12 @@
       "Bash(ssh airporttransfer@134.209.137.11:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(cat:*)",
+      "Bash(ssh root@134.209.137.11:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:www.airporttransfer.com)"
     ],
     "deny": [],
     "ask": []
