@@ -297,36 +297,36 @@ export default function Home() {
           </div>
 
           {/* Wide Centered Search Form */}
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl p-4 animate-slide-up">
               <form onSubmit={handleSubmit}>
-                {/* Row 1: Trip Type Toggle */}
+                {/* Row 1: Trip Type Toggle - Colorful */}
                 <div className="flex justify-center mb-3">
-                  <div className="inline-flex bg-gray-100 rounded-lg p-1">
+                  <div className="inline-flex rounded-lg overflow-hidden border border-gray-200">
                     <button
                       type="button"
                       onClick={() => setTripType('one-way')}
-                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${tripType === 'one-way' ? 'bg-white shadow text-[#1e3a5f]' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`px-5 py-2 text-sm font-semibold transition-all ${tripType === 'one-way' ? 'bg-[#00b4b4] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                     >
                       One Way
                     </button>
                     <button
                       type="button"
                       onClick={() => setTripType('round-trip')}
-                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${tripType === 'round-trip' ? 'bg-white shadow text-[#1e3a5f]' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`px-5 py-2 text-sm font-semibold transition-all ${tripType === 'round-trip' ? 'bg-[#00b4b4] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
                     >
                       Round Trip
                     </button>
                   </div>
                 </div>
 
-                {/* Row 2: All Fields in One Line */}
-                <div className="grid grid-cols-2 md:grid-cols-7 gap-2 mb-3">
+                {/* Row 2: Pick Up & Drop Off */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
                   <div ref={fromRef} className="relative">
                     <label className="text-xs font-medium text-gray-600 mb-1 block">Pick Up</label>
                     <input
                       type="text"
-                      placeholder={loading ? 'Loading...' : 'Airport'}
+                      placeholder={loading ? 'Loading...' : 'Select airport'}
                       value={fromSearch}
                       onChange={(e) => {
                         setFromSearch(e.target.value);
@@ -364,7 +364,7 @@ export default function Home() {
                     <label className="text-xs font-medium text-gray-600 mb-1 block">Drop Off</label>
                     <input
                       type="text"
-                      placeholder={selectedFrom ? 'Destination' : 'Select pickup'}
+                      placeholder={selectedFrom ? 'Select destination' : 'Select pickup first'}
                       value={toSearch}
                       onChange={(e) => {
                         setToSearch(e.target.value);
@@ -395,7 +395,10 @@ export default function Home() {
                       </div>
                     )}
                   </div>
+                </div>
 
+                {/* Row 3: Date, Time, Passengers, Luggage, Flight */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
                   <div>
                     <label className="text-xs font-medium text-gray-600 mb-1 block">Date</label>
                     <input
@@ -457,9 +460,9 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Row 2.5: Round Trip Fields (conditional) */}
+                {/* Round Trip Fields (conditional) */}
                 {tripType === 'round-trip' && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-2 gap-2 mb-3 p-3 bg-[#f0fafa] rounded-lg border border-[#00b4b4]/20">
                     <div>
                       <label className="text-xs font-medium text-gray-600 mb-1 block">Return Date</label>
                       <input
@@ -484,11 +487,13 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* Row 3: Search Button */}
-                <button type="submit" className="w-full bg-[#00b4b4] hover:bg-[#009999] text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <FaSearch />
-                  Search Transfers
-                </button>
+                {/* Row 4: Search Button - Smaller */}
+                <div className="flex justify-center">
+                  <button type="submit" className="bg-[#ff6b35] hover:bg-[#e55a2b] text-white font-semibold px-8 py-2.5 rounded-lg transition-colors flex items-center gap-2 text-sm">
+                    <FaSearch className="text-xs" />
+                    Search Transfers
+                  </button>
+                </div>
               </form>
             </div>
 
