@@ -297,46 +297,46 @@ export default function Home() {
           </div>
 
           {/* Wide Centered Search Form */}
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 md:p-8 animate-slide-up">
-              {/* Trip Type Toggle */}
-              <div className="flex justify-center mb-6">
-                <div className="trip-toggle">
-                  <button
-                    onClick={() => setTripType('one-way')}
-                    className={`trip-toggle-btn ${tripType === 'one-way' ? 'active' : ''}`}
-                  >
-                    One Way
-                  </button>
-                  <button
-                    onClick={() => setTripType('round-trip')}
-                    className={`trip-toggle-btn ${tripType === 'round-trip' ? 'active' : ''}`}
-                  >
-                    Round Trip
-                  </button>
-                </div>
-              </div>
-
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-2xl p-4 animate-slide-up">
               <form onSubmit={handleSubmit}>
-                {/* Row 1: From & To */}
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div ref={fromRef}>
-                    <label className="form-label">Pickup Location</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder={loading ? 'Loading airports...' : 'Select airport'}
-                        value={fromSearch}
-                        onChange={(e) => {
-                          setFromSearch(e.target.value);
-                          setSelectedFrom(null);
-                          setShowFromDropdown(true);
-                        }}
-                        onFocus={() => setShowFromDropdown(true)}
-                        className="input-field"
-                        required
-                      />
-                    </div>
+                {/* Row 1: Trip Type Toggle */}
+                <div className="flex justify-center mb-3">
+                  <div className="inline-flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      type="button"
+                      onClick={() => setTripType('one-way')}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${tripType === 'one-way' ? 'bg-white shadow text-[#1e3a5f]' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      One Way
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTripType('round-trip')}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${tripType === 'round-trip' ? 'bg-white shadow text-[#1e3a5f]' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Round Trip
+                    </button>
+                  </div>
+                </div>
+
+                {/* Row 2: All Fields in One Line */}
+                <div className="grid grid-cols-2 md:grid-cols-7 gap-2 mb-3">
+                  <div ref={fromRef} className="relative">
+                    <label className="text-xs font-medium text-gray-600 mb-1 block">Pick Up</label>
+                    <input
+                      type="text"
+                      placeholder={loading ? 'Loading...' : 'Airport'}
+                      value={fromSearch}
+                      onChange={(e) => {
+                        setFromSearch(e.target.value);
+                        setSelectedFrom(null);
+                        setShowFromDropdown(true);
+                      }}
+                      onFocus={() => setShowFromDropdown(true)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
+                      required
+                    />
                     {showFromDropdown && filteredAirports.length > 0 && (
                       <div className="dropdown">
                         {filteredAirports.slice(0, 8).map((airport) => (
@@ -360,24 +360,22 @@ export default function Home() {
                     )}
                   </div>
 
-                  <div ref={toRef}>
-                    <label className="form-label">Drop-off Location</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder={selectedFrom ? 'Select destination' : 'Select airport first'}
-                        value={toSearch}
-                        onChange={(e) => {
-                          setToSearch(e.target.value);
-                          setSelectedTo(null);
-                          setShowToDropdown(true);
-                        }}
-                        onFocus={() => selectedFrom && setShowToDropdown(true)}
-                        className="input-field"
-                        disabled={!selectedFrom}
-                        required
-                      />
-                    </div>
+                  <div ref={toRef} className="relative">
+                    <label className="text-xs font-medium text-gray-600 mb-1 block">Drop Off</label>
+                    <input
+                      type="text"
+                      placeholder={selectedFrom ? 'Destination' : 'Select pickup'}
+                      value={toSearch}
+                      onChange={(e) => {
+                        setToSearch(e.target.value);
+                        setSelectedTo(null);
+                        setShowToDropdown(true);
+                      }}
+                      onFocus={() => selectedFrom && setShowToDropdown(true)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4] disabled:bg-gray-50"
+                      disabled={!selectedFrom}
+                      required
+                    />
                     {showToDropdown && searchedZones.length > 0 && (
                       <div className="dropdown">
                         {searchedZones.slice(0, 8).map((zone) => (
@@ -397,115 +395,100 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                </div>
 
-                {/* Row 2: Date, Time, Passengers, Luggage */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div>
-                    <label className="form-label">Date</label>
+                    <label className="text-xs font-medium text-gray-600 mb-1 block">Date</label>
                     <input
                       type="date"
                       min={today}
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="input-field"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="form-label">Time</label>
+                    <label className="text-xs font-medium text-gray-600 mb-1 block">Time</label>
                     <input
                       type="time"
                       value={formData.time}
                       onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                      className="input-field"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="form-label">Passengers</label>
+                    <label className="text-xs font-medium text-gray-600 mb-1 block">Passengers</label>
                     <select
                       value={formData.passengers}
                       onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                      className="select-field"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                         <option key={n} value={n}>{n}</option>
                       ))}
                     </select>
                   </div>
+
                   <div>
-                    <label className="form-label">Luggage</label>
+                    <label className="text-xs font-medium text-gray-600 mb-1 block">Luggage</label>
                     <select
                       value={formData.luggage}
                       onChange={(e) => setFormData({ ...formData, luggage: e.target.value })}
-                      className="select-field"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
                     >
                       {[0, 1, 2, 3, 4, 5, 6].map((n) => (
                         <option key={n} value={n}>{n}</option>
                       ))}
                     </select>
                   </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-gray-600 mb-1 block">Flight No.</label>
+                    <input
+                      type="text"
+                      placeholder="TK1234"
+                      value={formData.flightNumber}
+                      onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value.toUpperCase() })}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
+                    />
+                  </div>
                 </div>
 
-                {/* Row 3: Round Trip Fields (conditional) */}
+                {/* Row 2.5: Round Trip Fields (conditional) */}
                 {tripType === 'round-trip' && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-[#f8fafc] rounded-xl">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 p-3 bg-gray-50 rounded-lg">
                     <div>
-                      <label className="form-label">Return Date</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Return Date</label>
                       <input
                         type="date"
                         min={formData.date || today}
                         value={formData.returnDate}
                         onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
-                        className="input-field"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
                         required={tripType === 'round-trip'}
                       />
                     </div>
                     <div>
-                      <label className="form-label">Return Time</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Return Time</label>
                       <input
                         type="time"
                         value={formData.returnTime}
                         onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
-                        className="input-field"
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
                         required={tripType === 'round-trip'}
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="form-label">Flight Number (Optional)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g., TK1234"
-                        value={formData.flightNumber}
-                        onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value.toUpperCase() })}
-                        className="input-field"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Row 3/4: Flight Number (one-way) & Search Button */}
-                <div className="grid md:grid-cols-3 gap-4 items-end">
-                  {tripType === 'one-way' && (
-                    <div>
-                      <label className="form-label">Flight Number (Optional)</label>
-                      <input
-                        type="text"
-                        placeholder="e.g., TK1234"
-                        value={formData.flightNumber}
-                        onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value.toUpperCase() })}
-                        className="input-field"
-                      />
-                    </div>
-                  )}
-                  <div className={tripType === 'one-way' ? 'md:col-span-2' : 'md:col-span-3'}>
-                    <button type="submit" className="btn-primary btn-lg w-full flex items-center justify-center gap-2">
-                      <FaSearch />
-                      Search Transfers
-                    </button>
-                  </div>
-                </div>
+                {/* Row 3: Search Button */}
+                <button type="submit" className="w-full bg-[#00b4b4] hover:bg-[#009999] text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
+                  <FaSearch />
+                  Search Transfers
+                </button>
               </form>
             </div>
 
