@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   const { agencyId } = auth.payload;
 
-  const members = await query<TeamMemberRow[]>(
+  const members = await query<TeamMemberRow>(
     `SELECT au.id, au.user_id, u.full_name, u.email, au.role, au.is_active, u.last_login, au.created_at
      FROM agency_users au
      JOIN users u ON u.id = au.user_id
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Check if email already exists
-  const existing = await query<{ id: number }[]>(
+  const existing = await query<{ id: number }>(
     'SELECT id FROM users WHERE email = ?',
     [email]
   );

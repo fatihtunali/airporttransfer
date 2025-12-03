@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
   sql += ' ORDER BY b.created_at DESC LIMIT 100';
 
-  const bookings = await query<BookingRow[]>(sql, params);
+  const bookings = await query<BookingRow>(sql, params);
 
   return NextResponse.json({
     bookings: bookings.map((b) => ({

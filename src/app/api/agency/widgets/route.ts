@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
   const { agencyId } = auth.payload;
 
-  const widgets = await query<WidgetRow[]>(
+  const widgets = await query<WidgetRow>(
     `SELECT id, widget_key, widget_type, allowed_domains, theme,
             impressions, conversions, is_active, created_at
      FROM agency_widgets

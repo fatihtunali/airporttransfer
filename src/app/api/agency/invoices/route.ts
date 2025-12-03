@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
   sql += ' ORDER BY created_at DESC';
 
-  const invoices = await query<InvoiceRow[]>(sql, params);
+  const invoices = await query<InvoiceRow>(sql, params);
 
   // Get stats
   const stats = await queryOne<StatsRow>(

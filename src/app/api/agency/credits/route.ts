@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
   );
 
   // Get transactions
-  const transactions = await query<TransactionRow[]>(
+  const transactions = await query<TransactionRow>(
     `SELECT ct.id, ct.type, ct.amount, ct.balance_after, ct.currency,
             ct.reference, b.public_code as booking_code, ct.notes, ct.created_at
      FROM agency_credit_transactions ct

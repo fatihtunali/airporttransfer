@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Find available tariffs
-  const tariffs = await query<TariffRow[]>(
+  const tariffs = await query<TariffRow>(
     `SELECT
        t.id, t.supplier_id, s.name as supplier_name, s.rating_avg as supplier_rating,
        t.vehicle_type, t.base_price, t.currency, t.max_pax,

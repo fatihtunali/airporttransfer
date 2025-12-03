@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
   );
 
   // Get recent bookings
-  const recentBookings = await query<BookingRow[]>(
+  const recentBookings = await query<BookingRow>(
     `SELECT
        b.id, b.public_code, bp.full_name as customer_name,
        a.name as airport_name, z.name as zone_name,
