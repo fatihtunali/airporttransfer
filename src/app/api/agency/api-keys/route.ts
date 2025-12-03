@@ -27,22 +27,23 @@ export async function GET(request: NextRequest) {
     created_at: string;
   }
 
-  const agency = await query<AgencyKeyRow[]>(
+  const agencies = await query<AgencyKeyRow>(
     `SELECT id, api_key, name, created_at FROM agencies WHERE id = ?`,
     [agencyId]
   );
 
-  if (agency.length === 0 || !agency[0].api_key) {
+  if (agencies.length === 0 || !agencies[0].api_key) {
     return NextResponse.json([]);
   }
 
-  const key = agency[0].api_key;
+  const agency = agencies[0];
+  const key = agency.api_key;
   return NextResponse.json([
     {
-      id: agency[0].id,
+      id: agency.id,
       keyPreview: `${key.substring(0, 12)}...${key.substring(key.length - 4)}`,
       name: 'Primary API Key',
-      createdAt: agency[0].created_at,
+      createdAt: agency.created_at,
       lastUsed: null,
       requestCount: 0,
     },
