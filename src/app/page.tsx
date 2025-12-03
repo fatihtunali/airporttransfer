@@ -277,240 +277,180 @@ export default function Home() {
         <div className="hero-pattern" />
 
         <div className="relative z-10 w-full container-custom pt-32 pb-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
-            <div className="text-white animate-fade-in">
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-                <FaStar className="text-yellow-400" />
-                <span className="text-sm font-medium">Rated 4.9/5 by 10,000+ customers</span>
-              </div>
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                Book Your Airport
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#00b4b4] to-[#00d4d4]">
-                  Transfer Worldwide
-                </span>
-              </h1>
-
-              <p className="text-lg md:text-xl text-white/80 mb-8 max-w-xl">
-                Reliable, comfortable, and affordable airport transfers from verified local suppliers.
-                Compare prices and book in seconds.
-              </p>
-
-              {/* Trust Indicators */}
-              <div className="flex flex-wrap gap-4 mb-8">
-                <div className="flex items-center gap-2 text-white/90">
-                  <FaCheckCircle className="text-[#00b4b4]" />
-                  <span>Free Cancellation</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/90">
-                  <FaCheckCircle className="text-[#00b4b4]" />
-                  <span>24/7 Support</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/90">
-                  <FaCheckCircle className="text-[#00b4b4]" />
-                  <span>Best Price Guarantee</span>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-6">
-                <div>
-                  <div className="text-3xl md:text-4xl font-bold text-[#00b4b4]">500+</div>
-                  <div className="text-white/70 text-sm">Airports</div>
-                </div>
-                <div>
-                  <div className="text-3xl md:text-4xl font-bold text-[#00b4b4]">50K+</div>
-                  <div className="text-white/70 text-sm">Happy Customers</div>
-                </div>
-                <div>
-                  <div className="text-3xl md:text-4xl font-bold text-[#00b4b4]">100+</div>
-                  <div className="text-white/70 text-sm">Countries</div>
-                </div>
-              </div>
+          {/* Centered Hero Content */}
+          <div className="text-center text-white animate-fade-in mb-10">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+              <FaStar className="text-yellow-400" />
+              <span className="text-sm font-medium">Rated 4.9/5 by 10,000+ customers</span>
             </div>
 
-            {/* Right - Booking Box */}
-            <div className="booking-box animate-slide-up">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+              Book Your Airport
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#00b4b4] to-[#00d4d4]">
+                Transfer Worldwide
+              </span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto">
+              Reliable, comfortable, and affordable airport transfers from verified local suppliers.
+            </p>
+          </div>
+
+          {/* Wide Centered Search Form */}
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 md:p-8 animate-slide-up">
               {/* Trip Type Toggle */}
-              <div className="trip-toggle mb-6">
-                <button
-                  onClick={() => setTripType('one-way')}
-                  className={`trip-toggle-btn ${tripType === 'one-way' ? 'active' : ''}`}
-                >
-                  One Way
-                </button>
-                <button
-                  onClick={() => setTripType('round-trip')}
-                  className={`trip-toggle-btn ${tripType === 'round-trip' ? 'active' : ''}`}
-                >
-                  Round Trip
-                </button>
+              <div className="flex justify-center mb-6">
+                <div className="trip-toggle">
+                  <button
+                    onClick={() => setTripType('one-way')}
+                    className={`trip-toggle-btn ${tripType === 'one-way' ? 'active' : ''}`}
+                  >
+                    One Way
+                  </button>
+                  <button
+                    onClick={() => setTripType('round-trip')}
+                    className={`trip-toggle-btn ${tripType === 'round-trip' ? 'active' : ''}`}
+                  >
+                    Round Trip
+                  </button>
+                </div>
               </div>
 
               <form onSubmit={handleSubmit}>
-                {/* From - Airport */}
-                <div className="mb-4" ref={fromRef}>
-                  <label className="form-label">Pickup Location</label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
-                      <FaPlaneDeparture />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder={loading ? 'Loading airports...' : 'Select airport'}
-                      value={fromSearch}
-                      onChange={(e) => {
-                        setFromSearch(e.target.value);
-                        setSelectedFrom(null);
-                        setShowFromDropdown(true);
-                      }}
-                      onFocus={() => setShowFromDropdown(true)}
-                      className="input-field pl-12"
-                      required
-                    />
-                  </div>
-                  {showFromDropdown && filteredAirports.length > 0 && (
-                    <div className="dropdown">
-                      {filteredAirports.slice(0, 8).map((airport) => (
-                        <button
-                          key={airport.id}
-                          type="button"
-                          onClick={() => handleFromSelect(airport)}
-                          className="dropdown-item"
-                        >
-                          <FaPlaneDeparture className="dropdown-item-icon" />
-                          <div>
-                            <div className="dropdown-item-title flex items-center gap-2">
-                              <span className="badge badge-primary">{airport.code}</span>
-                              {airport.name}
-                            </div>
-                            <div className="dropdown-item-subtitle">{airport.city}, {airport.country}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* To - Destination */}
-                <div className="mb-4" ref={toRef}>
-                  <label className="form-label">Drop-off Location</label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#ff6b35]">
-                      <FaMapMarkerAlt />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder={selectedFrom ? 'Select destination' : 'Select airport first'}
-                      value={toSearch}
-                      onChange={(e) => {
-                        setToSearch(e.target.value);
-                        setSelectedTo(null);
-                        setShowToDropdown(true);
-                      }}
-                      onFocus={() => selectedFrom && setShowToDropdown(true)}
-                      className="input-field pl-12"
-                      disabled={!selectedFrom}
-                      required
-                    />
-                  </div>
-                  {showToDropdown && searchedZones.length > 0 && (
-                    <div className="dropdown">
-                      {searchedZones.slice(0, 8).map((zone) => (
-                        <button
-                          key={zone.id}
-                          type="button"
-                          onClick={() => handleToSelect(zone)}
-                          className="dropdown-item"
-                        >
-                          <FaMapMarkerAlt className="dropdown-item-icon text-[#ff6b35]" />
-                          <div>
-                            <div className="dropdown-item-title">{zone.name}</div>
-                            <div className="dropdown-item-subtitle">{zone.city}, {zone.country}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Date & Time Row */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="form-label">Date</label>
+                {/* Row 1: From & To */}
+                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                  <div ref={fromRef}>
+                    <label className="form-label">Pickup Location</label>
                     <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
-                        <FaCalendarAlt />
-                      </div>
                       <input
-                        type="date"
-                        min={today}
-                        value={formData.date}
-                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        className="input-field pl-12"
+                        type="text"
+                        placeholder={loading ? 'Loading airports...' : 'Select airport'}
+                        value={fromSearch}
+                        onChange={(e) => {
+                          setFromSearch(e.target.value);
+                          setSelectedFrom(null);
+                          setShowFromDropdown(true);
+                        }}
+                        onFocus={() => setShowFromDropdown(true)}
+                        className="input-field"
                         required
                       />
                     </div>
+                    {showFromDropdown && filteredAirports.length > 0 && (
+                      <div className="dropdown">
+                        {filteredAirports.slice(0, 8).map((airport) => (
+                          <button
+                            key={airport.id}
+                            type="button"
+                            onClick={() => handleFromSelect(airport)}
+                            className="dropdown-item"
+                          >
+                            <FaPlaneDeparture className="dropdown-item-icon" />
+                            <div>
+                              <div className="dropdown-item-title flex items-center gap-2">
+                                <span className="badge badge-primary">{airport.code}</span>
+                                {airport.name}
+                              </div>
+                              <div className="dropdown-item-subtitle">{airport.city}, {airport.country}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div ref={toRef}>
+                    <label className="form-label">Drop-off Location</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder={selectedFrom ? 'Select destination' : 'Select airport first'}
+                        value={toSearch}
+                        onChange={(e) => {
+                          setToSearch(e.target.value);
+                          setSelectedTo(null);
+                          setShowToDropdown(true);
+                        }}
+                        onFocus={() => selectedFrom && setShowToDropdown(true)}
+                        className="input-field"
+                        disabled={!selectedFrom}
+                        required
+                      />
+                    </div>
+                    {showToDropdown && searchedZones.length > 0 && (
+                      <div className="dropdown">
+                        {searchedZones.slice(0, 8).map((zone) => (
+                          <button
+                            key={zone.id}
+                            type="button"
+                            onClick={() => handleToSelect(zone)}
+                            className="dropdown-item"
+                          >
+                            <FaMapMarkerAlt className="dropdown-item-icon text-[#ff6b35]" />
+                            <div>
+                              <div className="dropdown-item-title">{zone.name}</div>
+                              <div className="dropdown-item-subtitle">{zone.city}, {zone.country}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Row 2: Date, Time, Passengers, Luggage */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <label className="form-label">Date</label>
+                    <input
+                      type="date"
+                      min={today}
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      className="input-field"
+                      required
+                    />
                   </div>
                   <div>
                     <label className="form-label">Time</label>
-                    <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
-                        <FaClock />
-                      </div>
-                      <input
-                        type="time"
-                        value={formData.time}
-                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                        className="input-field pl-12"
-                        required
-                      />
-                    </div>
+                    <input
+                      type="time"
+                      value={formData.time}
+                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                      className="input-field"
+                      required
+                    />
                   </div>
-                </div>
-
-                {/* Passengers & Luggage */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="form-label">Passengers</label>
-                    <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
-                        <FaUsers />
-                      </div>
-                      <select
-                        value={formData.passengers}
-                        onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                        className="select-field pl-12"
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                          <option key={n} value={n}>{n}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <select
+                      value={formData.passengers}
+                      onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
+                      className="select-field"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="form-label">Luggage</label>
-                    <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
-                        <FaSuitcase />
-                      </div>
-                      <select
-                        value={formData.luggage}
-                        onChange={(e) => setFormData({ ...formData, luggage: e.target.value })}
-                        className="select-field pl-12"
-                      >
-                        {[0, 1, 2, 3, 4, 5, 6].map((n) => (
-                          <option key={n} value={n}>{n}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <select
+                      value={formData.luggage}
+                      onChange={(e) => setFormData({ ...formData, luggage: e.target.value })}
+                      className="select-field"
+                    >
+                      {[0, 1, 2, 3, 4, 5, 6].map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
-                {/* Round Trip Fields */}
+                {/* Row 3: Round Trip Fields (conditional) */}
                 {tripType === 'round-trip' && (
-                  <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-[#f8fafc] rounded-xl">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 bg-[#f8fafc] rounded-xl">
                     <div>
                       <label className="form-label">Return Date</label>
                       <input
@@ -532,33 +472,61 @@ export default function Home() {
                         required={tripType === 'round-trip'}
                       />
                     </div>
+                    <div className="md:col-span-2">
+                      <label className="form-label">Flight Number (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., TK1234"
+                        value={formData.flightNumber}
+                        onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value.toUpperCase() })}
+                        className="input-field"
+                      />
+                    </div>
                   </div>
                 )}
 
-                {/* Flight Number */}
-                <div className="mb-6">
-                  <label className="form-label">Flight Number (Optional)</label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
-                      <FaPlaneArrival />
+                {/* Row 3/4: Flight Number (one-way) & Search Button */}
+                <div className="grid md:grid-cols-3 gap-4 items-end">
+                  {tripType === 'one-way' && (
+                    <div>
+                      <label className="form-label">Flight Number (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., TK1234"
+                        value={formData.flightNumber}
+                        onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value.toUpperCase() })}
+                        className="input-field"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      placeholder="e.g., TK1234"
-                      value={formData.flightNumber}
-                      onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value.toUpperCase() })}
-                      className="input-field pl-12"
-                    />
+                  )}
+                  <div className={tripType === 'one-way' ? 'md:col-span-2' : 'md:col-span-3'}>
+                    <button type="submit" className="btn-primary btn-lg w-full flex items-center justify-center gap-2">
+                      <FaSearch />
+                      Search Transfers
+                    </button>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">We'll track your flight for delays</p>
                 </div>
-
-                {/* Submit Button */}
-                <button type="submit" className="btn-primary btn-lg w-full flex items-center justify-center gap-2">
-                  <FaSearch />
-                  Search Transfers
-                </button>
               </form>
+            </div>
+
+            {/* Trust Indicators below form */}
+            <div className="flex flex-wrap justify-center gap-6 mt-6 text-white/90">
+              <div className="flex items-center gap-2">
+                <FaCheckCircle className="text-[#00b4b4]" />
+                <span>Free Cancellation</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaCheckCircle className="text-[#00b4b4]" />
+                <span>24/7 Support</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaCheckCircle className="text-[#00b4b4]" />
+                <span>Best Price Guarantee</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaCheckCircle className="text-[#00b4b4]" />
+                <span>500+ Airports</span>
+              </div>
             </div>
           </div>
         </div>
