@@ -273,9 +273,7 @@ export default function Home() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url('/assets/airport-pickup.jpg')` }}
         />
-        <div className="hero-overlay" />
-        <div className="hero-pattern" />
-
+        
         <div className="relative z-10 w-full container-custom pt-32 pb-20">
           {/* Centered Hero Content */}
           <div className="text-center text-white animate-fade-in mb-10">
