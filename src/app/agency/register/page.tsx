@@ -168,11 +168,11 @@ export default function AgencyRegister() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <Image
-              src="/logo/logo.svg"
+              src="/logo/logo_atp.jpg"
               alt="Airport Transfer Portal"
               width={180}
-              height={45}
-              className="mx-auto"
+              height={50}
+              className="mx-auto rounded"
             />
           </Link>
           <div className="flex items-center justify-center gap-2 mt-3">

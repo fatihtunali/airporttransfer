@@ -100,11 +100,11 @@ export default function AgencyLayout({
           <div className="p-4 border-b border-gray-200">
             <Link href="/agency" className="flex items-center gap-2">
               <Image
-                src="/logo/logo.svg"
+                src="/logo/logo_atp.jpg"
                 alt="Airport Transfer Portal"
                 width={140}
-                height={35}
-                className="h-8 w-auto"
+                height={40}
+                className="h-8 w-auto rounded"
               />
             </Link>
             <p className="text-xs text-emerald-600 font-medium mt-1">Agency Portal</p>
