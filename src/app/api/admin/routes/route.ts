@@ -49,27 +49,21 @@ export async function GET(request: NextRequest) {
        ORDER BY a.code, z.name`
     );
 
-    return NextResponse.json(
-      routes.map((r) => ({
+    return NextResponse.json({
+      routes: routes.map((r) => ({
         id: r.id,
         airportId: r.airport_id,
+        airportCode: r.airport_code,
+        airportName: r.airport_name,
         zoneId: r.zone_id,
+        zoneName: r.zone_name,
+        zoneCity: r.zone_city,
         direction: r.direction,
         approxDistanceKm: r.approx_distance_km,
         approxDurationMin: r.approx_duration_min,
         isActive: r.is_active,
-        airport: {
-          id: r.airport_id,
-          code: r.airport_code,
-          name: r.airport_name,
-        },
-        zone: {
-          id: r.zone_id,
-          name: r.zone_name,
-          city: r.zone_city,
-        },
       }))
-    );
+    });
   } catch (error) {
     console.error('Error fetching routes:', error);
     return NextResponse.json(

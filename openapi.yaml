@@ -42,6 +42,8 @@ tags:
     description: Supplier / transfer company operations
   - name: Admin
     description: Admin-level management endpoints
+  - name: Dispatch
+    description: Dispatch operations for driver tracking, flight monitoring, and issue management
 
 components:
   securitySchemes:
@@ -832,6 +834,341 @@ components:
         error:
           type: string
         message:
+          type: string
+
+    # Dispatch Schemas
+    DriverLocationStatus:
+      type: string
+      enum: [ONLINE, OFFLINE, ON_TRIP, BREAK]
+
+    FlightTrackingStatus:
+      type: string
+      enum: [SCHEDULED, DEPARTED, EN_ROUTE, LANDED, ARRIVED_GATE, CANCELLED, DIVERTED, DELAYED, UNKNOWN]
+
+    DispatchIssueSeverity:
+      type: string
+      enum: [LOW, MEDIUM, HIGH, CRITICAL]
+
+    DispatchIssueStatus:
+      type: string
+      enum: [OPEN, IN_PROGRESS, RESOLVED, ESCALATED, CLOSED]
+
+    DispatchIssueType:
+      type: string
+      enum: [NO_SHOW_CUSTOMER, NO_SHOW_DRIVER, DRIVER_LATE, VEHICLE_BREAKDOWN, ACCIDENT, CUSTOMER_COMPLAINT, DRIVER_COMPLAINT, PAYMENT_ISSUE, FLIGHT_ISSUE, ADDRESS_ISSUE, OTHER]
+
+    NotificationRecipientType:
+      type: string
+      enum: [CUSTOMER, DRIVER, SUPPLIER, DISPATCHER, AGENCY]
+
+    NotificationType:
+      type: string
+      enum: [BOOKING_CONFIRMED, DRIVER_ASSIGNED, DRIVER_EN_ROUTE, DRIVER_ARRIVED, TRIP_STARTED, TRIP_COMPLETED, FLIGHT_DELAYED, PICKUP_TIME_CHANGED, BOOKING_CANCELLED, REVIEW_REQUEST, PAYMENT_RECEIVED, PAYOUT_SENT, DOCUMENT_EXPIRING, GENERAL]
+
+    NotificationChannel:
+      type: string
+      enum: [EMAIL, SMS, PUSH, WHATSAPP, IN_APP]
+
+    NotificationStatus:
+      type: string
+      enum: [PENDING, SENT, DELIVERED, FAILED, READ]
+
+    MessageSenderType:
+      type: string
+      enum: [CUSTOMER, DRIVER, DISPATCHER, SYSTEM]
+
+    MessageType:
+      type: string
+      enum: [TEXT, IMAGE, LOCATION, SYSTEM]
+
+    DriverLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+        driverId:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        supplier:
+          type: string
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+            heading:
+              type: number
+            speed:
+              type: number
+            accuracy:
+              type: number
+            batteryLevel:
+              type: integer
+        status:
+          $ref: '#/components/schemas/DriverLocationStatus'
+        currentRideId:
+          type: integer
+          nullable: true
+        bookingCode:
+          type: string
+          nullable: true
+        lastUpdated:
+          type: string
+          format: date-time
+
+    FlightTracking:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookingId:
+          type: integer
+        bookingCode:
+          type: string
+        flightNumber:
+          type: string
+        flightDate:
+          type: string
+          format: date
+        departureAirport:
+          type: string
+        arrivalAirport:
+          type: string
+        scheduledDeparture:
+          type: string
+          format: date-time
+          nullable: true
+        scheduledArrival:
+          type: string
+          format: date-time
+        estimatedArrival:
+          type: string
+          format: date-time
+          nullable: true
+        actualArrival:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/FlightTrackingStatus'
+        delayMinutes:
+          type: integer
+        delayReason:
+          type: string
+          nullable: true
+        terminal:
+          type: string
+          nullable: true
+        gate:
+          type: string
+          nullable: true
+        baggageClaim:
+          type: string
+          nullable: true
+        trackingSource:
+          type: string
+          nullable: true
+        lastChecked:
+          type: string
+          format: date-time
+          nullable: true
+        customerName:
+          type: string
+        pickupTime:
+          type: string
+          format: date-time
+        pickupAdjusted:
+          type: boolean
+
+    DispatchIssue:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookingId:
+          type: integer
+          nullable: true
+        bookingCode:
+          type: string
+          nullable: true
+        rideId:
+          type: integer
+          nullable: true
+        driverId:
+          type: integer
+          nullable: true
+        supplierId:
+          type: integer
+          nullable: true
+        type:
+          $ref: '#/components/schemas/DispatchIssueType'
+        severity:
+          $ref: '#/components/schemas/DispatchIssueSeverity'
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/DispatchIssueStatus'
+        resolution:
+          type: string
+          nullable: true
+        reportedBy:
+          type: string
+        reporterId:
+          type: integer
+          nullable: true
+        resolvedBy:
+          type: integer
+          nullable: true
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        customerName:
+          type: string
+          nullable: true
+        driverName:
+          type: string
+          nullable: true
+        supplierName:
+          type: string
+          nullable: true
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        recipientType:
+          $ref: '#/components/schemas/NotificationRecipientType'
+        recipientId:
+          type: integer
+          nullable: true
+        recipientEmail:
+          type: string
+          nullable: true
+        recipientPhone:
+          type: string
+          nullable: true
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        title:
+          type: string
+        message:
+          type: string
+        bookingId:
+          type: integer
+          nullable: true
+        bookingCode:
+          type: string
+          nullable: true
+        rideId:
+          type: integer
+          nullable: true
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+        status:
+          $ref: '#/components/schemas/NotificationStatus'
+        sentAt:
+          type: string
+          format: date-time
+          nullable: true
+        deliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        errorMessage:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookingId:
+          type: integer
+        rideId:
+          type: integer
+          nullable: true
+        senderType:
+          $ref: '#/components/schemas/MessageSenderType'
+        senderId:
+          type: integer
+          nullable: true
+        senderName:
+          type: string
+          nullable: true
+        message:
+          type: string
+        messageType:
+          $ref: '#/components/schemas/MessageType'
+        attachmentUrl:
+          type: string
+          nullable: true
+        location:
+          type: object
+          nullable: true
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        isRead:
+          type: boolean
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookingId:
+          type: integer
+        bookingCode:
+          type: string
+        customerName:
+          type: string
+        driverName:
+          type: string
+          nullable: true
+        lastMessage:
+          type: string
+        lastMessageTime:
+          type: string
+          format: date-time
+        unreadCount:
+          type: integer
+        status:
           type: string
 
 paths:
@@ -1976,3 +2313,528 @@ paths:
                   pendingPayouts:
                     type: number
                     format: double
+
+  # ============================
+  # Dispatch Endpoints
+  # ============================
+
+  /dispatch/dashboard:
+    get:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Get dispatch dashboard stats
+      description: Returns real-time stats for dispatch operations
+      responses:
+        '200':
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    type: object
+                    properties:
+                      todayRides:
+                        type: integer
+                      activeDrivers:
+                        type: integer
+                      ongoingRides:
+                        type: integer
+                      pendingAssignment:
+                        type: integer
+                      delayedFlights:
+                        type: integer
+                      openIssues:
+                        type: integer
+
+  /dispatch/locations:
+    get:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Get driver locations
+      description: Returns real-time driver locations with status and current ride info
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/DriverLocationStatus'
+          description: Filter by driver status
+      responses:
+        '200':
+          description: Driver locations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drivers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DriverLocation'
+    post:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Update driver location
+      description: Update a driver's GPS location and status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [driverId, latitude, longitude]
+              properties:
+                driverId:
+                  type: integer
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+                heading:
+                  type: number
+                speed:
+                  type: number
+                accuracy:
+                  type: number
+                batteryLevel:
+                  type: integer
+                status:
+                  $ref: '#/components/schemas/DriverLocationStatus'
+      responses:
+        '200':
+          description: Location updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /dispatch/flights:
+    get:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Get flight tracking data
+      description: Returns flight status for upcoming bookings
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+            enum: [all, delayed, arriving, landed]
+          description: Filter flights by status
+      responses:
+        '200':
+          description: Flight tracking data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flights:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FlightTracking'
+    post:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Add flight tracking
+      description: Add flight tracking for a booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId, flightNumber, flightDate]
+              properties:
+                bookingId:
+                  type: integer
+                flightNumber:
+                  type: string
+                flightDate:
+                  type: string
+                  format: date
+                departureAirport:
+                  type: string
+                arrivalAirport:
+                  type: string
+                scheduledDeparture:
+                  type: string
+                  format: date-time
+                scheduledArrival:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Flight tracking added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+    put:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Update flight tracking
+      description: Update flight status and arrival info
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: integer
+                status:
+                  $ref: '#/components/schemas/FlightTrackingStatus'
+                estimatedArrival:
+                  type: string
+                  format: date-time
+                actualArrival:
+                  type: string
+                  format: date-time
+                delayMinutes:
+                  type: integer
+                delayReason:
+                  type: string
+                terminal:
+                  type: string
+                gate:
+                  type: string
+                baggageClaim:
+                  type: string
+                trackingSource:
+                  type: string
+      responses:
+        '200':
+          description: Flight tracking updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /dispatch/issues:
+    get:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Get dispatch issues
+      description: Returns issues and incidents requiring attention
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+            enum: [all, open, in_progress, critical, resolved]
+          description: Filter issues by status
+      responses:
+        '200':
+          description: Dispatch issues
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issues:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DispatchIssue'
+    post:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Create dispatch issue
+      description: Report a new issue or incident
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, severity, title]
+              properties:
+                bookingId:
+                  type: integer
+                rideId:
+                  type: integer
+                type:
+                  $ref: '#/components/schemas/DispatchIssueType'
+                severity:
+                  $ref: '#/components/schemas/DispatchIssueSeverity'
+                title:
+                  type: string
+                description:
+                  type: string
+                reportedBy:
+                  type: string
+                  enum: [CUSTOMER, DRIVER, DISPATCHER, SYSTEM]
+      responses:
+        '200':
+          description: Issue created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  issueId:
+                    type: integer
+    put:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Update dispatch issue
+      description: Update issue status or resolution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: integer
+                status:
+                  $ref: '#/components/schemas/DispatchIssueStatus'
+                resolution:
+                  type: string
+                resolvedBy:
+                  type: integer
+      responses:
+        '200':
+          description: Issue updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /dispatch/messages:
+    get:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Get message conversations
+      description: Returns recent message threads with unread counts
+      responses:
+        '200':
+          description: Conversations list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+
+  /dispatch/messages/{bookingId}:
+    get:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Get messages for booking
+      description: Returns message thread for a specific booking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+    post:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Send message
+      description: Send a message in a booking thread
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message, senderType]
+              properties:
+                message:
+                  type: string
+                senderType:
+                  $ref: '#/components/schemas/MessageSenderType'
+                senderName:
+                  type: string
+                messageType:
+                  $ref: '#/components/schemas/MessageType'
+                attachmentUrl:
+                  type: string
+                locationLat:
+                  type: number
+                locationLng:
+                  type: number
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  messageId:
+                    type: integer
+
+  /dispatch/notifications:
+    get:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Get notifications
+      description: Returns notifications for dispatch operations
+      parameters:
+        - name: recipientType
+          in: query
+          schema:
+            $ref: '#/components/schemas/NotificationRecipientType'
+        - name: recipientId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/NotificationStatus'
+        - name: channel
+          in: query
+          schema:
+            $ref: '#/components/schemas/NotificationChannel'
+      responses:
+        '200':
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+    post:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Create notification
+      description: Create a new notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recipientType, type, title, message, channel]
+              properties:
+                recipientType:
+                  $ref: '#/components/schemas/NotificationRecipientType'
+                recipientId:
+                  type: integer
+                recipientEmail:
+                  type: string
+                recipientPhone:
+                  type: string
+                type:
+                  $ref: '#/components/schemas/NotificationType'
+                title:
+                  type: string
+                message:
+                  type: string
+                bookingId:
+                  type: integer
+                rideId:
+                  type: integer
+                channel:
+                  $ref: '#/components/schemas/NotificationChannel'
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Notification created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  notificationId:
+                    type: integer
+    put:
+      tags: [Dispatch]
+      security:
+        - bearerAuth: []
+      summary: Update notification status
+      description: Update notification status or mark as read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                status:
+                  $ref: '#/components/schemas/NotificationStatus'
+                markAsRead:
+                  type: boolean
+      responses:
+        '200':
+          description: Notification updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean

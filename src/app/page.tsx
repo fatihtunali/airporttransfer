@@ -72,9 +72,16 @@ export default function Home() {
       try {
         const res = await fetch('/api/public/airports');
         const data = await res.json();
-        setAirports(data);
+        // Ensure we have an array (handle error responses)
+        if (Array.isArray(data)) {
+          setAirports(data);
+        } else {
+          console.error('Airports API returned non-array:', data);
+          setAirports([]);
+        }
       } catch (error) {
         console.error('Failed to fetch airports:', error);
+        setAirports([]);
       } finally {
         setLoading(false);
       }
@@ -89,9 +96,16 @@ export default function Home() {
         try {
           const res = await fetch(`/api/public/zones?airportId=${selectedFrom.id}`);
           const data = await res.json();
-          setFilteredZones(data);
+          // Ensure we have an array
+          if (Array.isArray(data)) {
+            setFilteredZones(data);
+          } else {
+            console.error('Zones API returned non-array:', data);
+            setFilteredZones([]);
+          }
         } catch (error) {
           console.error('Failed to fetch zones:', error);
+          setFilteredZones([]);
         }
       };
       fetchZones();

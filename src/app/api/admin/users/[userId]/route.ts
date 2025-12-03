@@ -1,0 +1,71 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+import bcrypt from 'bcryptjs';
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  const { userId } = await params;
+
+  try {
+    const body = await request.json();
+    const { email, password, fullName, phone, role, isActive } = body;
+
+    const updates: string[] = [];
+    const values: (string | number)[] = [];
+
+    if (email !== undefined) {
+      updates.push('email = ?');
+      values.push(email);
+    }
+    if (fullName !== undefined) {
+      updates.push('full_name = ?');
+      values.push(fullName);
+    }
+    if (phone !== undefined) {
+      updates.push('phone = ?');
+      values.push(phone || '');
+    }
+    if (role !== undefined) {
+      updates.push('role = ?');
+      values.push(role);
+    }
+    if (isActive !== undefined) {
+      updates.push('is_active = ?');
+      values.push(isActive ? 1 : 0);
+    }
+    if (password) {
+      const passwordHash = await bcrypt.hash(password, 10);
+      updates.push('password_hash = ?');
+      values.push(passwordHash);
+    }
+
+    if (updates.length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
+    values.push(userId);
+    await query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Update user error:', error);
+    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  const { userId } = await params;
+
+  try {
+    await query('UPDATE users SET is_active = 0 WHERE id = ?', [userId]);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
+  }
+}

@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
        ORDER BY created_at DESC`
     );
 
-    return NextResponse.json(
-      suppliers.map((s) => ({
+    return NextResponse.json({
+      suppliers: suppliers.map((s) => ({
         id: s.id,
         name: s.name,
         legalName: s.legal_name,
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         ratingAvg: s.rating_avg,
         ratingCount: s.rating_count,
       }))
-    );
+    });
   } catch (error) {
     console.error('Error fetching suppliers:', error);
     return NextResponse.json(
