@@ -1,44 +1,746 @@
 @import "tailwindcss";
 
+/* ============================================
+   AIRPORT TRANSFER PORTAL - MODERN DESIGN SYSTEM
+   Inspired by airporttransfer.com
+   ============================================ */
+
 :root {
+  /* Primary Colors - Navy Blue Theme */
+  --primary: #1e3a5f;
+  --primary-light: #2d5a87;
+  --primary-dark: #0f2744;
+
+  /* Accent Colors - Teal/Turquoise */
+  --accent: #00b4b4;
+  --accent-light: #00d4d4;
+  --accent-dark: #009494;
+
+  /* Secondary - Orange for CTAs */
+  --secondary: #ff6b35;
+  --secondary-light: #ff8b5a;
+  --secondary-dark: #e55520;
+
+  /* Neutral Colors */
   --background: #ffffff;
-  --foreground: #171717;
-  --primary: #0ea5e9;
-  --primary-dark: #0284c7;
-  --secondary: #f97316;
+  --foreground: #1a1a2e;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --surface: #f8fafc;
+  --surface-hover: #f1f5f9;
+
+  /* Status Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
   --color-primary-dark: var(--primary-dark);
+  --color-accent: var(--accent);
   --color-secondary: var(--secondary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom button styles */
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--foreground);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  transition: all var(--transition);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Primary Button - Accent Color */
 .btn-primary {
-  @apply bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl;
+  @apply px-6 py-3 text-white font-semibold rounded-xl transition-all duration-200;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  box-shadow: 0 4px 14px 0 rgba(0, 180, 180, 0.39);
 }
 
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
+  box-shadow: 0 6px 20px rgba(0, 180, 180, 0.45);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary Button - Orange */
 .btn-secondary {
-  @apply bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200;
+  @apply px-6 py-3 text-white font-semibold rounded-xl transition-all duration-200;
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+  box-shadow: 0 4px 14px 0 rgba(255, 107, 53, 0.39);
 }
 
-/* Input styles */
+.btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--secondary-light) 0%, var(--secondary) 100%);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.45);
+  transform: translateY(-2px);
+}
+
+/* Outline Button */
+.btn-outline {
+  @apply px-6 py-3 font-semibold rounded-xl transition-all duration-200 border-2;
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+}
+
+/* Ghost Button */
+.btn-ghost {
+  @apply px-6 py-3 font-semibold rounded-xl transition-all duration-200;
+  background: transparent;
+  color: var(--primary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+/* Large Button */
+.btn-lg {
+  @apply px-8 py-4 text-lg;
+}
+
+/* Small Button */
+.btn-sm {
+  @apply px-4 py-2 text-sm;
+}
+
+/* ============================================
+   INPUTS & FORMS
+   ============================================ */
+
 .input-field {
-  @apply w-full px-4 py-4 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent outline-none transition-all;
+  @apply w-full px-4 py-3.5 text-base rounded-xl transition-all duration-200 outline-none;
+  border: 2px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
 }
 
-/* Card styles */
+.input-field:hover {
+  border-color: #cbd5e1;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 180, 180, 0.15);
+}
+
+.input-field::placeholder {
+  color: var(--muted);
+}
+
+.input-field:disabled {
+  background: var(--surface);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Input with Icon */
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-group .input-icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-group .input-field {
+  padding-left: 3rem;
+}
+
+/* Select Field */
+.select-field {
+  @apply w-full px-4 py-3.5 text-base rounded-xl transition-all duration-200 outline-none appearance-none cursor-pointer;
+  border: 2px solid var(--border);
+  background-color: var(--background);
+  color: var(--foreground);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+.select-field:hover {
+  border-color: #cbd5e1;
+}
+
+.select-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 180, 180, 0.15);
+}
+
+/* Label */
+.form-label {
+  @apply block text-sm font-semibold mb-2;
+  color: var(--foreground);
+}
+
+/* ============================================
+   CARDS
+   ============================================ */
+
 .card {
-  @apply bg-white rounded-2xl shadow-xl p-8;
+  @apply rounded-2xl transition-all duration-300;
+  background: var(--background);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-elevated {
+  @apply rounded-2xl transition-all duration-300;
+  background: var(--background);
+  box-shadow: var(--shadow-xl);
+}
+
+.card-elevated:hover {
+  box-shadow: var(--shadow-2xl);
+  transform: translateY(-4px);
+}
+
+.card-bordered {
+  @apply rounded-2xl transition-all duration-300;
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-bordered:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+
+/* Glass Card */
+.card-glass {
+  @apply rounded-2xl p-6;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* ============================================
+   SEARCH FORM - BOOKING BOX
+   ============================================ */
+
+.booking-box {
+  @apply rounded-3xl p-8;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.booking-box-dark {
+  @apply rounded-3xl p-8;
+  background: rgba(30, 58, 95, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  color: white;
+}
+
+/* Trip Type Toggle */
+.trip-toggle {
+  @apply flex rounded-xl overflow-hidden;
+  background: var(--surface);
+  padding: 4px;
+}
+
+.trip-toggle-btn {
+  @apply flex-1 py-3 px-6 text-center font-semibold rounded-lg transition-all duration-200;
+  color: var(--muted);
+}
+
+.trip-toggle-btn.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.trip-toggle-btn:not(.active):hover {
+  color: var(--foreground);
+  background: var(--surface-hover);
+}
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+
+.navbar {
+  @apply fixed top-0 left-0 right-0 z-50 transition-all duration-300;
+}
+
+.navbar-transparent {
+  background: transparent;
+}
+
+.navbar-solid {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-md);
+}
+
+.nav-link {
+  @apply px-4 py-2 font-medium rounded-lg transition-all duration-200;
+  color: inherit;
+}
+
+.nav-link:hover {
+  background: rgba(0, 180, 180, 0.1);
+  color: var(--accent);
+}
+
+/* ============================================
+   HERO SECTION
+   ============================================ */
+
+.hero {
+  @apply relative min-h-screen flex items-center;
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+}
+
+.hero-overlay {
+  @apply absolute inset-0;
+  background: linear-gradient(135deg, rgba(15, 39, 68, 0.85) 0%, rgba(30, 58, 95, 0.7) 50%, rgba(45, 90, 135, 0.6) 100%);
+}
+
+.hero-pattern {
+  @apply absolute inset-0 opacity-10;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ============================================
+   FEATURE CARDS
+   ============================================ */
+
+.feature-card {
+  @apply text-center p-6 rounded-2xl transition-all duration-300;
+  background: var(--background);
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-xl);
+}
+
+.feature-icon {
+  @apply w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-2xl;
+}
+
+.feature-icon-teal {
+  background: linear-gradient(135deg, rgba(0, 180, 180, 0.15) 0%, rgba(0, 180, 180, 0.05) 100%);
+  color: var(--accent);
+}
+
+.feature-icon-orange {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.15) 0%, rgba(255, 107, 53, 0.05) 100%);
+  color: var(--secondary);
+}
+
+.feature-icon-blue {
+  background: linear-gradient(135deg, rgba(30, 58, 95, 0.15) 0%, rgba(30, 58, 95, 0.05) 100%);
+  color: var(--primary);
+}
+
+.feature-icon-green {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+  color: var(--success);
+}
+
+/* ============================================
+   VEHICLE CARDS
+   ============================================ */
+
+.vehicle-card {
+  @apply rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer;
+  background: var(--background);
+  border: 2px solid var(--border);
+}
+
+.vehicle-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.vehicle-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 180, 180, 0.2);
+}
+
+.vehicle-card-image {
+  @apply h-40 bg-gray-100 flex items-center justify-center;
+}
+
+.vehicle-card-content {
+  @apply p-5;
+}
+
+.vehicle-card-price {
+  @apply text-2xl font-bold;
+  color: var(--accent);
+}
+
+/* ============================================
+   TRUST BADGES
+   ============================================ */
+
+.trust-badge {
+  @apply flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.trust-badge-icon {
+  @apply w-5 h-5;
+  color: var(--accent);
+}
+
+/* Stats */
+.stats-grid {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-4;
+}
+
+.stat-item {
+  @apply text-center p-4;
+}
+
+.stat-value {
+  @apply text-3xl md:text-4xl font-bold;
+  color: var(--accent);
+}
+
+.stat-label {
+  @apply text-sm;
+  color: var(--muted);
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+
+.footer {
+  background: var(--primary-dark);
+  color: white;
+}
+
+.footer-link {
+  @apply text-gray-400 hover:text-white transition-colors duration-200;
+}
+
+.footer-heading {
+  @apply text-lg font-semibold text-white mb-4;
+}
+
+/* ============================================
+   DROPDOWNS
+   ============================================ */
+
+.dropdown {
+  @apply absolute z-50 w-full mt-2 rounded-xl overflow-hidden;
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xl);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  @apply w-full px-4 py-3 text-left flex items-start gap-3 transition-colors duration-150;
+  border-bottom: 1px solid var(--border);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: rgba(0, 180, 180, 0.08);
+}
+
+.dropdown-item-icon {
+  @apply mt-0.5 flex-shrink-0;
+  color: var(--accent);
+}
+
+.dropdown-item-title {
+  @apply font-semibold;
+  color: var(--foreground);
+}
+
+.dropdown-item-subtitle {
+  @apply text-sm;
+  color: var(--muted);
+}
+
+/* ============================================
+   BADGES & TAGS
+   ============================================ */
+
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+.badge-primary {
+  background: rgba(0, 180, 180, 0.15);
+  color: var(--accent-dark);
+}
+
+.badge-secondary {
+  background: rgba(255, 107, 53, 0.15);
+  color: var(--secondary-dark);
+}
+
+.badge-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.badge-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.5s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+.skeleton {
+  @apply rounded-lg;
+  background: linear-gradient(90deg, var(--surface) 25%, #e2e8f0 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.spinner {
+  @apply w-8 h-8 border-4 rounded-full animate-spin;
+  border-color: var(--accent);
+  border-top-color: transparent;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, var(--accent) 0%, var(--primary-light) 100%);
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+}
+
+.gradient-bg-accent {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+}
+
+/* Container with max width */
+.container-custom {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Section padding */
+.section-padding {
+  @apply py-16 md:py-24;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-dark {
+  background: rgba(30, 58, 95, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }

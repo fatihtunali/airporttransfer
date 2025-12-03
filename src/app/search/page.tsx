@@ -17,6 +17,14 @@ import {
   FaCrown,
   FaFilter,
   FaSortAmountDown,
+  FaPlane,
+  FaMapMarkerAlt,
+  FaCalendarAlt,
+  FaUsers,
+  FaShieldAlt,
+  FaHeadset,
+  FaWifi,
+  FaSnowflake,
 } from 'react-icons/fa';
 
 interface TransferOption {
@@ -52,6 +60,14 @@ const vehicleCapacity: Record<string, { passengers: number; luggage: number }> =
   MINIBUS: { passengers: 16, luggage: 16 },
   BUS: { passengers: 50, luggage: 50 },
   VIP: { passengers: 3, luggage: 3 },
+};
+
+const vehicleDescriptions: Record<string, string> = {
+  SEDAN: 'Comfortable sedan for small groups',
+  VAN: 'Spacious van for families',
+  MINIBUS: 'Perfect for medium groups',
+  BUS: 'Large capacity for big groups',
+  VIP: 'Luxury vehicle with premium service',
 };
 
 type SortOption = 'price_asc' | 'price_desc' | 'rating_desc' | 'duration_asc';
@@ -207,10 +223,15 @@ function SearchResultsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Searching for available transfers...</p>
+          <div className="relative w-20 h-20 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+            <FaCar className="absolute inset-0 m-auto w-8 h-8 text-primary" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Finding Your Perfect Transfer</h3>
+          <p className="text-gray-500">Searching for available vehicles...</p>
         </div>
       </div>
     );
@@ -218,10 +239,18 @@ function SearchResultsContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Link href="/" className="btn-primary">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaPlane className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary-dark transition-all"
+          >
+            <FaArrowLeft />
             Back to Search
           </Link>
         </div>
@@ -230,42 +259,62 @@ function SearchResultsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+      {/* Modern Header */}
+      <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+            <Link href="/" className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
               <FaArrowLeft />
-              <span>Back to Search</span>
+              <span className="font-medium">Back to Search</span>
             </Link>
-            <Link href="/">
-              <Image
-                src="/logo/logo_atp.jpg"
-                alt="Airport Transfer Portal"
-                width={160}
-                height={48}
-                className="h-10 w-auto"
-              />
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
+                <FaCar className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-bold text-xl text-primary hidden sm:block">Airport Transfer Portal</span>
             </Link>
+            <div className="flex items-center gap-4">
+              <a href="tel:+1234567890" className="hidden sm:flex items-center gap-2 text-gray-600 hover:text-primary">
+                <FaHeadset className="text-accent" />
+                <span className="font-medium">24/7 Support</span>
+              </a>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Search Summary */}
-      <div className="bg-sky-600 text-white py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Search Summary Banner */}
+      <div className="bg-gradient-to-r from-primary via-primary-dark to-secondary text-white py-8 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <h1 className="text-2xl font-bold mb-2">Available Transfers</h1>
-              <p className="text-sky-100">
-                {pickupTime && formatDate(pickupTime)} at {pickupTime && formatTime(pickupTime)} • {paxAdults} passengers
-              </p>
+              <h1 className="text-3xl font-bold mb-3">Available Transfers</h1>
+              <div className="flex flex-wrap items-center gap-4 text-white/90">
+                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg">
+                  <FaCalendarAlt className="text-accent" />
+                  <span>{pickupTime && formatDate(pickupTime)}</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg">
+                  <FaClock className="text-accent" />
+                  <span>{pickupTime && formatTime(pickupTime)}</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg">
+                  <FaUsers className="text-accent" />
+                  <span>{paxAdults} passengers</span>
+                </div>
+              </div>
             </div>
             <Link
               href="/"
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-primary font-semibold rounded-xl hover:bg-gray-50 transition-all shadow-lg"
             >
+              <FaMapMarkerAlt />
               Modify Search
             </Link>
           </div>
@@ -276,20 +325,24 @@ function SearchResultsContent() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filter & Sort Bar */}
         {results.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+          <div className="bg-white rounded-2xl shadow-lg p-4 mb-8 border border-gray-100">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               {/* Left: Filter Toggle & Active Filters */}
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
-                    showFilters ? 'bg-sky-50 border-sky-300 text-sky-700' : 'border-gray-300 hover:bg-gray-50'
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+                    showFilters
+                      ? 'bg-primary text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   <FaFilter />
                   <span>Filters</span>
                   {selectedVehicleTypes.length > 0 && (
-                    <span className="bg-sky-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      showFilters ? 'bg-white/20' : 'bg-primary text-white'
+                    }`}>
                       {selectedVehicleTypes.length}
                     </span>
                   )}
@@ -298,37 +351,61 @@ function SearchResultsContent() {
                 {selectedVehicleTypes.length > 0 && (
                   <button
                     onClick={clearFilters}
-                    className="text-sm text-gray-500 hover:text-gray-700 underline"
+                    className="text-sm text-gray-500 hover:text-primary font-medium transition-colors"
                   >
-                    Clear filters
+                    Clear all
                   </button>
                 )}
+
+                {/* Active Filter Tags */}
+                <div className="flex flex-wrap gap-2">
+                  {selectedVehicleTypes.map(type => (
+                    <span
+                      key={type}
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium"
+                    >
+                      {type}
+                      <button
+                        onClick={() => toggleVehicleType(type)}
+                        className="hover:text-primary-dark"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
 
               {/* Right: Sort Dropdown */}
               <div className="flex items-center gap-3">
-                <FaSortAmountDown className="text-gray-400" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                >
-                  <option value="price_asc">Price: Low to High</option>
-                  <option value="price_desc">Price: High to Low</option>
-                  <option value="rating_desc">Rating: Best First</option>
-                  <option value="duration_asc">Duration: Fastest First</option>
-                </select>
+                <span className="text-gray-500 text-sm">Sort by:</span>
+                <div className="relative">
+                  <FaSortAmountDown className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="pl-10 pr-4 py-2.5 bg-gray-100 border-0 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer"
+                  >
+                    <option value="price_asc">Price: Low to High</option>
+                    <option value="price_desc">Price: High to Low</option>
+                    <option value="rating_desc">Rating: Best First</option>
+                    <option value="duration_asc">Duration: Fastest</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             {/* Expandable Filter Panel */}
             {showFilters && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="grid md:grid-cols-2 gap-6">
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <div className="grid md:grid-cols-2 gap-8">
                   {/* Vehicle Type Filter */}
                   <div>
-                    <h4 className="font-semibold text-gray-700 mb-3">Vehicle Type</h4>
-                    <div className="flex flex-wrap gap-2">
+                    <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <FaCar className="text-primary" />
+                      Vehicle Type
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {VEHICLE_TYPES.map((type) => {
                         const isSelected = selectedVehicleTypes.includes(type);
                         const count = results.filter(r => r.vehicleType === type).length;
@@ -337,18 +414,18 @@ function SearchResultsContent() {
                           <button
                             key={type}
                             onClick={() => toggleVehicleType(type)}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+                            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                               isSelected
-                                ? 'bg-sky-500 border-sky-500 text-white'
-                                : 'border-gray-300 hover:bg-gray-50'
+                                ? 'bg-primary text-white border-primary shadow-lg'
+                                : 'bg-white border-gray-200 hover:border-primary hover:shadow-md'
                             }`}
                           >
-                            <span className="w-5 h-5">
+                            <span className={isSelected ? 'text-white' : 'text-primary'}>
                               {vehicleIcons[type]}
                             </span>
-                            <span>{type}</span>
-                            <span className={`text-xs ${isSelected ? 'text-sky-100' : 'text-gray-400'}`}>
-                              ({count})
+                            <span className="font-medium text-sm">{type}</span>
+                            <span className={`text-xs ${isSelected ? 'text-white/70' : 'text-gray-400'}`}>
+                              {count} available
                             </span>
                           </button>
                         );
@@ -358,30 +435,33 @@ function SearchResultsContent() {
 
                   {/* Price Range Filter */}
                   <div>
-                    <h4 className="font-semibold text-gray-700 mb-3">
+                    <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <span className="text-primary">€</span>
                       Price Range ({currency})
                     </h4>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-500">Min</label>
-                        <input
-                          type="number"
-                          value={priceRange.min}
-                          onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                          min={0}
-                        />
-                      </div>
-                      <span className="text-gray-400">-</span>
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-500">Max</label>
-                        <input
-                          type="number"
-                          value={priceRange.max}
-                          onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                          min={0}
-                        />
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <label className="text-xs text-gray-500 mb-1 block">Minimum</label>
+                          <input
+                            type="number"
+                            value={priceRange.min}
+                            onChange={(e) => setPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
+                            className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                            min={0}
+                          />
+                        </div>
+                        <span className="text-gray-300 mt-6">—</span>
+                        <div className="flex-1">
+                          <label className="text-xs text-gray-500 mb-1 block">Maximum</label>
+                          <input
+                            type="number"
+                            value={priceRange.max}
+                            onChange={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
+                            className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                            min={0}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -392,123 +472,187 @@ function SearchResultsContent() {
         )}
 
         {results.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaCar className="w-8 h-8 text-gray-400" />
+          <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+            <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FaCar className="w-12 h-12 text-gray-400" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No transfers available</h2>
-            <p className="text-gray-600 mb-6">
-              We couldn't find any transfers for your route. This could be because:
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">No Transfers Available</h2>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              We couldn't find any transfers for your selected route. This might be because:
             </p>
-            <ul className="text-gray-600 text-left max-w-md mx-auto mb-6 space-y-2">
-              <li className="flex items-start gap-2">
-                <span className="text-orange-500">•</span>
-                No suppliers operate on this route yet
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-orange-500">•</span>
-                The pickup time is too soon
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-orange-500">•</span>
-                All vehicles are fully booked
-              </li>
-            </ul>
-            <Link href="/" className="btn-primary inline-flex items-center gap-2">
+            <div className="bg-gray-50 rounded-xl p-6 max-w-md mx-auto mb-8">
+              <ul className="text-gray-600 text-left space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                  </span>
+                  <span>No suppliers currently operate on this route</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                  </span>
+                  <span>The requested pickup time is too soon</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                  </span>
+                  <span>All vehicles are fully booked for this time</span>
+                </li>
+              </ul>
+            </div>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl hover:shadow-xl transition-all"
+            >
               <FaArrowLeft />
               Try Different Route
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            <p className="text-gray-600 mb-4">
-              {filteredAndSortedResults.length} of {results.length} transfer options
-              {selectedVehicleTypes.length > 0 && ' (filtered)'}
-            </p>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <p className="text-gray-600">
+                Showing <span className="font-semibold text-gray-900">{filteredAndSortedResults.length}</span> of{' '}
+                <span className="font-semibold text-gray-900">{results.length}</span> transfer options
+                {selectedVehicleTypes.length > 0 && <span className="text-primary ml-1">(filtered)</span>}
+              </p>
+            </div>
 
             {filteredAndSortedResults.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                <p className="text-gray-600 mb-4">No transfers match your filters.</p>
-                <button onClick={clearFilters} className="btn-primary">
+              <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+                <p className="text-gray-600 mb-4">No transfers match your current filters.</p>
+                <button
+                  onClick={clearFilters}
+                  className="px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary-dark transition-all"
+                >
                   Clear Filters
                 </button>
               </div>
             ) : filteredAndSortedResults.map((option, index) => (
               <div
                 key={index}
-                className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group"
               >
-                <div className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center gap-6">
+                <div className="p-6 lg:p-8">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                     {/* Vehicle Info */}
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-16 h-16 bg-sky-50 rounded-xl flex items-center justify-center text-sky-600">
-                        {vehicleIcons[option.vehicleType] || <FaCar className="w-8 h-8" />}
+                    <div className="flex items-start gap-5 flex-1">
+                      <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                        {vehicleIcons[option.vehicleType] || <FaCar className="w-10 h-10" />}
                       </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{option.vehicleType}</h3>
-                        <p className="text-gray-600">{option.supplier.name}</p>
-                        <div className="flex items-center gap-2 mt-1">
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-1">{option.vehicleType}</h3>
+                            <p className="text-gray-500 text-sm mb-2">{vehicleDescriptions[option.vehicleType]}</p>
+                          </div>
+                          {option.vehicleType === 'VIP' && (
+                            <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold rounded-full">
+                              PREMIUM
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-gray-700 font-medium">{option.supplier.name}</span>
                           {option.supplier.rating > 0 && (
-                            <span className="flex items-center gap-1 text-sm">
+                            <span className="flex items-center gap-1.5 px-2 py-1 bg-yellow-50 rounded-lg">
                               <FaStar className="text-yellow-400" />
-                              {option.supplier.rating.toFixed(1)}
-                              <span className="text-gray-400">({option.supplier.ratingCount})</span>
+                              <span className="font-semibold text-gray-800">{option.supplier.rating.toFixed(1)}</span>
+                              <span className="text-gray-400 text-sm">({option.supplier.ratingCount})</span>
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Capacity */}
-                    <div className="flex items-center gap-6 text-gray-600">
+                    {/* Capacity & Duration */}
+                    <div className="flex items-center gap-6 lg:gap-8 text-gray-600 border-y lg:border-y-0 lg:border-x border-gray-100 py-4 lg:py-0 lg:px-8">
                       <div className="flex items-center gap-2">
-                        <FaUser />
-                        <span>{vehicleCapacity[option.vehicleType]?.passengers || 4} max</span>
+                        <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                          <FaUser className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{vehicleCapacity[option.vehicleType]?.passengers || 4}</p>
+                          <p className="text-xs text-gray-500">max</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <FaSuitcase />
-                        <span>{vehicleCapacity[option.vehicleType]?.luggage || 4} bags</span>
+                        <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                          <FaSuitcase className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{vehicleCapacity[option.vehicleType]?.luggage || 4}</p>
+                          <p className="text-xs text-gray-500">bags</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <FaClock />
-                        <span>{option.estimatedDurationMin} min</span>
+                        <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                          <FaClock className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{option.estimatedDurationMin}</p>
+                          <p className="text-xs text-gray-500">min</p>
+                        </div>
                       </div>
                     </div>
 
                     {/* Price & Book */}
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">
-                        {option.currency} {option.totalPrice.toFixed(2)}
+                    <div className="flex flex-col items-end gap-3">
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500 mb-1">Total price</p>
+                        <div className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                          {option.currency} {option.totalPrice.toFixed(2)}
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-500 mb-2">Total price</p>
                       <button
                         onClick={() => handleSelectOption(option)}
-                        className="btn-primary"
+                        className="w-full lg:w-auto px-8 py-3.5 bg-gradient-to-r from-accent to-accent-dark text-white font-semibold rounded-xl hover:shadow-lg hover:scale-105 transition-all"
                       >
-                        Select
+                        Select Vehicle
                       </button>
                     </div>
                   </div>
 
                   {/* Features */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                      <span className="flex items-center gap-1">
-                        <FaCheck className="text-green-500" />
+                  <div className="mt-6 pt-6 border-t border-gray-100">
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <span className="flex items-center gap-2 text-gray-600">
+                        <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <FaCheck className="w-3 h-3 text-green-600" />
+                        </span>
                         {option.cancellationPolicy}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <FaCheck className="text-green-500" />
+                      <span className="flex items-center gap-2 text-gray-600">
+                        <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <FaCheck className="w-3 h-3 text-green-600" />
+                        </span>
                         Meet & Greet
                       </span>
-                      <span className="flex items-center gap-1">
-                        <FaCheck className="text-green-500" />
+                      <span className="flex items-center gap-2 text-gray-600">
+                        <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <FaCheck className="w-3 h-3 text-green-600" />
+                        </span>
                         Flight Tracking
                       </span>
-                      <span className="flex items-center gap-1">
-                        <FaCheck className="text-green-500" />
+                      <span className="flex items-center gap-2 text-gray-600">
+                        <span className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <FaCheck className="w-3 h-3 text-green-600" />
+                        </span>
                         60 min free waiting
+                      </span>
+                      <span className="flex items-center gap-2 text-gray-600">
+                        <span className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                          <FaWifi className="w-3 h-3 text-blue-600" />
+                        </span>
+                        Free WiFi
+                      </span>
+                      <span className="flex items-center gap-2 text-gray-600">
+                        <span className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                          <FaSnowflake className="w-3 h-3 text-blue-600" />
+                        </span>
+                        Air Conditioning
                       </span>
                     </div>
                   </div>
@@ -517,7 +661,59 @@ function SearchResultsContent() {
             ))}
           </div>
         )}
+
+        {/* Trust Badges */}
+        <div className="mt-12 bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+          <h3 className="text-center text-gray-500 text-sm uppercase tracking-wider mb-6">Why Book With Us</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <FaShieldAlt className="w-6 h-6 text-white" />
+              </div>
+              <p className="font-semibold text-gray-800">Secure Booking</p>
+              <p className="text-sm text-gray-500">SSL encrypted</p>
+            </div>
+            <div className="text-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <FaHeadset className="w-6 h-6 text-white" />
+              </div>
+              <p className="font-semibold text-gray-800">24/7 Support</p>
+              <p className="text-sm text-gray-500">Always here to help</p>
+            </div>
+            <div className="text-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <FaStar className="w-6 h-6 text-white" />
+              </div>
+              <p className="font-semibold text-gray-800">Top Rated</p>
+              <p className="text-sm text-gray-500">Verified drivers</p>
+            </div>
+            <div className="text-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                <FaCheck className="w-6 h-6 text-white" />
+              </div>
+              <p className="font-semibold text-gray-800">Best Price</p>
+              <p className="text-sm text-gray-500">Guaranteed</p>
+            </div>
+          </div>
+        </div>
       </main>
+
+      {/* Footer */}
+      <footer className="bg-gradient-to-r from-primary to-primary-dark text-white py-8 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                <FaCar className="w-5 h-5 text-accent" />
+              </div>
+              <span className="font-bold text-xl">Airport Transfer Portal</span>
+            </div>
+            <p className="text-white/70 text-sm">
+              © {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -525,10 +721,15 @@ function SearchResultsContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="relative w-20 h-20 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+            <FaCar className="absolute inset-0 m-auto w-8 h-8 text-primary" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Loading Results</h3>
+          <p className="text-gray-500">Please wait...</p>
         </div>
       </div>
     }>

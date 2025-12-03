@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   FaPlaneDeparture,
   FaPlaneArrival,
@@ -15,7 +16,23 @@ import {
   FaCar,
   FaGlobe,
   FaHandshake,
-  FaMapMarkerAlt
+  FaMapMarkerAlt,
+  FaStar,
+  FaCheckCircle,
+  FaHeadset,
+  FaCreditCard,
+  FaUserTie,
+  FaBus,
+  FaShuttleVan,
+  FaArrowRight,
+  FaBars,
+  FaTimes,
+  FaPhone,
+  FaEnvelope,
+  FaFacebookF,
+  FaTwitter,
+  FaInstagram,
+  FaLinkedinIn
 } from 'react-icons/fa';
 
 interface Airport {
@@ -39,9 +56,10 @@ export default function Home() {
   const router = useRouter();
   const [tripType, setTripType] = useState<'one-way' | 'round-trip'>('one-way');
   const [airports, setAirports] = useState<Airport[]>([]);
-  const [zones, setZones] = useState<Zone[]>([]);
   const [filteredZones, setFilteredZones] = useState<Zone[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Selected values
   const [selectedFrom, setSelectedFrom] = useState<LocationItem | null>(null);
@@ -66,21 +84,27 @@ export default function Home() {
     flightNumber: '',
   });
 
+  // Scroll handler for navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Fetch airports on mount
   useEffect(() => {
     const fetchAirports = async () => {
       try {
         const res = await fetch('/api/public/airports');
         const data = await res.json();
-        // Ensure we have an array (handle error responses)
         if (Array.isArray(data)) {
           setAirports(data);
         } else {
-          console.error('Airports API returned non-array:', data);
           setAirports([]);
         }
-      } catch (error) {
-        console.error('Failed to fetch airports:', error);
+      } catch {
         setAirports([]);
       } finally {
         setLoading(false);
@@ -89,22 +113,19 @@ export default function Home() {
     fetchAirports();
   }, []);
 
-  // Fetch zones when airport is selected (for "To" field)
+  // Fetch zones when airport is selected
   useEffect(() => {
     if (selectedFrom?.type === 'airport') {
       const fetchZones = async () => {
         try {
           const res = await fetch(`/api/public/zones?airportId=${selectedFrom.id}`);
           const data = await res.json();
-          // Ensure we have an array
           if (Array.isArray(data)) {
             setFilteredZones(data);
           } else {
-            console.error('Zones API returned non-array:', data);
             setFilteredZones([]);
           }
-        } catch (error) {
-          console.error('Failed to fetch zones:', error);
+        } catch {
           setFilteredZones([]);
         }
       };
@@ -147,7 +168,6 @@ export default function Home() {
     setSelectedFrom({ ...airport, type: 'airport' });
     setFromSearch(`${airport.code} - ${airport.name}`);
     setShowFromDropdown(false);
-    // Reset "To" when airport changes
     setSelectedTo(null);
     setToSearch('');
   };
@@ -166,7 +186,6 @@ export default function Home() {
       return;
     }
 
-    // Build search params
     const pickupDateTime = `${formData.date}T${formData.time}:00`;
     const params = new URLSearchParams({
       airportId: selectedFrom.id.toString(),
@@ -181,396 +200,680 @@ export default function Home() {
       params.set('flightNumber', formData.flightNumber);
     }
 
-    // Navigate to search results
     router.push(`/search?${params.toString()}`);
   };
 
-  // Set minimum date to today
   const today = new Date().toISOString().split('T')[0];
 
   return (
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="absolute top-0 left-0 right-0 z-50 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
+      <nav className={`navbar ${isScrolled ? 'navbar-solid' : 'navbar-transparent'}`}>
+        <div className="container-custom">
+          <div className="flex justify-between items-center h-20">
+            {/* Logo */}
+            <Link href="/" className="flex items-center">
               <Image
                 src="/logo/logo_atp.jpg"
                 alt="Airport Transfer Portal"
-                width={200}
-                height={60}
-                className="h-12 w-auto"
+                width={180}
+                height={50}
+                className="h-12 w-auto rounded"
                 priority
               />
+            </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-8">
+              <a href="#how-it-works" className={`nav-link ${isScrolled ? 'text-gray-700' : 'text-white'}`}>
+                How It Works
+              </a>
+              <a href="#vehicles" className={`nav-link ${isScrolled ? 'text-gray-700' : 'text-white'}`}>
+                Vehicles
+              </a>
+              <a href="#reviews" className={`nav-link ${isScrolled ? 'text-gray-700' : 'text-white'}`}>
+                Reviews
+              </a>
+              <Link href="/supplier/login" className={`nav-link ${isScrolled ? 'text-gray-700' : 'text-white'}`}>
+                Partner Login
+              </Link>
+              <Link href="/agency/login" className="btn-primary btn-sm">
+                Book Now
+              </Link>
             </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#how-it-works" className="text-white/90 hover:text-white transition-colors">How It Works</a>
-              <a href="#" className="text-white/90 hover:text-white transition-colors">Popular Routes</a>
-              <a href="#" className="text-white/90 hover:text-white transition-colors">Help</a>
-            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`lg:hidden p-2 rounded-lg ${isScrolled ? 'text-gray-700' : 'text-white'}`}
+            >
+              {mobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+            </button>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden absolute top-20 left-0 right-0 bg-white shadow-xl border-t animate-slide-down">
+              <div className="p-4 space-y-4">
+                <a href="#how-it-works" className="block py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg">How It Works</a>
+                <a href="#vehicles" className="block py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg">Vehicles</a>
+                <a href="#reviews" className="block py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg">Reviews</a>
+                <Link href="/supplier/login" className="block py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg">Partner Login</Link>
+                <Link href="/agency/login" className="btn-primary w-full text-center">Book Now</Link>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center">
+      <section className="hero">
         {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('/assets/airport-pickup.jpg')`,
-          }}
+          style={{ backgroundImage: `url('/assets/airport-pickup.jpg')` }}
         />
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30" />
+        <div className="hero-overlay" />
+        <div className="hero-pattern" />
 
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          {/* Centered Layout */}
-          <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Airport Transfers
-              <span className="block text-orange-400">Worldwide</span>
-            </h1>
-            <p className="text-lg text-white/80 max-w-2xl mx-auto">
-              Book reliable transfers from local suppliers. Compare prices and travel with confidence.
-            </p>
-          </div>
+        <div className="relative z-10 w-full container-custom pt-32 pb-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div className="text-white animate-fade-in">
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+                <FaStar className="text-yellow-400" />
+                <span className="text-sm font-medium">Rated 4.9/5 by 10,000+ customers</span>
+              </div>
 
-          {/* Search Card - Full Width Centered */}
-          <div className="card max-w-4xl mx-auto">
-                {/* Trip Type Toggle */}
-                <div className="flex mb-6">
-                  <button
-                    onClick={() => setTripType('one-way')}
-                    className={`flex-1 py-3 text-center font-semibold rounded-l-lg transition-all ${
-                      tripType === 'one-way'
-                        ? 'bg-sky-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    One Way
-                  </button>
-                  <button
-                    onClick={() => setTripType('round-trip')}
-                    className={`flex-1 py-3 text-center font-semibold rounded-r-lg transition-all ${
-                      tripType === 'round-trip'
-                        ? 'bg-sky-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Round Trip
-                  </button>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                Book Your Airport
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#00b4b4] to-[#00d4d4]">
+                  Transfer Worldwide
+                </span>
+              </h1>
+
+              <p className="text-lg md:text-xl text-white/80 mb-8 max-w-xl">
+                Reliable, comfortable, and affordable airport transfers from verified local suppliers.
+                Compare prices and book in seconds.
+              </p>
+
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap gap-4 mb-8">
+                <div className="flex items-center gap-2 text-white/90">
+                  <FaCheckCircle className="text-[#00b4b4]" />
+                  <span>Free Cancellation</span>
                 </div>
+                <div className="flex items-center gap-2 text-white/90">
+                  <FaCheckCircle className="text-[#00b4b4]" />
+                  <span>24/7 Support</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/90">
+                  <FaCheckCircle className="text-[#00b4b4]" />
+                  <span>Best Price Guarantee</span>
+                </div>
+              </div>
 
-                <form onSubmit={handleSubmit}>
-                  <div className="grid md:grid-cols-2 gap-5 mb-5">
-                    {/* From - Airport Autocomplete */}
-                    <div className="relative" ref={fromRef}>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">From (Airport)</label>
-                      <div className="flex items-center gap-3">
-                        <FaPlaneDeparture className="text-sky-500 text-xl flex-shrink-0" />
-                        <input
-                          type="text"
-                          placeholder={loading ? 'Loading airports...' : 'Select airport'}
-                          value={fromSearch}
-                          onChange={(e) => {
-                            setFromSearch(e.target.value);
-                            setSelectedFrom(null);
-                            setShowFromDropdown(true);
-                          }}
-                          onFocus={() => setShowFromDropdown(true)}
-                          className="input-field"
-                          required
-                        />
-                      </div>
-                      {showFromDropdown && filteredAirports.length > 0 && (
-                        <div className="absolute z-50 w-full min-w-[320px] mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-y-auto">
-                          {filteredAirports.map((airport) => (
-                            <button
-                              key={airport.id}
-                              type="button"
-                              onClick={() => handleFromSelect(airport)}
-                              className="w-full px-4 py-3 text-left hover:bg-sky-50 flex items-start gap-3 border-b border-gray-100 last:border-0"
-                            >
-                              <FaPlaneDeparture className="text-sky-500 mt-1 flex-shrink-0" />
-                              <div className="min-w-0 flex-1">
-                                <div className="font-semibold text-gray-900 flex items-center gap-2">
-                                  <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-sm font-bold">{airport.code}</span>
-                                  <span className="truncate">{airport.name}</span>
-                                </div>
-                                <div className="text-sm text-gray-500 truncate">{airport.city}, {airport.country}</div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-6">
+                <div>
+                  <div className="text-3xl md:text-4xl font-bold text-[#00b4b4]">500+</div>
+                  <div className="text-white/70 text-sm">Airports</div>
+                </div>
+                <div>
+                  <div className="text-3xl md:text-4xl font-bold text-[#00b4b4]">50K+</div>
+                  <div className="text-white/70 text-sm">Happy Customers</div>
+                </div>
+                <div>
+                  <div className="text-3xl md:text-4xl font-bold text-[#00b4b4]">100+</div>
+                  <div className="text-white/70 text-sm">Countries</div>
+                </div>
+              </div>
+            </div>
 
-                    {/* To - Zone Autocomplete */}
-                    <div className="relative" ref={toRef}>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">To (Destination)</label>
-                      <div className="flex items-center gap-3">
-                        <FaMapMarkerAlt className="text-orange-500 text-xl flex-shrink-0" />
-                        <input
-                          type="text"
-                          placeholder={selectedFrom ? 'Select destination' : 'Select airport first'}
-                          value={toSearch}
-                          onChange={(e) => {
-                            setToSearch(e.target.value);
-                            setSelectedTo(null);
-                            setShowToDropdown(true);
-                          }}
-                          onFocus={() => selectedFrom && setShowToDropdown(true)}
-                          className="input-field"
-                          disabled={!selectedFrom}
-                          required
-                        />
-                      </div>
-                      {showToDropdown && searchedZones.length > 0 && (
-                        <div className="absolute z-50 w-full min-w-[320px] mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-y-auto">
-                          {searchedZones.map((zone) => (
-                            <button
-                              key={zone.id}
-                              type="button"
-                              onClick={() => handleToSelect(zone)}
-                              className="w-full px-4 py-3 text-left hover:bg-sky-50 flex items-start gap-3 border-b border-gray-100 last:border-0"
-                            >
-                              <FaMapMarkerAlt className="text-orange-500 mt-1 flex-shrink-0" />
-                              <div className="min-w-0 flex-1">
-                                <div className="font-semibold text-gray-900 truncate">{zone.name}</div>
-                                <div className="text-sm text-gray-500 truncate">{zone.city}, {zone.country}</div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+            {/* Right - Booking Box */}
+            <div className="booking-box animate-slide-up">
+              {/* Trip Type Toggle */}
+              <div className="trip-toggle mb-6">
+                <button
+                  onClick={() => setTripType('one-way')}
+                  className={`trip-toggle-btn ${tripType === 'one-way' ? 'active' : ''}`}
+                >
+                  One Way
+                </button>
+                <button
+                  onClick={() => setTripType('round-trip')}
+                  className={`trip-toggle-btn ${tripType === 'round-trip' ? 'active' : ''}`}
+                >
+                  Round Trip
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                {/* From - Airport */}
+                <div className="mb-4" ref={fromRef}>
+                  <label className="form-label">Pickup Location</label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
+                      <FaPlaneDeparture />
                     </div>
+                    <input
+                      type="text"
+                      placeholder={loading ? 'Loading airports...' : 'Select airport'}
+                      value={fromSearch}
+                      onChange={(e) => {
+                        setFromSearch(e.target.value);
+                        setSelectedFrom(null);
+                        setShowFromDropdown(true);
+                      }}
+                      onFocus={() => setShowFromDropdown(true)}
+                      className="input-field pl-12"
+                      required
+                    />
                   </div>
-
-                  <div className="grid md:grid-cols-4 gap-5 mb-5">
-                    {/* Date */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                      <div className="flex items-center gap-3">
-                        <FaCalendarAlt className="text-sky-500 text-lg flex-shrink-0" />
-                        <input
-                          type="date"
-                          min={today}
-                          value={formData.date}
-                          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                          className="input-field"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    {/* Time */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Time</label>
-                      <div className="flex items-center gap-3">
-                        <FaClock className="text-sky-500 text-lg flex-shrink-0" />
-                        <input
-                          type="time"
-                          value={formData.time}
-                          onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                          className="input-field"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    {/* Passengers */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Passengers</label>
-                      <div className="flex items-center gap-3">
-                        <FaUsers className="text-sky-500 text-lg flex-shrink-0" />
-                        <select
-                          value={formData.passengers}
-                          onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                          className="input-field appearance-none"
+                  {showFromDropdown && filteredAirports.length > 0 && (
+                    <div className="dropdown">
+                      {filteredAirports.slice(0, 8).map((airport) => (
+                        <button
+                          key={airport.id}
+                          type="button"
+                          onClick={() => handleFromSelect(airport)}
+                          className="dropdown-item"
                         >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((n) => (
-                            <option key={n} value={n}>{n} {n === 1 ? 'Passenger' : 'Passengers'}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Luggage */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Luggage</label>
-                      <div className="flex items-center gap-3">
-                        <FaSuitcase className="text-sky-500 text-lg flex-shrink-0" />
-                        <select
-                          value={formData.luggage}
-                          onChange={(e) => setFormData({ ...formData, luggage: e.target.value })}
-                          className="input-field appearance-none"
-                        >
-                          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                            <option key={n} value={n}>{n} {n === 1 ? 'Bag' : 'Bags'}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Round Trip Fields */}
-                  {tripType === 'round-trip' && (
-                    <div className="grid md:grid-cols-2 gap-5 mb-5 p-5 bg-sky-50 rounded-lg">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Return Date</label>
-                        <div className="flex items-center gap-3">
-                          <FaCalendarAlt className="text-sky-500 text-lg flex-shrink-0" />
-                          <input
-                            type="date"
-                            min={formData.date || today}
-                            value={formData.returnDate}
-                            onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
-                            className="input-field"
-                            required={tripType === 'round-trip'}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Return Time</label>
-                        <div className="flex items-center gap-3">
-                          <FaClock className="text-sky-500 text-lg flex-shrink-0" />
-                          <input
-                            type="time"
-                            value={formData.returnTime}
-                            onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
-                            className="input-field"
-                            required={tripType === 'round-trip'}
-                          />
-                        </div>
-                      </div>
+                          <FaPlaneDeparture className="dropdown-item-icon" />
+                          <div>
+                            <div className="dropdown-item-title flex items-center gap-2">
+                              <span className="badge badge-primary">{airport.code}</span>
+                              {airport.name}
+                            </div>
+                            <div className="dropdown-item-subtitle">{airport.city}, {airport.country}</div>
+                          </div>
+                        </button>
+                      ))}
                     </div>
                   )}
+                </div>
 
-                  {/* Flight Number (Optional) */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Flight Number (Optional)</label>
-                    <div className="flex items-center gap-3 max-w-xs">
-                      <FaPlaneArrival className="text-sky-500 text-lg flex-shrink-0" />
+                {/* To - Destination */}
+                <div className="mb-4" ref={toRef}>
+                  <label className="form-label">Drop-off Location</label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#ff6b35]">
+                      <FaMapMarkerAlt />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder={selectedFrom ? 'Select destination' : 'Select airport first'}
+                      value={toSearch}
+                      onChange={(e) => {
+                        setToSearch(e.target.value);
+                        setSelectedTo(null);
+                        setShowToDropdown(true);
+                      }}
+                      onFocus={() => selectedFrom && setShowToDropdown(true)}
+                      className="input-field pl-12"
+                      disabled={!selectedFrom}
+                      required
+                    />
+                  </div>
+                  {showToDropdown && searchedZones.length > 0 && (
+                    <div className="dropdown">
+                      {searchedZones.slice(0, 8).map((zone) => (
+                        <button
+                          key={zone.id}
+                          type="button"
+                          onClick={() => handleToSelect(zone)}
+                          className="dropdown-item"
+                        >
+                          <FaMapMarkerAlt className="dropdown-item-icon text-[#ff6b35]" />
+                          <div>
+                            <div className="dropdown-item-title">{zone.name}</div>
+                            <div className="dropdown-item-subtitle">{zone.city}, {zone.country}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Date & Time Row */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="form-label">Date</label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
+                        <FaCalendarAlt />
+                      </div>
                       <input
-                        type="text"
-                        placeholder="e.g., TK1234"
-                        value={formData.flightNumber}
-                        onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value.toUpperCase() })}
-                        className="input-field"
+                        type="date"
+                        min={today}
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        className="input-field pl-12"
+                        required
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-2 ml-8">For airport pickups - we'll track your flight</p>
                   </div>
+                  <div>
+                    <label className="form-label">Time</label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
+                        <FaClock />
+                      </div>
+                      <input
+                        type="time"
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        className="input-field pl-12"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Search Button */}
-                  <button type="submit" className="w-full btn-primary flex items-center justify-center gap-2 text-lg py-4">
-                    <FaSearch />
-                    Search Transfers
-                  </button>
-                </form>
+                {/* Passengers & Luggage */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="form-label">Passengers</label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
+                        <FaUsers />
+                      </div>
+                      <select
+                        value={formData.passengers}
+                        onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
+                        className="select-field pl-12"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="form-label">Luggage</label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
+                        <FaSuitcase />
+                      </div>
+                      <select
+                        value={formData.luggage}
+                        onChange={(e) => setFormData({ ...formData, luggage: e.target.value })}
+                        className="select-field pl-12"
+                      >
+                        {[0, 1, 2, 3, 4, 5, 6].map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Round Trip Fields */}
+                {tripType === 'round-trip' && (
+                  <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-[#f8fafc] rounded-xl">
+                    <div>
+                      <label className="form-label">Return Date</label>
+                      <input
+                        type="date"
+                        min={formData.date || today}
+                        value={formData.returnDate}
+                        onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
+                        className="input-field"
+                        required={tripType === 'round-trip'}
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Return Time</label>
+                      <input
+                        type="time"
+                        value={formData.returnTime}
+                        onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
+                        className="input-field"
+                        required={tripType === 'round-trip'}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Flight Number */}
+                <div className="mb-6">
+                  <label className="form-label">Flight Number (Optional)</label>
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#00b4b4]">
+                      <FaPlaneArrival />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="e.g., TK1234"
+                      value={formData.flightNumber}
+                      onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value.toUpperCase() })}
+                      className="input-field pl-12"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">We'll track your flight for delays</p>
+                </div>
+
+                {/* Submit Button */}
+                <button type="submit" className="btn-primary btn-lg w-full flex items-center justify-center gap-2">
+                  <FaSearch />
+                  Search Transfers
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-gray-50" id="how-it-works">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Trust Badges Section */}
+      <section className="py-6 bg-white border-b">
+        <div className="container-custom">
+          <div className="flex flex-wrap justify-center items-center gap-8 text-gray-500">
+            <div className="flex items-center gap-2">
+              <FaShieldAlt className="text-[#00b4b4]" />
+              <span className="text-sm font-medium">Secure Payment</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FaCreditCard className="text-[#00b4b4]" />
+              <span className="text-sm font-medium">All Cards Accepted</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FaHeadset className="text-[#00b4b4]" />
+              <span className="text-sm font-medium">24/7 Customer Support</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <FaCheckCircle className="text-[#00b4b4]" />
+              <span className="text-sm font-medium">Free Cancellation</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="section-padding bg-[#f8fafc]" id="how-it-works">
+        <div className="container-custom">
           <div className="text-center mb-16">
+            <span className="badge badge-primary mb-4">Simple & Easy</span>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Why Choose AirportTransfer?
+              How It Works
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              The smart way to book airport transfers worldwide
+              Book your airport transfer in just 3 simple steps
             </p>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-sky-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FaGlobe className="w-8 h-8 text-sky-600" />
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="feature-card">
+              <div className="feature-icon feature-icon-teal">
+                <FaSearch size={28} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Global Coverage</h3>
-              <p className="text-gray-600">Transfers available in thousands of cities and airports worldwide</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">1. Search & Compare</h3>
+              <p className="text-gray-600">
+                Enter your pickup and drop-off locations. Compare prices from multiple verified local suppliers.
+              </p>
+            </div>
+
+            <div className="feature-card">
+              <div className="feature-icon feature-icon-orange">
+                <FaCar size={28} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">2. Choose Your Vehicle</h3>
+              <p className="text-gray-600">
+                Select from economy cars to luxury vehicles. Pick the one that fits your needs and budget.
+              </p>
+            </div>
+
+            <div className="feature-card">
+              <div className="feature-icon feature-icon-green">
+                <FaCheckCircle size={28} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">3. Book & Relax</h3>
+              <p className="text-gray-600">
+                Confirm your booking with instant confirmation. Your driver will be waiting at the airport.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Vehicle Types Section */}
+      <section className="section-padding" id="vehicles">
+        <div className="container-custom">
+          <div className="text-center mb-16">
+            <span className="badge badge-secondary mb-4">Our Fleet</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Choose Your Vehicle
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              From budget-friendly sedans to luxury SUVs, we have the perfect ride for you
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { name: 'Economy Sedan', icon: FaCar, passengers: '1-3', luggage: '2', price: 'From $25' },
+              { name: 'Business Sedan', icon: FaUserTie, passengers: '1-3', luggage: '2', price: 'From $45' },
+              { name: 'Minivan', icon: FaShuttleVan, passengers: '4-6', luggage: '4', price: 'From $55' },
+              { name: 'Minibus', icon: FaBus, passengers: '7-16', luggage: '8', price: 'From $85' },
+            ].map((vehicle) => (
+              <div key={vehicle.name} className="vehicle-card">
+                <div className="vehicle-card-image">
+                  <vehicle.icon size={64} className="text-[#1e3a5f]" />
+                </div>
+                <div className="vehicle-card-content">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{vehicle.name}</h3>
+                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                    <span className="flex items-center gap-1">
+                      <FaUsers className="text-[#00b4b4]" /> {vehicle.passengers}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <FaSuitcase className="text-[#00b4b4]" /> {vehicle.luggage}
+                    </span>
+                  </div>
+                  <div className="vehicle-card-price">{vehicle.price}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us Section */}
+      <section className="section-padding gradient-bg text-white">
+        <div className="container-custom">
+          <div className="text-center mb-16">
+            <span className="badge bg-white/20 text-white mb-4">Why Choose Us</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              The Smart Way to Book Transfers
+            </h2>
+            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+              Join thousands of satisfied travelers who trust us for their airport transfers
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FaGlobe className="w-8 h-8 text-[#00b4b4]" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Global Coverage</h3>
+              <p className="text-white/70">500+ airports in 100+ countries worldwide</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FaCar className="w-8 h-8 text-orange-600" />
+              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FaCar className="w-8 h-8 text-[#ff6b35]" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Local Suppliers</h3>
-              <p className="text-gray-600">Compare prices from verified local transfer companies</p>
+              <h3 className="text-xl font-semibold mb-2">Local Suppliers</h3>
+              <p className="text-white/70">Verified partners with local expertise</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FaShieldAlt className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FaShieldAlt className="w-8 h-8 text-[#10b981]" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Secure Booking</h3>
-              <p className="text-gray-600">Safe payment and instant confirmation for every booking</p>
+              <h3 className="text-xl font-semibold mb-2">Secure Booking</h3>
+              <p className="text-white/70">Safe payment & instant confirmation</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FaHandshake className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FaHandshake className="w-8 h-8 text-[#8b5cf6]" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">24/7 Support</h3>
-              <p className="text-gray-600">Customer support available around the clock</p>
+              <h3 className="text-xl font-semibold mb-2">24/7 Support</h3>
+              <p className="text-white/70">Customer support around the clock</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="section-padding bg-[#f8fafc]" id="reviews">
+        <div className="container-custom">
+          <div className="text-center mb-16">
+            <span className="badge badge-primary mb-4">Customer Reviews</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              What Our Customers Say
+            </h2>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <FaStar key={star} className="text-yellow-400 text-2xl" />
+              ))}
+              <span className="text-xl font-bold text-gray-900 ml-2">4.9/5</span>
+            </div>
+            <p className="text-gray-600">Based on 10,000+ reviews</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { name: 'Sarah M.', location: 'London, UK', text: 'Excellent service! Driver was waiting right at arrivals with my name. Very professional and the car was spotless.', rating: 5 },
+              { name: 'Marco R.', location: 'Rome, Italy', text: 'Best airport transfer I\'ve ever booked. Great price, punctual driver, and easy booking process. Highly recommend!', rating: 5 },
+              { name: 'John D.', location: 'New York, USA', text: 'Used this service for a business trip. Everything was perfect - from booking to drop-off. Will use again!', rating: 5 },
+            ].map((review, idx) => (
+              <div key={idx} className="card p-6">
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(review.rating)].map((_, i) => (
+                    <FaStar key={i} className="text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-gray-600 mb-4">&quot;{review.text}&quot;</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#1e3a5f] rounded-full flex items-center justify-center text-white font-semibold">
+                    {review.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900">{review.name}</div>
+                    <div className="text-sm text-gray-500">{review.location}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="section-padding">
+        <div className="container-custom">
+          <div className="card-glass p-8 md:p-12 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Ready to Book Your Transfer?
+            </h2>
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Join thousands of happy travelers. Book your airport transfer now and travel with peace of mind.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a href="#" className="btn-primary btn-lg">
+                <FaSearch />
+                Search Transfers
+              </a>
+              <Link href="/supplier/register" className="btn-outline btn-lg">
+                Become a Partner
+                <FaArrowRight />
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
+      <footer className="footer py-16">
+        <div className="container-custom">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             <div>
               <Image
                 src="/logo/logo_atp.jpg"
                 alt="Airport Transfer Portal"
                 width={180}
                 height={54}
-                className="h-11 w-auto bg-white rounded p-1"
+                className="h-12 w-auto bg-white rounded p-1 mb-4"
               />
-              <p className="text-gray-400 mt-4">
+              <p className="text-gray-400 mb-6">
                 Book reliable airport transfers worldwide from verified local suppliers.
               </p>
+              <div className="flex gap-4">
+                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#00b4b4] hover:text-white transition-colors">
+                  <FaFacebookF />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#00b4b4] hover:text-white transition-colors">
+                  <FaTwitter />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#00b4b4] hover:text-white transition-colors">
+                  <FaInstagram />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#00b4b4] hover:text-white transition-colors">
+                  <FaLinkedinIn />
+                </a>
+              </div>
             </div>
+
             <div>
-              <h4 className="font-semibold mb-4">Transfers</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Search Transfers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Popular Routes</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Airport Guides</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Travel Tips</a></li>
+              <h4 className="footer-heading">Transfers</h4>
+              <ul className="space-y-3">
+                <li><a href="#" className="footer-link">Search Transfers</a></li>
+                <li><a href="#" className="footer-link">Popular Routes</a></li>
+                <li><a href="#" className="footer-link">Airport Guides</a></li>
+                <li><a href="#" className="footer-link">Travel Tips</a></li>
               </ul>
             </div>
+
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">FAQs</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Manage Booking</a></li>
+              <h4 className="footer-heading">Support</h4>
+              <ul className="space-y-3">
+                <li><a href="#" className="footer-link">Help Center</a></li>
+                <li><a href="#" className="footer-link">Contact Us</a></li>
+                <li><a href="#" className="footer-link">FAQs</a></li>
+                <li><a href="#" className="footer-link">Manage Booking</a></li>
               </ul>
             </div>
+
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="/partner" className="hover:text-white transition-colors">Become a Partner</a></li>
+              <h4 className="footer-heading">Contact</h4>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3 text-gray-400">
+                  <FaPhone className="text-[#00b4b4]" />
+                  +1 (555) 123-4567
+                </li>
+                <li className="flex items-center gap-3 text-gray-400">
+                  <FaEnvelope className="text-[#00b4b4]" />
+                  support@airporttransfer.com
+                </li>
               </ul>
+              <div className="mt-6">
+                <h5 className="text-white font-medium mb-2">Become a Partner</h5>
+                <Link href="/supplier/register" className="text-[#00b4b4] hover:text-[#00d4d4] transition-colors flex items-center gap-2">
+                  Join our network <FaArrowRight />
+                </Link>
+              </div>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400">&copy; {new Date().getFullYear()} AirportTransfer. All rights reserved.</p>
-            <a href="/partner" className="text-gray-400 hover:text-orange-400 transition-colors text-sm">
-              Are you a transfer company? Join our network →
-            </a>
+
+          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-gray-400">&copy; {new Date().getFullYear()} AirportTransfer Portal. All rights reserved.</p>
+            <div className="flex gap-6">
+              <a href="#" className="footer-link text-sm">Terms of Service</a>
+              <a href="#" className="footer-link text-sm">Privacy Policy</a>
+              <a href="#" className="footer-link text-sm">Cookie Policy</a>
+            </div>
           </div>
         </div>
       </footer>

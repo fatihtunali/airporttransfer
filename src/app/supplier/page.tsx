@@ -13,6 +13,11 @@ import {
   FaCheckCircle,
   FaExclamationCircle,
   FaArrowRight,
+  FaTags,
+  FaFileAlt,
+  FaPlus,
+  FaArrowUp,
+  FaEye,
 } from 'react-icons/fa';
 
 interface DashboardData {
@@ -42,13 +47,13 @@ interface DashboardData {
   }>;
 }
 
-const statusColors: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-blue-100 text-blue-800',
-  ASSIGNED: 'bg-purple-100 text-purple-800',
-  IN_PROGRESS: 'bg-sky-100 text-sky-800',
-  COMPLETED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100 text-red-800',
+const statusColors: Record<string, { bg: string; text: string; dot: string }> = {
+  PENDING: { bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
+  CONFIRMED: { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
+  ASSIGNED: { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
+  IN_PROGRESS: { bg: 'bg-sky-50', text: 'text-sky-700', dot: 'bg-sky-500' },
+  COMPLETED: { bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' },
+  CANCELLED: { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
 };
 
 export default function SupplierDashboard() {
@@ -76,15 +81,25 @@ export default function SupplierDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500"></div>
+        <div className="text-center">
+          <div className="relative w-16 h-16 mx-auto mb-4">
+            <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+          </div>
+          <p className="text-gray-500">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-        <p className="text-gray-600">Unable to load dashboard data.</p>
+      <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <FaExclamationCircle className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">Unable to Load Dashboard</h3>
+        <p className="text-gray-500">Please try refreshing the page.</p>
       </div>
     );
   }
@@ -102,181 +117,293 @@ export default function SupplierDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-sky-600 to-sky-700 rounded-xl p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">
-          Welcome back, {data.supplier.name}!
-        </h1>
-        <div className="flex items-center gap-4 text-sky-100">
-          {data.supplier.isVerified ? (
-            <span className="flex items-center gap-1">
-              <FaCheckCircle className="text-green-300" />
-              Verified Supplier
-            </span>
-          ) : (
-            <span className="flex items-center gap-1">
-              <FaExclamationCircle className="text-yellow-300" />
-              Pending Verification
-            </span>
-          )}
-          {data.supplier.rating > 0 && (
-            <span className="flex items-center gap-1">
-              <FaStar className="text-yellow-300" />
-              {data.supplier.rating.toFixed(1)} ({data.supplier.ratingCount} reviews)
-            </span>
-          )}
+      <div className="bg-gradient-to-r from-primary via-primary-dark to-secondary rounded-2xl p-6 lg:p-8 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}></div>
+        </div>
+        <div className="relative">
+          <h1 className="text-2xl lg:text-3xl font-bold mb-3">
+            Welcome back, {data.supplier.name}!
+          </h1>
+          <div className="flex flex-wrap items-center gap-4">
+            {data.supplier.isVerified ? (
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/20 text-green-100 rounded-full text-sm">
+                <FaCheckCircle />
+                Verified Supplier
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-500/20 text-yellow-100 rounded-full text-sm">
+                <FaExclamationCircle />
+                Pending Verification
+              </span>
+            )}
+            {data.supplier.rating > 0 && (
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white rounded-full text-sm">
+                <FaStar className="text-yellow-300" />
+                {data.supplier.rating.toFixed(1)} ({data.supplier.ratingCount} reviews)
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Today's Bookings</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
+              <p className="text-gray-500 text-sm font-medium">Today's Bookings</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
                 {data.stats.todayBookings}
               </p>
+              <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                <FaArrowUp className="w-3 h-3" />
+                Active today
+              </p>
             </div>
-            <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center">
-              <FaCalendarAlt className="w-6 h-6 text-sky-600" />
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <FaCalendarAlt className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Upcoming</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
+              <p className="text-gray-500 text-sm font-medium">Upcoming</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
                 {data.stats.upcomingBookings}
               </p>
+              <p className="text-sm text-purple-600 mt-1 flex items-center gap-1">
+                <FaClock className="w-3 h-3" />
+                Scheduled
+              </p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <FaClock className="w-6 h-6 text-purple-600" />
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <FaClock className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Completed This Month</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
+              <p className="text-gray-500 text-sm font-medium">Completed This Month</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
                 {data.stats.completedThisMonth}
               </p>
+              <p className="text-sm text-green-600 mt-1 flex items-center gap-1">
+                <FaCheckCircle className="w-3 h-3" />
+                Transfers done
+              </p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <FaChartLine className="w-6 h-6 text-green-600" />
+            <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <FaChartLine className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-shadow">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-gray-500 text-sm">Pending Payout</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
+              <p className="text-gray-500 text-sm font-medium">Pending Payout</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
                 {data.stats.currency} {data.stats.pendingPayout.toFixed(2)}
               </p>
+              <p className="text-sm text-orange-600 mt-1 flex items-center gap-1">
+                <FaMoneyBillWave className="w-3 h-3" />
+                To be paid
+              </p>
             </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <FaMoneyBillWave className="w-6 h-6 text-orange-600" />
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <FaMoneyBillWave className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Link
-          href="/supplier/bookings"
-          className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow flex items-center gap-3"
-        >
-          <FaCalendarAlt className="w-5 h-5 text-sky-600" />
-          <span className="font-medium text-gray-700">Manage Bookings</span>
-        </Link>
-        <Link
-          href="/supplier/vehicles"
-          className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow flex items-center gap-3"
-        >
-          <FaCar className="w-5 h-5 text-green-600" />
-          <span className="font-medium text-gray-700">Add Vehicle</span>
-        </Link>
-        <Link
-          href="/supplier/drivers"
-          className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow flex items-center gap-3"
-        >
-          <FaUsers className="w-5 h-5 text-purple-600" />
-          <span className="font-medium text-gray-700">Add Driver</span>
-        </Link>
-        <Link
-          href="/supplier/pricing"
-          className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow flex items-center gap-3"
-        >
-          <FaMoneyBillWave className="w-5 h-5 text-orange-600" />
-          <span className="font-medium text-gray-700">Update Pricing</span>
-        </Link>
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <Link
+            href="/supplier/bookings"
+            className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FaCalendarAlt className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">Manage Bookings</p>
+              <p className="text-xs text-gray-500">View all transfers</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/supplier/vehicles"
+            className="flex items-center gap-3 p-4 bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FaCar className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">Add Vehicle</p>
+              <p className="text-xs text-gray-500">Expand your fleet</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/supplier/drivers"
+            className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FaUsers className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">Add Driver</p>
+              <p className="text-xs text-gray-500">Grow your team</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/supplier/pricing"
+            className="flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-xl hover:shadow-md transition-all group"
+          >
+            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+              <FaTags className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800">Update Pricing</p>
+              <p className="text-xs text-gray-500">Set your rates</p>
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* Recent Bookings */}
-      <div className="bg-white rounded-xl shadow-sm">
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Bookings</h2>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Recent Bookings</h2>
+            <p className="text-sm text-gray-500 mt-1">Your latest transfer requests</p>
+          </div>
           <Link
             href="/supplier/bookings"
-            className="text-sky-600 hover:text-sky-700 text-sm font-medium flex items-center gap-1"
+            className="inline-flex items-center gap-2 px-4 py-2 text-primary hover:bg-primary/5 rounded-lg transition-colors font-medium"
           >
-            View All <FaArrowRight className="w-3 h-3" />
+            View All
+            <FaArrowRight className="w-3 h-3" />
           </Link>
         </div>
-        <div className="divide-y divide-gray-100">
-          {data.recentBookings.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              No recent bookings
+
+        {data.recentBookings.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaCalendarAlt className="w-8 h-8 text-gray-400" />
             </div>
-          ) : (
-            data.recentBookings.map((booking) => (
-              <div
-                key={booking.id}
-                className="p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-sm text-gray-500">
-                        #{booking.publicCode}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          statusColors[booking.status] || 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {booking.status.replace('_', ' ')}
-                      </span>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Recent Bookings</h3>
+            <p className="text-gray-500 mb-6">You don't have any bookings yet. Set up your pricing to start receiving transfers.</p>
+            <Link
+              href="/supplier/pricing"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary-dark transition-colors"
+            >
+              <FaPlus className="w-4 h-4" />
+              Set Up Pricing
+            </Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {data.recentBookings.map((booking) => {
+              const statusStyle = statusColors[booking.status] || { bg: 'bg-gray-50', text: 'text-gray-700', dot: 'bg-gray-500' };
+              return (
+                <div
+                  key={booking.id}
+                  className="p-4 lg:p-6 hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <span className="font-mono text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                          #{booking.publicCode}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
+                          {booking.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-gray-900">
+                        {booking.customerName}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500">
+                        <span className="flex items-center gap-1.5">
+                          <FaCalendarAlt className="w-3.5 h-3.5 text-gray-400" />
+                          {formatDate(booking.pickupDatetime)}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <FaCar className="w-3.5 h-3.5 text-gray-400" />
+                          {booking.vehicleType}
+                        </span>
+                      </div>
                     </div>
-                    <p className="font-medium text-gray-900 mt-1">
-                      {booking.customerName}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {formatDate(booking.pickupDatetime)} • {booking.vehicleType}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">
-                      {booking.currency} {booking.totalPrice.toFixed(2)}
-                    </p>
-                    <Link
-                      href={`/supplier/bookings/${booking.publicCode}`}
-                      className="text-sky-600 hover:text-sky-700 text-sm"
-                    >
-                      View Details
-                    </Link>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-gray-900">
+                          {booking.currency} {booking.totalPrice.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500">Total</p>
+                      </div>
+                      <Link
+                        href={`/supplier/bookings/${booking.publicCode}`}
+                        className="p-3 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                      >
+                        <FaEye className="w-5 h-5" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Additional Links */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+        <Link
+          href="/supplier/documents"
+          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <FaFileAlt className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Documents</h3>
+              <p className="text-sm text-gray-500">Upload and manage your business documents</p>
+            </div>
+            <FaArrowRight className="w-5 h-5 text-gray-300 ml-auto group-hover:text-primary group-hover:translate-x-1 transition-all" />
+          </div>
+        </Link>
+
+        <Link
+          href="/supplier/reviews"
+          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <FaStar className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Reviews</h3>
+              <p className="text-sm text-gray-500">See what customers say about your service</p>
+            </div>
+            <FaArrowRight className="w-5 h-5 text-gray-300 ml-auto group-hover:text-primary group-hover:translate-x-1 transition-all" />
+          </div>
+        </Link>
       </div>
     </div>
   );
