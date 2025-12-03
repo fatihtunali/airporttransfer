@@ -298,7 +298,7 @@ export default function Home() {
 
           {/* Wide Centered Search Form */}
           <div className="max-w-5xl mx-auto">
-            <div className="bg-white/70 backdrop-blur-md rounded-xl p-4 animate-slide-up">
+            <div className="bg-white/70 rounded-xl p-4 animate-slide-up">
               <form onSubmit={handleSubmit}>
                 {/* Row 1: Trip Type Toggle - Colorful */}
                 <div className="flex justify-center mb-3">
