@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, queryOne } from '@/lib/db';
+import { query, queryOne, insert } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
@@ -50,16 +50,14 @@ export async function POST(request: NextRequest) {
     const apiKey = `atp_live_${crypto.randomBytes(24).toString('hex')}`;
 
     // Create user
-    const userResult = await query(
+    const userId = await insert(
       `INSERT INTO users (email, password_hash, full_name, phone, role, is_active)
        VALUES (?, ?, ?, ?, 'AGENCY_OWNER', TRUE)`,
       [email, passwordHash, contactName, contactPhone]
     );
 
-    const userId = (userResult as { insertId: number }).insertId;
-
     // Create agency
-    const agencyResult = await query(
+    const agencyId = await insert(
       `INSERT INTO agencies (
         name, legal_name, contact_name, contact_email, contact_phone,
         billing_email, country, city, address, website, vat_number,
@@ -80,8 +78,6 @@ export async function POST(request: NextRequest) {
         apiKey,
       ]
     );
-
-    const agencyId = (agencyResult as { insertId: number }).insertId;
 
     // Link user to agency
     await query(

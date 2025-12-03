@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateApiKey } from '@/lib/agency-auth';
-import { query, queryOne } from '@/lib/db';
+import { query, queryOne, insert } from '@/lib/db';
 import crypto from 'crypto';
 
 interface TariffRow {
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
   const pickupDatetime = `${pickupDate} ${pickupTime}:00`;
 
   // Create booking
-  const bookingResult = await query(
+  const bookingId = await insert(
     `INSERT INTO bookings (
        public_code, supplier_id, channel, agency_id, agency_ref,
        airport_id, zone_id, direction, pickup_address, dropoff_address,
@@ -133,8 +133,6 @@ export async function POST(request: NextRequest) {
       supplierPayout,
     ]
   );
-
-  const bookingId = (bookingResult as { insertId: number }).insertId;
 
   // Add lead passenger
   await query(

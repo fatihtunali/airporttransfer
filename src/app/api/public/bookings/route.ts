@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
         ]
       );
 
-      const bookingId = (bookingResult as { insertId: number }).insertId;
+      const bookingId = (bookingResult as unknown as { insertId: number }).insertId;
 
       // Insert main passenger
       await conn.execute(

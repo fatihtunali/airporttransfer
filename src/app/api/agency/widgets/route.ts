@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAgency, canManageAgency } from '@/lib/agency-auth';
-import { query } from '@/lib/db';
+import { query, insert } from '@/lib/db';
 import crypto from 'crypto';
 
 interface WidgetRow {
@@ -64,14 +64,14 @@ export async function POST(request: NextRequest) {
   // Generate widget key
   const widgetKey = `wgt_${crypto.randomBytes(16).toString('hex')}`;
 
-  const result = await query(
+  const id = await insert(
     `INSERT INTO agency_widgets (agency_id, widget_key, widget_type, theme, allowed_domains, is_active)
      VALUES (?, ?, ?, ?, ?, TRUE)`,
     [agencyId, widgetKey, widgetType || 'SEARCH_FORM', theme || 'LIGHT', allowedDomains || null]
   );
 
   return NextResponse.json({
-    id: (result as { insertId: number }).insertId,
+    id,
     widgetKey,
   });
 }

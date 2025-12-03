@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateAgency, canManageAgency } from '@/lib/agency-auth';
-import { query } from '@/lib/db';
+import { query, insert } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 
 interface TeamMemberRow {
@@ -86,13 +86,11 @@ export async function POST(request: NextRequest) {
   const userRole = role === 'OWNER' ? 'AGENCY_OWNER' : role === 'MANAGER' ? 'AGENCY_MANAGER' : 'AGENCY_BOOKER';
 
   // Create user
-  const userResult = await query(
+  const userId = await insert(
     `INSERT INTO users (email, password_hash, full_name, role, is_active)
      VALUES (?, ?, ?, ?, TRUE)`,
     [email, passwordHash, fullName, userRole]
   );
-
-  const userId = (userResult as { insertId: number }).insertId;
 
   // Link to agency
   await query(
