@@ -1,0 +1,1978 @@
+openapi: 3.0.3
+info:
+  title: Airport Transfer Marketplace API
+  version: 1.1.0
+  description: |
+    Independent Airport Transfer Marketplace API.
+    Covers authentication, suppliers, airports/zones/routes, pricing, bookings, rides, and payments.
+
+    ## Role-Based Access Control
+
+    - `GET /public/*`, `POST /public/*`, `/webhooks/*`: **no authentication**
+    - `/auth/*`: no authentication
+    - `/supplier/*`: requires JWT with roles: `SUPPLIER_OWNER`, `DISPATCHER`, or `DRIVER`
+    - `/admin/*`: requires JWT with role: `ADMIN`
+
+    ## Currency Handling
+
+    - Marketplace operates in **EUR** as base currency
+    - Suppliers can set prices in their local currency (TRY, USD, GBP, etc.)
+    - Currency conversion happens at booking time using real-time rates
+    - Supplier payouts are made in their configured payout currency
+
+    ## Cancellation Policy
+
+    - Free cancellation up to **24 hours** before pickup
+    - **50% refund** for cancellations **12–24 hours** before pickup
+    - **No refund** for cancellations less than **12 hours** before pickup
+    - Supplier cancellations result in full refund + possible compensation
+
+servers:
+  - url: https://api.airporttransferportal.com
+    description: Production server
+  - url: http://localhost:3000
+    description: Development server
+
+tags:
+  - name: Auth
+    description: Authentication & user management
+  - name: Public
+    description: Public endpoints for searching and booking transfers (no auth required)
+  - name: Supplier
+    description: Supplier / transfer company operations
+  - name: Admin
+    description: Admin-level management endpoints
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Role:
+      type: string
+      enum: [ADMIN, SUPPLIER_OWNER, DISPATCHER, DRIVER, END_CUSTOMER]
+
+    VehicleType:
+      type: string
+      enum: [SEDAN, VAN, MINIBUS, BUS, VIP]
+
+    RouteDirection:
+      type: string
+      enum: [FROM_AIRPORT, TO_AIRPORT, BOTH]
+
+    BookingChannel:
+      type: string
+      enum: [B2C, B2B, AGENCY_API]
+
+    BookingStatus:
+      type: string
+      enum: [PENDING, AWAITING_PAYMENT, CONFIRMED, ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED]
+
+    PaymentStatus:
+      type: string
+      enum: [UNPAID, PARTIALLY_PAID, PAID, REFUNDED]
+
+    RideStatus:
+      type: string
+      enum:
+        - PENDING_ASSIGN
+        - ASSIGNED
+        - ON_WAY
+        - AT_PICKUP
+        - IN_RIDE
+        - FINISHED
+        - NO_SHOW
+        - CANCELLED
+
+    PaymentProviderStatus:
+      type: string
+      enum: [PENDING, SUCCESS, FAILED, REFUNDED]
+
+    SupplierPayoutStatus:
+      type: string
+      enum: [PENDING, SCHEDULED, PAID, CANCELLED]
+
+    TariffRuleType:
+      type: string
+      enum: [TIME_OF_DAY, DAY_OF_WEEK, SEASON, LAST_MINUTE]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+        phone:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        isActive:
+          type: boolean
+
+    Airport:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+          example: IST
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        timezone:
+          type: string
+          example: Europe/Istanbul
+        isActive:
+          type: boolean
+
+    Zone:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          example: Sultanahmet
+        city:
+          type: string
+        country:
+          type: string
+        isActive:
+          type: boolean
+
+    Route:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        airport:
+          $ref: '#/components/schemas/Airport'
+        zone:
+          $ref: '#/components/schemas/Zone'
+        direction:
+          $ref: '#/components/schemas/RouteDirection'
+        approxDistanceKm:
+          type: number
+          format: double
+        approxDurationMin:
+          type: integer
+        isActive:
+          type: boolean
+
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        country:
+          type: string
+        city:
+          type: string
+        taxNumber:
+          type: string
+        legalName:
+          type: string
+        isVerified:
+          type: boolean
+        commissionRate:
+          type: number
+          format: double
+
+    Vehicle:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        supplierId:
+          type: integer
+          format: int64
+        plateNumber:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        seatCount:
+          type: integer
+        luggageCount:
+          type: integer
+        vehicleType:
+          $ref: '#/components/schemas/VehicleType'
+        isActive:
+          type: boolean
+
+    Driver:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        supplierId:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        licenseNumber:
+          type: string
+        phone:
+          type: string
+        isActive:
+          type: boolean
+        ratingAvg:
+          type: number
+          format: double
+        ratingCount:
+          type: integer
+
+    Tariff:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        supplierId:
+          type: integer
+          format: int64
+        routeId:
+          type: integer
+          format: int64
+        vehicleType:
+          $ref: '#/components/schemas/VehicleType'
+        currency:
+          type: string
+          example: EUR
+        basePrice:
+          type: number
+          format: double
+        pricePerPax:
+          type: number
+          format: double
+          nullable: true
+        minPax:
+          type: integer
+        maxPax:
+          type: integer
+          nullable: true
+        validFrom:
+          type: string
+          format: date
+          nullable: true
+        validTo:
+          type: string
+          format: date
+          nullable: true
+        isActive:
+          type: boolean
+
+    TariffRule:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        tariffId:
+          type: integer
+          format: int64
+        ruleType:
+          $ref: '#/components/schemas/TariffRuleType'
+        dayOfWeek:
+          type: integer
+          minimum: 1
+          maximum: 7
+          nullable: true
+        startTime:
+          type: string
+          format: time
+          nullable: true
+        endTime:
+          type: string
+          format: time
+          nullable: true
+        seasonFrom:
+          type: string
+          format: date
+          nullable: true
+        seasonTo:
+          type: string
+          format: date
+          nullable: true
+        percAdjustment:
+          type: number
+          format: double
+          nullable: true
+        fixedAdjustment:
+          type: number
+          format: double
+          nullable: true
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        publicCode:
+          type: string
+          example: ABC123
+        customerId:
+          type: integer
+          format: int64
+          nullable: true
+        channel:
+          $ref: '#/components/schemas/BookingChannel'
+        agencyName:
+          type: string
+          nullable: true
+        airport:
+          $ref: '#/components/schemas/Airport'
+        zone:
+          $ref: '#/components/schemas/Zone'
+        direction:
+          $ref: '#/components/schemas/RouteDirection'
+        flightNumber:
+          type: string
+          nullable: true
+        flightDate:
+          type: string
+          format: date
+          nullable: true
+        flightTime:
+          type: string
+          format: time
+          nullable: true
+        pickupTime:
+          type: string
+          format: date-time
+        paxAdults:
+          type: integer
+        paxChildren:
+          type: integer
+        vehicleType:
+          $ref: '#/components/schemas/VehicleType'
+        currency:
+          type: string
+        totalPrice:
+          type: number
+          format: double
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        paymentStatus:
+          $ref: '#/components/schemas/PaymentStatus'
+
+    Passenger:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        bookingId:
+          type: integer
+          format: int64
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        isMain:
+          type: boolean
+
+    Ride:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        bookingId:
+          type: integer
+          format: int64
+        supplierId:
+          type: integer
+          format: int64
+        vehicleId:
+          type: integer
+          format: int64
+          nullable: true
+        driverId:
+          type: integer
+          format: int64
+          nullable: true
+        status:
+          $ref: '#/components/schemas/RideStatus'
+        pickupLat:
+          type: number
+          format: double
+          nullable: true
+        pickupLng:
+          type: number
+          format: double
+          nullable: true
+        dropoffLat:
+          type: number
+          format: double
+          nullable: true
+        dropoffLng:
+          type: number
+          format: double
+          nullable: true
+        driverNote:
+          type: string
+          nullable: true
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        bookingId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+        provider:
+          type: string
+        providerTxid:
+          type: string
+        status:
+          $ref: '#/components/schemas/PaymentProviderStatus'
+
+    SupplierPayout:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        supplierId:
+          type: integer
+          format: int64
+        bookingId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+        status:
+          $ref: '#/components/schemas/SupplierPayoutStatus'
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    AirportCreate:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        timezone:
+          type: string
+
+    ZoneCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+
+    RouteCreate:
+      type: object
+      required: [airportId, zoneId, direction]
+      properties:
+        airportId:
+          type: integer
+          format: int64
+        zoneId:
+          type: integer
+          format: int64
+        direction:
+          $ref: '#/components/schemas/RouteDirection'
+        approxDistanceKm:
+          type: number
+          format: double
+        approxDurationMin:
+          type: integer
+
+    SupplierCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        country:
+          type: string
+        city:
+          type: string
+        taxNumber:
+          type: string
+        legalName:
+          type: string
+        commissionRate:
+          type: number
+          format: double
+
+    VehicleCreate:
+      type: object
+      required: [plateNumber, vehicleType, seatCount]
+      properties:
+        plateNumber:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        seatCount:
+          type: integer
+        luggageCount:
+          type: integer
+        vehicleType:
+          $ref: '#/components/schemas/VehicleType'
+
+    DriverCreate:
+      type: object
+      required: [fullName, phone]
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        licenseNumber:
+          type: string
+
+    TariffCreate:
+      type: object
+      required: [routeId, vehicleType, currency, basePrice]
+      properties:
+        routeId:
+          type: integer
+          format: int64
+        vehicleType:
+          $ref: '#/components/schemas/VehicleType'
+        currency:
+          type: string
+        basePrice:
+          type: number
+          format: double
+        pricePerPax:
+          type: number
+          format: double
+          nullable: true
+        minPax:
+          type: integer
+          default: 1
+        maxPax:
+          type: integer
+          nullable: true
+        validFrom:
+          type: string
+          format: date
+          nullable: true
+        validTo:
+          type: string
+          format: date
+          nullable: true
+
+    TariffRuleCreate:
+      type: object
+      required: [ruleType]
+      properties:
+        ruleType:
+          $ref: '#/components/schemas/TariffRuleType'
+        dayOfWeek:
+          type: integer
+          minimum: 1
+          maximum: 7
+          nullable: true
+        startTime:
+          type: string
+          format: time
+          nullable: true
+        endTime:
+          type: string
+          format: time
+          nullable: true
+        seasonFrom:
+          type: string
+          format: date
+          nullable: true
+        seasonTo:
+          type: string
+          format: date
+          nullable: true
+        percAdjustment:
+          type: number
+          format: double
+          nullable: true
+        fixedAdjustment:
+          type: number
+          format: double
+          nullable: true
+
+    TransferSearchRequest:
+      type: object
+      required:
+        - airportId
+        - zoneId
+        - direction
+        - pickupTime
+        - paxAdults
+        - currency
+      properties:
+        airportId:
+          type: integer
+          format: int64
+        zoneId:
+          type: integer
+          format: int64
+        direction:
+          $ref: '#/components/schemas/RouteDirection'
+        pickupTime:
+          type: string
+          format: date-time
+        paxAdults:
+          type: integer
+        paxChildren:
+          type: integer
+          default: 0
+        currency:
+          type: string
+          example: EUR
+
+    TransferOption:
+      type: object
+      properties:
+        supplier:
+          $ref: '#/components/schemas/Supplier'
+        vehicleType:
+          $ref: '#/components/schemas/VehicleType'
+        currency:
+          type: string
+        totalPrice:
+          type: number
+          format: double
+        estimatedDurationMin:
+          type: integer
+        cancellationPolicy:
+          type: string
+        optionCode:
+          type: string
+          description: Internal code used when creating booking from this option.
+
+    TransferSearchResponse:
+      type: object
+      properties:
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferOption'
+
+    CreateBookingRequest:
+      type: object
+      required:
+        - optionCode
+        - channel
+        - mainPassenger
+      properties:
+        optionCode:
+          type: string
+          description: Option code returned from search endpoint
+        channel:
+          $ref: '#/components/schemas/BookingChannel'
+        agencyName:
+          type: string
+          nullable: true
+        mainPassenger:
+          type: object
+          required: [fullName, phone]
+          properties:
+            fullName:
+              type: string
+            phone:
+              type: string
+            email:
+              type: string
+        additionalPassengers:
+          type: array
+          items:
+            type: object
+            properties:
+              fullName:
+                type: string
+              phone:
+                type: string
+              email:
+                type: string
+
+    CreateBookingResponse:
+      type: object
+      properties:
+        booking:
+          $ref: '#/components/schemas/Booking'
+        passengers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Passenger'
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - fullName
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        fullName:
+          type: string
+        phone:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+
+    PaginatedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items: {}
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and get JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /public/airports:
+    get:
+      tags: [Public]
+      summary: List active airports
+      responses:
+        '200':
+          description: List of airports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Airport'
+
+  /public/zones:
+    get:
+      tags: [Public]
+      summary: List zones, optionally filtered by airport
+      parameters:
+        - in: query
+          name: airportId
+          schema:
+            type: integer
+            format: int64
+          required: false
+      responses:
+        '200':
+          description: List of zones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zone'
+
+  /public/search-transfers:
+    post:
+      tags: [Public]
+      summary: Search transfer options for given route and time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferSearchRequest'
+      responses:
+        '200':
+          description: List of available transfer options
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferSearchResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /public/bookings:
+    post:
+      tags: [Public]
+      summary: Create booking from selected transfer option
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateBookingResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /public/bookings/{publicCode}:
+    get:
+      tags: [Public]
+      summary: Get booking by public code for customer
+      parameters:
+        - in: path
+          name: publicCode
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /public/bookings/{bookingId}/pay:
+    post:
+      tags: [Public]
+      summary: Initiate payment for a booking
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+          description: Used to safely retry payment without double-charging
+      responses:
+        '200':
+          description: Payment initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          description: Cannot pay this booking
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /webhooks/payment:
+    post:
+      tags: [Public]
+      summary: Payment provider webhook
+      description: |
+        Called by payment provider to notify about payment status changes.
+        Should be secured by a shared secret or IP whitelist.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+      responses:
+        '200':
+          description: Webhook received
+        '400':
+          description: Invalid payload
+
+  /supplier/me:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+        - DRIVER
+      summary: Get current supplier user profile and supplier info
+      responses:
+        '200':
+          description: Supplier profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  supplier:
+                    $ref: '#/components/schemas/Supplier'
+        '401':
+          description: Unauthorized
+
+  /supplier/vehicles:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: List vehicles for current supplier
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of vehicles
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Vehicle'
+        '401':
+          description: Unauthorized
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: Create new vehicle for current supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleCreate'
+      responses:
+        '201':
+          description: Vehicle created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Validation error
+
+  /supplier/drivers:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: List drivers for current supplier
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of drivers
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Driver'
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: Create new driver for current supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverCreate'
+      responses:
+        '201':
+          description: Driver created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+
+  /supplier/tariffs:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: List tariffs for current supplier
+      parameters:
+        - in: query
+          name: routeId
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of tariffs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Tariff'
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: Create new tariff for current supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TariffCreate'
+      responses:
+        '201':
+          description: Tariff created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tariff'
+
+  /supplier/tariffs/{tariffId}:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: Get tariff details with rules
+      parameters:
+        - in: path
+          name: tariffId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Tariff details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tariff:
+                    $ref: '#/components/schemas/Tariff'
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TariffRule'
+
+  /supplier/tariffs/{tariffId}/rules:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: List rules for a tariff
+      parameters:
+        - in: path
+          name: tariffId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Tariff rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TariffRule'
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: Add pricing rule to a tariff
+      parameters:
+        - in: path
+          name: tariffId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TariffRuleCreate'
+      responses:
+        '201':
+          description: Tariff rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TariffRule'
+
+  /supplier/rides:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+        - DRIVER
+      summary: List rides for current supplier
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/RideStatus'
+        - in: query
+          name: fromDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: toDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of rides
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Ride'
+
+  /supplier/rides/{rideId}:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+        - DRIVER
+      summary: Get ride details
+      parameters:
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Ride details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ride'
+
+  /supplier/rides/{rideId}/assign-driver:
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: Assign driver and optionally vehicle to ride
+      parameters:
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [driverId]
+              properties:
+                driverId:
+                  type: integer
+                  format: int64
+                vehicleId:
+                  type: integer
+                  format: int64
+                  nullable: true
+      responses:
+        '200':
+          description: Ride updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ride'
+        '400':
+          description: Invalid state
+
+  /supplier/rides/{rideId}/status:
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+        - DRIVER
+      summary: Update ride status (ON_WAY, AT_PICKUP, etc.)
+      parameters:
+        - in: path
+          name: rideId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: '#/components/schemas/RideStatus'
+      responses:
+        '200':
+          description: Ride status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ride'
+        '400':
+          description: Invalid transition
+
+  /supplier/payouts:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: List payouts for current supplier
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/SupplierPayoutStatus'
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of payouts
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SupplierPayout'
+
+  /supplier/dashboard:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - SUPPLIER_OWNER
+        - DISPATCHER
+      summary: Get supplier dashboard summary
+      responses:
+        '200':
+          description: Supplier KPIs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upcomingRides:
+                    type: integer
+                  completedRidesToday:
+                    type: integer
+                  totalEarningsThisMonth:
+                    type: number
+                    format: double
+                  pendingPayouts:
+                    type: number
+                    format: double
+
+  /admin/airports:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: List all airports (including inactive)
+      responses:
+        '200':
+          description: List of airports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Airport'
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Create airport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AirportCreate'
+      responses:
+        '201':
+          description: Airport created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Airport'
+
+  /admin/zones:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: List all zones (including inactive)
+      responses:
+        '200':
+          description: List of zones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zone'
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Create zone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZoneCreate'
+      responses:
+        '201':
+          description: Zone created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+
+  /admin/routes:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: List all routes
+      responses:
+        '200':
+          description: List of routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Route'
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Create route between airport and zone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteCreate'
+      responses:
+        '201':
+          description: Route created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+
+  /admin/suppliers:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: List all suppliers
+      responses:
+        '200':
+          description: List of suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Supplier'
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Create supplier company
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierCreate'
+      responses:
+        '201':
+          description: Supplier created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+
+  /admin/suppliers/{supplierId}:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Get supplier details
+      parameters:
+        - in: path
+          name: supplierId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Supplier details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+
+  /admin/suppliers/{supplierId}/verify:
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Mark supplier as verified
+      parameters:
+        - in: path
+          name: supplierId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Supplier verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+
+  /admin/tariffs:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: List all tariffs across suppliers
+      responses:
+        '200':
+          description: List of tariffs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tariff'
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Create tariff for any supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/TariffCreate'
+                - type: object
+                  properties:
+                    supplierId:
+                      type: integer
+                      format: int64
+      responses:
+        '201':
+          description: Tariff created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tariff'
+
+  /admin/tariffs/{tariffId}:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Get tariff details with rules
+      parameters:
+        - in: path
+          name: tariffId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Tariff details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tariff:
+                    $ref: '#/components/schemas/Tariff'
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TariffRule'
+
+  /admin/tariffs/{tariffId}/rules:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: List rules for a tariff
+      parameters:
+        - in: path
+          name: tariffId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Tariff rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TariffRule'
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Add pricing rule to a tariff
+      parameters:
+        - in: path
+          name: tariffId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TariffRuleCreate'
+      responses:
+        '201':
+          description: Tariff rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TariffRule'
+
+  /admin/payouts:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: List all supplier payouts
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/SupplierPayoutStatus'
+      responses:
+        '200':
+          description: List of payouts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplierPayout'
+
+  /admin/payouts/{payoutId}/mark-paid:
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Mark payout as paid
+      parameters:
+        - in: path
+          name: payoutId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payout updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierPayout'
+
+  /admin/bookings:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: List all bookings
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/BookingStatus'
+        - in: query
+          name: fromDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: toDate
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      x-roles:
+        - ADMIN
+      summary: Get admin dashboard KPIs
+      responses:
+        '200':
+          description: Admin KPIs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalBookingsToday:
+                    type: integer
+                  totalRevenueToday:
+                    type: number
+                    format: double
+                  activeSuppliers:
+                    type: integer
+                  pendingPayouts:
+                    type: number
+                    format: double
