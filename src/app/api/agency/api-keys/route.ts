@@ -20,7 +20,14 @@ export async function GET(request: NextRequest) {
 
   // For now, we use the main agency API key
   // In a full implementation, you'd have a separate api_keys table
-  const agency = await query<{ id: number; api_key: string; name: string; created_at: string }[]>(
+  interface AgencyKeyRow {
+    id: number;
+    api_key: string | null;
+    name: string;
+    created_at: string;
+  }
+
+  const agency = await query<AgencyKeyRow[]>(
     `SELECT id, api_key, name, created_at FROM agencies WHERE id = ?`,
     [agencyId]
   );
