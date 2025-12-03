@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   }
 
   const agency = agencies[0];
-  const key = agency.api_key;
+  const key = agency.api_key!; // Already checked above that it's not null
   return NextResponse.json([
     {
       id: agency.id,
