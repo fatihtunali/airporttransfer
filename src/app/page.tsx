@@ -746,7 +746,7 @@ export default function Home() {
                   Book Your Transfer
                   <FaArrowRight />
                 </a>
-                <Link href="/supplier/register" className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold text-lg rounded-full hover:bg-white/20 transition-all duration-300 border border-white/20 inline-flex items-center justify-center gap-2">
+                <Link href="/become-partner" className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold text-lg rounded-full hover:bg-white/20 transition-all duration-300 border border-white/20 inline-flex items-center justify-center gap-2">
                   Become a Partner
                   <FaHandshake />
                 </Link>
@@ -783,22 +783,20 @@ export default function Home() {
             <div>
               <h4 className="text-lg font-bold mb-6">Quick Links</h4>
               <ul className="space-y-3">
-                {['Search Transfers', 'Popular Routes', 'Airport Guides', 'Travel Tips'].map((link, idx) => (
-                  <li key={idx}>
-                    <a href="#" className="text-gray-400 hover:text-teal-400 transition-colors">{link}</a>
-                  </li>
-                ))}
+                <li><Link href="/" className="text-gray-400 hover:text-teal-400 transition-colors">Search Transfers</Link></li>
+                <li><Link href="/popular-routes" className="text-gray-400 hover:text-teal-400 transition-colors">Popular Routes</Link></li>
+                <li><Link href="/airport-guides" className="text-gray-400 hover:text-teal-400 transition-colors">Airport Guides</Link></li>
+                <li><Link href="/travel-tips" className="text-gray-400 hover:text-teal-400 transition-colors">Travel Tips</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-lg font-bold mb-6">Support</h4>
               <ul className="space-y-3">
-                {['Help Center', 'Contact Us', 'FAQs', 'Manage Booking'].map((link, idx) => (
-                  <li key={idx}>
-                    <a href="#" className="text-gray-400 hover:text-teal-400 transition-colors">{link}</a>
-                  </li>
-                ))}
+                <li><Link href="/help" className="text-gray-400 hover:text-teal-400 transition-colors">Help Center</Link></li>
+                <li><Link href="/contact" className="text-gray-400 hover:text-teal-400 transition-colors">Contact Us</Link></li>
+                <li><Link href="/faq" className="text-gray-400 hover:text-teal-400 transition-colors">FAQs</Link></li>
+                <li><Link href="/manage-booking" className="text-gray-400 hover:text-teal-400 transition-colors">Manage Booking</Link></li>
               </ul>
             </div>
 
@@ -819,7 +817,7 @@ export default function Home() {
                 </li>
               </ul>
               <div className="mt-6">
-                <Link href="/supplier/register" className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 font-semibold transition-colors">
+                <Link href="/become-partner" className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 font-semibold transition-colors">
                   Become a Partner <FaArrowRight />
                 </Link>
               </div>
