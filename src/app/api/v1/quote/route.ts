@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateApiKey } from '@/lib/agency-auth';
-import { queryOne } from '@/lib/db';
+import { query, queryOne } from '@/lib/db';
 
 interface TariffRow {
   id: number;
@@ -15,6 +15,19 @@ interface TariffRow {
   distance_km: number;
   duration_min: number;
   commission_rate: number;
+}
+
+interface ExtraRow {
+  id: number;
+  name: string;
+  name_key: string;
+  price: number;
+  currency: string;
+}
+
+interface RequestedExtra {
+  key: string;
+  quantity?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -64,9 +77,40 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Calculate pricing
-  let totalPrice = tariff.base_price;
-  const extrasPrice = 0; // TODO: Calculate extras
+  // Calculate extras pricing
+  let extrasPrice = 0;
+  const extrasBreakdown: { name: string; key: string; price: number; quantity: number }[] = [];
+
+  if (extras && Array.isArray(extras) && extras.length > 0) {
+    // Fetch available extras for this supplier
+    const supplierExtras = await query<ExtraRow>(
+      `SELECT id, name, name_key, price, currency
+       FROM extras
+       WHERE supplier_id = ? AND is_active = TRUE`,
+      [tariff.supplier_id]
+    );
+
+    // Calculate extras based on requested items
+    for (const requestedExtra of extras as RequestedExtra[]) {
+      const extra = supplierExtras.find(
+        e => e.name_key === requestedExtra.key || e.name.toLowerCase() === requestedExtra.key.toLowerCase()
+      );
+      if (extra) {
+        const quantity = requestedExtra.quantity || 1;
+        const extraTotal = Number(extra.price) * quantity;
+        extrasPrice += extraTotal;
+        extrasBreakdown.push({
+          name: extra.name,
+          key: extra.name_key || extra.name,
+          price: Number(extra.price),
+          quantity,
+        });
+      }
+    }
+  }
+
+  // Calculate total pricing
+  const totalPrice = Number(tariff.base_price) + extrasPrice;
 
   // Apply agency commission
   const agencyCommission = totalPrice * (tariff.commission_rate / 100);
@@ -88,8 +132,9 @@ export async function POST(request: NextRequest) {
       maxPassengers: tariff.max_pax,
     },
     pricing: {
-      basePrice: tariff.base_price,
+      basePrice: Number(tariff.base_price),
       extrasPrice,
+      extras: extrasBreakdown,
       totalPrice,
       agencyCommission,
       netPrice,

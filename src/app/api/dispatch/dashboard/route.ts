@@ -39,6 +39,10 @@ interface IssueRow {
   created_at: string;
 }
 
+interface AvgResponseRow {
+  avg_response_minutes: number | null;
+}
+
 export async function GET() {
   try {
     // Get ride stats
@@ -65,6 +69,14 @@ export async function GET() {
       SELECT COUNT(*) as count
       FROM dispatch_issues
       WHERE status IN ('OPEN', 'IN_PROGRESS')
+    `);
+
+    // Calculate average response time (time from ride creation to driver assignment)
+    const avgResponse = await queryOne<AvgResponseRow>(`
+      SELECT AVG(TIMESTAMPDIFF(MINUTE, r.created_at, r.assigned_at)) as avg_response_minutes
+      FROM rides r
+      WHERE r.assigned_at IS NOT NULL
+        AND r.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
     `);
 
     // Get active rides with details
@@ -122,7 +134,7 @@ export async function GET() {
         driversOnline: driversOnline?.count || 0,
         openIssues: openIssues?.count || 0,
         completedToday: stats?.completed_today || 0,
-        avgResponseTime: 12, // TODO: Calculate from actual data
+        avgResponseTime: Math.round(avgResponse?.avg_response_minutes || 0)
       },
       activeRides: activeRides.map((ride) => ({
         id: ride.id,

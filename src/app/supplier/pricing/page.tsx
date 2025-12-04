@@ -74,8 +74,16 @@ export default function SupplierPricing() {
 
   const fetchRoutes = async () => {
     try {
-      const res = await fetch('/api/public/airports');
-      // TODO: Fetch actual routes for supplier
+      const res = await fetch('/api/supplier/routes');
+      if (res.ok) {
+        const data = await res.json();
+        setRoutes(data.map((r: { id: number; airportCode: string; airportName: string; zoneName: string }) => ({
+          id: r.id,
+          airportCode: r.airportCode,
+          airportName: r.airportName,
+          zoneName: r.zoneName,
+        })));
+      }
     } catch (error) {
       console.error('Error fetching routes:', error);
     }
