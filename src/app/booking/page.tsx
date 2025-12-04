@@ -23,6 +23,8 @@ import {
   FaEnvelope,
   FaPhone,
   FaInfoCircle,
+  FaUniversity,
+  FaMoneyBillWave,
 } from 'react-icons/fa';
 
 const vehicleIcons: Record<string, React.ReactNode> = {
@@ -79,6 +81,20 @@ function BookingContent() {
     bookingId: string;
     publicCode: string;
     status: string;
+  } | null>(null);
+
+  // Payment state
+  const [paymentMethod, setPaymentMethod] = useState<'pay_later' | 'card' | 'bank_transfer'>('pay_later');
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [bankDetails, setBankDetails] = useState<{
+    bankName: string;
+    accountName: string;
+    iban: string;
+    swift: string;
+    reference: string;
+    amount: number;
+    currency: string;
+    dueDate: string;
   } | null>(null);
 
   const formatDate = (dateStr: string) => {
@@ -154,6 +170,7 @@ function BookingContent() {
     setError(null);
 
     try {
+      // Step 1: Create booking
       const response = await fetch('/api/public/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,6 +201,47 @@ function BookingContent() {
 
       const result = await response.json();
       setBookingResult(result);
+
+      // Step 2: Handle payment based on selected method
+      if (paymentMethod === 'card') {
+        // Redirect to Stripe checkout
+        setPaymentProcessing(true);
+        const paymentRes = await fetch('/api/public/payments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bookingCode: result.publicCode,
+            paymentMethod: 'card',
+            currency
+          }),
+        });
+
+        if (paymentRes.ok) {
+          const paymentData = await paymentRes.json();
+          // Store client secret for Stripe Elements (would need Stripe.js integration)
+          // For now, redirect to a payment page
+          window.location.href = `/pay/${result.publicCode}?secret=${paymentData.clientSecret}`;
+          return;
+        }
+        setPaymentProcessing(false);
+      } else if (paymentMethod === 'bank_transfer') {
+        // Get bank transfer details
+        const paymentRes = await fetch('/api/public/payments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bookingCode: result.publicCode,
+            paymentMethod: 'bank_transfer',
+            currency
+          }),
+        });
+
+        if (paymentRes.ok) {
+          const paymentData = await paymentRes.json();
+          setBankDetails(paymentData.bankDetails);
+        }
+      }
+
       setStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create booking. Please try again.');
@@ -448,16 +506,91 @@ function BookingContent() {
                   )}
                 </div>
 
-                {/* Payment Notice */}
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-                  <div className="flex items-start gap-3">
-                    <FaCreditCard className="text-blue-500 mt-1" />
-                    <div>
-                      <h4 className="font-semibold text-blue-900">Pay Later Option</h4>
-                      <p className="text-sm text-blue-700">
-                        No payment required now. You can pay the driver directly or we will send you a payment link.
-                      </p>
-                    </div>
+                {/* Payment Method Selection */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">Payment Method</h3>
+                  <div className="space-y-3">
+                    {/* Pay Later Option */}
+                    <label className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      paymentMethod === 'pay_later'
+                        ? 'border-teal-500 bg-teal-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="pay_later"
+                        checked={paymentMethod === 'pay_later'}
+                        onChange={() => setPaymentMethod('pay_later')}
+                        className="mt-1 w-5 h-5 text-teal-600 focus:ring-teal-500"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <FaMoneyBillWave className="text-green-500" />
+                          <span className="font-semibold text-gray-900">Pay Later</span>
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Popular</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          No payment required now. Pay the driver directly in cash or card upon arrival.
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Credit Card Option */}
+                    <label className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      paymentMethod === 'card'
+                        ? 'border-teal-500 bg-teal-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="card"
+                        checked={paymentMethod === 'card'}
+                        onChange={() => setPaymentMethod('card')}
+                        className="mt-1 w-5 h-5 text-teal-600 focus:ring-teal-500"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <FaCreditCard className="text-blue-500" />
+                          <span className="font-semibold text-gray-900">Credit / Debit Card</span>
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Secure</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Pay securely with Visa, Mastercard, or American Express. Instant confirmation.
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <img src="/images/visa.svg" alt="Visa" className="h-6" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                          <img src="/images/mastercard.svg" alt="Mastercard" className="h-6" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                          <img src="/images/amex.svg" alt="Amex" className="h-6" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                        </div>
+                      </div>
+                    </label>
+
+                    {/* Bank Transfer Option */}
+                    <label className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      paymentMethod === 'bank_transfer'
+                        ? 'border-teal-500 bg-teal-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="bank_transfer"
+                        checked={paymentMethod === 'bank_transfer'}
+                        onChange={() => setPaymentMethod('bank_transfer')}
+                        className="mt-1 w-5 h-5 text-teal-600 focus:ring-teal-500"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <FaUniversity className="text-purple-500" />
+                          <span className="font-semibold text-gray-900">Bank Transfer</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Pay via bank transfer. We will send you bank details after booking confirmation.
+                        </p>
+                      </div>
+                    </label>
                   </div>
                 </div>
 
@@ -483,18 +616,18 @@ function BookingContent() {
 
                 <button
                   onClick={handleSubmitBooking}
-                  disabled={loading}
+                  disabled={loading || paymentProcessing}
                   className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold text-lg rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? (
+                  {loading || paymentProcessing ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Processing...
+                      {paymentProcessing ? 'Redirecting to payment...' : 'Processing...'}
                     </>
                   ) : (
                     <>
-                      <FaCheck />
-                      Confirm Booking
+                      {paymentMethod === 'card' ? <FaCreditCard /> : <FaCheck />}
+                      {paymentMethod === 'card' ? 'Proceed to Payment' : 'Confirm Booking'}
                     </>
                   )}
                 </button>
@@ -523,6 +656,64 @@ function BookingContent() {
                     </div>
                   </div>
                 </div>
+
+                {/* Bank Transfer Details */}
+                {bankDetails && paymentMethod === 'bank_transfer' && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-xl p-6 mb-6 text-left">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FaUniversity className="text-purple-600" />
+                      <h3 className="font-bold text-purple-900">Bank Transfer Details</h3>
+                    </div>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Bank Name:</span>
+                        <span className="font-semibold text-gray-900">{bankDetails.bankName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Account Name:</span>
+                        <span className="font-semibold text-gray-900">{bankDetails.accountName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">IBAN:</span>
+                        <span className="font-mono font-semibold text-gray-900">{bankDetails.iban}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">SWIFT/BIC:</span>
+                        <span className="font-mono font-semibold text-gray-900">{bankDetails.swift}</span>
+                      </div>
+                      <hr className="border-purple-200" />
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Reference:</span>
+                        <span className="font-mono font-bold text-purple-700">{bankDetails.reference}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Amount:</span>
+                        <span className="font-bold text-purple-700">{bankDetails.currency} {bankDetails.amount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Due Date:</span>
+                        <span className="font-semibold text-orange-600">{bankDetails.dueDate}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-purple-600 mt-4">
+                      * Please use the reference number exactly as shown when making the transfer.
+                    </p>
+                  </div>
+                )}
+
+                {/* Pay Later Info */}
+                {paymentMethod === 'pay_later' && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-left">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FaMoneyBillWave className="text-green-600" />
+                      <h3 className="font-bold text-green-900">Pay Later Selected</h3>
+                    </div>
+                    <p className="text-sm text-green-700">
+                      You can pay the driver directly upon arrival. We accept cash and card payments.
+                      The total amount is <strong>{currency} {parseFloat(totalPrice).toFixed(2)}</strong>.
+                    </p>
+                  </div>
+                )}
 
                 <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
                   <p className="text-sm text-blue-700">
