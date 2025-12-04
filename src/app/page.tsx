@@ -772,8 +772,13 @@ export default function Home() {
                 Book reliable airport transfers worldwide from verified local suppliers. Travel with confidence.
               </p>
               <div className="flex gap-3">
-                {[FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn].map((Icon, idx) => (
-                  <a key={idx} href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-500 hover:text-white transition-all duration-300">
+                {[
+                  { Icon: FaFacebookF, href: 'https://facebook.com' },
+                  { Icon: FaTwitter, href: 'https://twitter.com' },
+                  { Icon: FaInstagram, href: 'https://instagram.com' },
+                  { Icon: FaLinkedinIn, href: 'https://linkedin.com' },
+                ].map(({ Icon, href }, idx) => (
+                  <a key={idx} href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-500 hover:text-white transition-all duration-300">
                     <Icon />
                   </a>
                 ))}
@@ -827,9 +832,9 @@ export default function Home() {
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
             <div className="flex gap-6">
-              {['Terms of Service', 'Privacy Policy', 'Cookie Policy'].map((link, idx) => (
-                <a key={idx} href="#" className="text-gray-500 hover:text-white text-sm transition-colors">{link}</a>
-              ))}
+              <Link href="/terms" className="text-gray-500 hover:text-white text-sm transition-colors">Terms of Service</Link>
+              <Link href="/privacy" className="text-gray-500 hover:text-white text-sm transition-colors">Privacy Policy</Link>
+              <Link href="/cookies" className="text-gray-500 hover:text-white text-sm transition-colors">Cookie Policy</Link>
             </div>
           </div>
         </div>
