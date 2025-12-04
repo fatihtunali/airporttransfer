@@ -1,68 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, queryOne, insert, transaction } from '@/lib/db';
-import crypto from 'crypto';
+import { query, queryOne, transaction } from '@/lib/db';
 
 type BookingChannel = 'B2C' | 'B2B' | 'AGENCY_API';
 type VehicleType = 'SEDAN' | 'VAN' | 'MINIBUS' | 'BUS' | 'VIP';
 
-interface PassengerInput {
-  fullName: string;
-  phone?: string;
-  email?: string;
+interface LeadPassengerInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
 }
 
 interface CreateBookingRequest {
-  optionCode: string;
-  channel: BookingChannel;
-  agencyName?: string;
-  mainPassenger: {
+  // Option from search
+  optionCode?: string;
+
+  // Route details
+  airportId: number;
+  zoneId: number;
+  direction?: string;
+  pickupTime: string;
+  paxAdults: number;
+  vehicleType: VehicleType;
+  currency: string;
+
+  // Passenger details
+  leadPassenger: LeadPassengerInput;
+
+  // Additional details
+  flightNumber?: string;
+  pickupAddress?: string;
+  dropoffAddress?: string;
+  specialRequests?: string;
+
+  // Legacy support
+  channel?: BookingChannel;
+  mainPassenger?: {
     fullName: string;
     phone: string;
     email?: string;
   };
-  additionalPassengers?: PassengerInput[];
-  // Additional booking details
-  flightNumber?: string;
-  flightDate?: string;
-  flightTime?: string;
-  pickupAddress?: string;
-  dropoffAddress?: string;
-  customerNotes?: string;
-}
-
-interface TariffDetails {
-  tariff_id: number;
-  supplier_id: number;
-  route_id: number;
-  airport_id: number;
-  zone_id: number;
-  direction: string;
-  vehicle_type: VehicleType;
-  base_price: number;
-  price_per_pax: number | null;
-  currency: string;
-  commission_rate: number;
 }
 
 // Generate unique public booking code
 function generatePublicCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excluding confusing chars
-  let code = 'LT';
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'ATP';
   for (let i = 0; i < 6; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
-}
-
-// Decode option code to get tariff details
-async function decodeOptionCode(optionCode: string): Promise<TariffDetails | null> {
-  // Option codes are generated from tariff data
-  // For now, we'll need to search for matching tariffs
-  // In production, you might want to store option codes temporarily in Redis
-
-  // This is a simplified approach - in reality you'd decode the hash
-  // or look up the option code from a cache
-  return null;
 }
 
 // POST /api/public/bookings - Create a new booking
@@ -70,32 +57,30 @@ export async function POST(request: NextRequest) {
   try {
     const body: CreateBookingRequest = await request.json();
 
+    // Support both new and legacy formats
+    const leadPassenger = body.leadPassenger || (body.mainPassenger ? {
+      firstName: body.mainPassenger.fullName.split(' ')[0],
+      lastName: body.mainPassenger.fullName.split(' ').slice(1).join(' ') || '',
+      email: body.mainPassenger.email || '',
+      phone: body.mainPassenger.phone,
+    } : null);
+
     // Validate required fields
-    if (!body.optionCode || !body.channel || !body.mainPassenger?.fullName || !body.mainPassenger?.phone) {
+    if (!leadPassenger?.firstName || !leadPassenger?.lastName || !leadPassenger?.phone) {
       return NextResponse.json(
-        { error: 'Missing required fields: optionCode, channel, mainPassenger.fullName, mainPassenger.phone' },
+        { error: 'Missing required passenger details: firstName, lastName, phone' },
         { status: 400 }
       );
     }
 
-    // For MVP, we'll extract tariff info from a separate search parameter
-    // In production, option codes should be cached and validated
-
-    // For now, require additional search parameters
-    const searchParams = new URL(request.url).searchParams;
-    const tariffId = searchParams.get('tariffId');
-    const pickupTime = searchParams.get('pickupTime');
-    const paxAdults = parseInt(searchParams.get('paxAdults') || '1');
-    const paxChildren = parseInt(searchParams.get('paxChildren') || '0');
-
-    if (!tariffId || !pickupTime) {
+    if (!body.airportId || !body.zoneId || !body.pickupTime || !body.vehicleType) {
       return NextResponse.json(
-        { error: 'Missing tariffId or pickupTime. Use search-transfers first to get a valid option.' },
+        { error: 'Missing required booking details: airportId, zoneId, pickupTime, vehicleType' },
         { status: 400 }
       );
     }
 
-    // Get tariff details
+    // Find a matching tariff for this route and vehicle type
     const tariff = await queryOne<{
       id: number;
       supplier_id: number;
@@ -104,34 +89,36 @@ export async function POST(request: NextRequest) {
       base_price: number;
       price_per_pax: number | null;
       currency: string;
-      airport_id: number;
-      zone_id: number;
-      direction: string;
       commission_rate: number;
     }>(
       `SELECT t.id, t.supplier_id, t.route_id, t.vehicle_type,
               t.base_price, t.price_per_pax, t.currency,
-              r.airport_id, r.zone_id, r.direction,
               s.commission_rate
        FROM tariffs t
        INNER JOIN routes r ON r.id = t.route_id
        INNER JOIN suppliers s ON s.id = t.supplier_id
-       WHERE t.id = ? AND t.is_active = TRUE`,
-      [tariffId]
+       WHERE r.airport_id = ?
+         AND r.zone_id = ?
+         AND t.vehicle_type = ?
+         AND t.is_active = TRUE
+         AND r.is_active = TRUE
+         AND s.is_active = TRUE
+       LIMIT 1`,
+      [body.airportId, body.zoneId, body.vehicleType]
     );
 
     if (!tariff) {
       return NextResponse.json(
-        { error: 'Invalid tariff or tariff no longer available' },
+        { error: 'No available tariff for this route and vehicle type' },
         { status: 400 }
       );
     }
 
     // Calculate total price
-    const totalPax = paxAdults + paxChildren;
+    const paxAdults = body.paxAdults || 1;
     let totalPrice = Number(tariff.base_price);
-    if (tariff.price_per_pax && totalPax > 1) {
-      totalPrice += Number(tariff.price_per_pax) * (totalPax - 1);
+    if (tariff.price_per_pax && paxAdults > 1) {
+      totalPrice += Number(tariff.price_per_pax) * (paxAdults - 1);
     }
 
     // Calculate commission
@@ -151,188 +138,104 @@ export async function POST(request: NextRequest) {
       attempts++;
     }
 
+    const direction = body.direction || 'FROM_AIRPORT';
+    const currency = body.currency || tariff.currency || 'EUR';
+    const channel = body.channel || 'B2C';
+
     // Create booking with transaction
-    const result = await transaction(async (conn) => {
+    const bookingId = await transaction(async (conn) => {
       // Insert booking
       const [bookingResult] = await conn.execute(
         `INSERT INTO bookings (
-          public_code, supplier_id, channel, agency_ref,
+          public_code, supplier_id, channel,
           airport_id, zone_id, direction,
           pickup_address, dropoff_address,
-          flight_number, flight_date, flight_time,
+          flight_number,
           pickup_datetime, pax_adults, pax_children,
           vehicle_type, currency, base_price,
           total_price, commission, supplier_payout,
           status, payment_status, customer_notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'UNPAID', ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'UNPAID', ?)`,
         [
           publicCode,
           tariff.supplier_id,
-          body.channel,
-          body.agencyName || null,
-          tariff.airport_id,
-          tariff.zone_id,
-          tariff.direction === 'BOTH' ? 'FROM_AIRPORT' : tariff.direction,
+          channel,
+          body.airportId,
+          body.zoneId,
+          direction,
           body.pickupAddress || null,
           body.dropoffAddress || null,
           body.flightNumber || null,
-          body.flightDate || null,
-          body.flightTime || null,
-          pickupTime,
+          body.pickupTime,
           paxAdults,
-          paxChildren,
-          tariff.vehicle_type,
-          tariff.currency,
+          0, // pax_children
+          body.vehicleType,
+          currency,
           tariff.base_price,
           totalPrice,
           commission,
           supplierPayout,
-          body.customerNotes || null,
+          body.specialRequests || null,
         ]
       );
 
-      const bookingId = (bookingResult as unknown as { insertId: number }).insertId;
+      const newBookingId = (bookingResult as unknown as { insertId: number }).insertId;
 
       // Insert main passenger
+      const fullName = `${leadPassenger.firstName} ${leadPassenger.lastName}`.trim();
       await conn.execute(
         `INSERT INTO booking_passengers (booking_id, full_name, phone, email, is_lead)
          VALUES (?, ?, ?, ?, TRUE)`,
-        [bookingId, body.mainPassenger.fullName, body.mainPassenger.phone, body.mainPassenger.email || null]
+        [newBookingId, fullName, leadPassenger.phone, leadPassenger.email || null]
       );
-
-      // Insert additional passengers
-      if (body.additionalPassengers?.length) {
-        for (const passenger of body.additionalPassengers) {
-          await conn.execute(
-            `INSERT INTO booking_passengers (booking_id, full_name, phone, email, is_lead)
-             VALUES (?, ?, ?, ?, FALSE)`,
-            [bookingId, passenger.fullName, passenger.phone || null, passenger.email || null]
-          );
-        }
-      }
 
       // Create ride record (pending assignment)
       await conn.execute(
         `INSERT INTO rides (booking_id, supplier_id, status)
          VALUES (?, ?, 'PENDING_ASSIGN')`,
-        [bookingId, tariff.supplier_id]
+        [newBookingId, tariff.supplier_id]
       );
 
       // Create supplier payout record (pending)
       await conn.execute(
         `INSERT INTO supplier_payouts (supplier_id, booking_id, amount, currency, status)
          VALUES (?, ?, ?, ?, 'PENDING')`,
-        [tariff.supplier_id, bookingId, supplierPayout, tariff.currency]
+        [tariff.supplier_id, newBookingId, supplierPayout, currency]
       );
 
-      return bookingId;
+      return newBookingId;
     });
 
-    // Fetch created booking with details
+    // Fetch created booking
     const booking = await queryOne<{
       id: number;
       public_code: string;
-      supplier_id: number;
-      channel: BookingChannel;
-      airport_id: number;
-      zone_id: number;
-      direction: string;
-      flight_number: string | null;
-      flight_date: string | null;
-      flight_time: string | null;
-      pickup_datetime: string;
-      pax_adults: number;
-      pax_children: number;
-      vehicle_type: VehicleType;
-      currency: string;
-      total_price: number;
       status: string;
       payment_status: string;
-      created_at: string;
+      total_price: number;
+      currency: string;
     }>(
-      `SELECT id, public_code, supplier_id, channel,
-              airport_id, zone_id, direction,
-              flight_number, flight_date, flight_time,
-              pickup_datetime, pax_adults, pax_children,
-              vehicle_type, currency, total_price,
-              status, payment_status, created_at
+      `SELECT id, public_code, status, payment_status, total_price, currency
        FROM bookings WHERE id = ?`,
-      [result]
-    );
-
-    // Fetch passengers
-    const passengers = await query<{
-      id: number;
-      booking_id: number;
-      full_name: string;
-      phone: string | null;
-      email: string | null;
-      is_lead: boolean;
-    }>(
-      `SELECT id, booking_id, full_name, phone, email, is_lead
-       FROM booking_passengers WHERE booking_id = ?`,
-      [result]
-    );
-
-    // Get airport and zone details
-    const airport = await queryOne<{ id: number; code: string; name: string; city: string; country: string }>(
-      'SELECT id, code, name, city, country FROM airports WHERE id = ?',
-      [booking!.airport_id]
-    );
-
-    const zone = await queryOne<{ id: number; name: string; city: string; country: string }>(
-      'SELECT id, name, city, country FROM zones WHERE id = ?',
-      [booking!.zone_id]
+      [bookingId]
     );
 
     return NextResponse.json(
       {
-        booking: {
-          id: booking!.id,
-          publicCode: booking!.public_code,
-          supplierId: booking!.supplier_id,
-          channel: booking!.channel,
-          airport: airport ? {
-            id: airport.id,
-            code: airport.code,
-            name: airport.name,
-            city: airport.city,
-            country: airport.country,
-          } : null,
-          zone: zone ? {
-            id: zone.id,
-            name: zone.name,
-            city: zone.city,
-            country: zone.country,
-          } : null,
-          direction: booking!.direction,
-          flightNumber: booking!.flight_number,
-          flightDate: booking!.flight_date,
-          flightTime: booking!.flight_time,
-          pickupTime: booking!.pickup_datetime,
-          paxAdults: booking!.pax_adults,
-          paxChildren: booking!.pax_children,
-          vehicleType: booking!.vehicle_type,
-          currency: booking!.currency,
-          totalPrice: Number(booking!.total_price),
-          status: booking!.status,
-          paymentStatus: booking!.payment_status,
-        },
-        passengers: passengers.map((p) => ({
-          id: p.id,
-          bookingId: p.booking_id,
-          fullName: p.full_name,
-          phone: p.phone,
-          email: p.email,
-          isMain: p.is_lead,
-        })),
+        bookingId: booking!.id,
+        publicCode: booking!.public_code,
+        status: booking!.status,
+        paymentStatus: booking!.payment_status,
+        totalPrice: Number(booking!.total_price),
+        currency: booking!.currency,
+        message: 'Booking created successfully',
       },
       { status: 201 }
     );
   } catch (error) {
     console.error('Error creating booking:', error);
     return NextResponse.json(
-      { error: 'Failed to create booking' },
+      { error: 'Failed to create booking. Please try again.' },
       { status: 500 }
     );
   }
