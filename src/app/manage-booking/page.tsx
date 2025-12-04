@@ -52,32 +52,56 @@ export default function ManageBookingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Simulate API call
-    setTimeout(() => {
-      if (searchForm.bookingRef.toLowerCase() === 'demo' || searchForm.bookingRef.startsWith('ATP-')) {
-        setBooking({
-          ref: searchForm.bookingRef.toUpperCase() || 'ATP-123456',
-          status: 'CONFIRMED',
-          date: '2024-12-15',
-          time: '14:30',
-          from: 'London Heathrow Airport (LHR)',
-          to: 'Central London, Westminster',
-          vehicle: 'Business Sedan',
-          passengers: 2,
-          price: '€55.00',
-          driver: 'John Smith',
-          driverPhone: '+44 7XXX XXX XXX',
-        });
-      } else {
-        setError('Booking not found. Please check your booking reference and email address.');
+    try {
+      const response = await fetch(`/api/public/bookings/${encodeURIComponent(searchForm.bookingRef)}?email=${encodeURIComponent(searchForm.email)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Booking not found. Please check your booking reference and email address.');
+        setLoading(false);
+        return;
       }
+
+      // Check if email matches any passenger email
+      const passengerEmails = data.passengers?.map((p: { email: string }) => p.email?.toLowerCase()) || [];
+      if (!passengerEmails.includes(searchForm.email.toLowerCase())) {
+        setError('Email address does not match the booking. Please use the email address used when booking.');
+        setLoading(false);
+        return;
+      }
+
+      // Format the booking data
+      const pickupDate = new Date(data.pickupTime);
+      const from = data.direction === 'from_airport'
+        ? `${data.airport?.name} (${data.airport?.code})`
+        : data.pickupAddress || data.zone?.name;
+      const to = data.direction === 'from_airport'
+        ? data.dropoffAddress || data.zone?.name
+        : `${data.airport?.name} (${data.airport?.code})`;
+
+      setBooking({
+        ref: data.publicCode,
+        status: data.status,
+        date: pickupDate.toLocaleDateString('en-GB'),
+        time: pickupDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        from: from || 'N/A',
+        to: to || 'N/A',
+        vehicle: data.vehicleType,
+        passengers: data.paxAdults + data.paxChildren,
+        price: `${data.currency} ${data.totalPrice.toFixed(2)}`,
+        driver: data.ride?.driver?.name,
+        driverPhone: data.ride?.driver?.phone,
+      });
+    } catch {
+      setError('Unable to connect to the server. Please try again later.');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -298,8 +322,13 @@ export default function ManageBookingPage() {
               <Image src="/logo/logo_atp.jpg" alt="Airport Transfer Portal" width={180} height={54} className="h-12 w-auto rounded-lg mb-6" />
               <p className="text-gray-400 mb-6">Book reliable airport transfers worldwide from verified local suppliers.</p>
               <div className="flex gap-3">
-                {[FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn].map((Icon, idx) => (
-                  <a key={idx} href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-500 hover:text-white transition-all">
+                {[
+                  { Icon: FaFacebookF, href: 'https://facebook.com' },
+                  { Icon: FaTwitter, href: 'https://twitter.com' },
+                  { Icon: FaInstagram, href: 'https://instagram.com' },
+                  { Icon: FaLinkedinIn, href: 'https://linkedin.com' },
+                ].map(({ Icon, href }, idx) => (
+                  <a key={idx} href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-500 hover:text-white transition-all">
                     <Icon />
                   </a>
                 ))}
@@ -337,8 +366,9 @@ export default function ManageBookingPage() {
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className="text-gray-500 hover:text-white text-sm">Terms of Service</a>
-              <a href="#" className="text-gray-500 hover:text-white text-sm">Privacy Policy</a>
+              <Link href="/terms" className="text-gray-500 hover:text-white text-sm">Terms of Service</Link>
+              <Link href="/privacy" className="text-gray-500 hover:text-white text-sm">Privacy Policy</Link>
+              <Link href="/cookies" className="text-gray-500 hover:text-white text-sm">Cookie Policy</Link>
             </div>
           </div>
         </div>

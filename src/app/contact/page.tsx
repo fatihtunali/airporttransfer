@@ -245,12 +245,12 @@ export default function ContactPage() {
                 <p className="text-gray-600 mb-6">Stay connected and get updates on our social media channels.</p>
                 <div className="flex gap-3">
                   {[
-                    { Icon: FaFacebookF, label: 'Facebook' },
-                    { Icon: FaTwitter, label: 'Twitter' },
-                    { Icon: FaInstagram, label: 'Instagram' },
-                    { Icon: FaLinkedinIn, label: 'LinkedIn' },
-                  ].map(({ Icon, label }, idx) => (
-                    <a key={idx} href="#" className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 hover:bg-teal-500 hover:text-white transition-all" aria-label={label}>
+                    { Icon: FaFacebookF, label: 'Facebook', href: 'https://facebook.com' },
+                    { Icon: FaTwitter, label: 'Twitter', href: 'https://twitter.com' },
+                    { Icon: FaInstagram, label: 'Instagram', href: 'https://instagram.com' },
+                    { Icon: FaLinkedinIn, label: 'LinkedIn', href: 'https://linkedin.com' },
+                  ].map(({ Icon, label, href }, idx) => (
+                    <a key={idx} href={href} target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 hover:bg-teal-500 hover:text-white transition-all" aria-label={label}>
                       <Icon size={20} />
                     </a>
                   ))}
@@ -269,8 +269,13 @@ export default function ContactPage() {
               <Image src="/logo/logo_atp.jpg" alt="Airport Transfer Portal" width={180} height={54} className="h-12 w-auto rounded-lg mb-6" />
               <p className="text-gray-400 mb-6">Book reliable airport transfers worldwide from verified local suppliers.</p>
               <div className="flex gap-3">
-                {[FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn].map((Icon, idx) => (
-                  <a key={idx} href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-500 hover:text-white transition-all">
+                {[
+                  { Icon: FaFacebookF, href: 'https://facebook.com' },
+                  { Icon: FaTwitter, href: 'https://twitter.com' },
+                  { Icon: FaInstagram, href: 'https://instagram.com' },
+                  { Icon: FaLinkedinIn, href: 'https://linkedin.com' },
+                ].map(({ Icon, href }, idx) => (
+                  <a key={idx} href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-500 hover:text-white transition-all">
                     <Icon />
                   </a>
                 ))}
@@ -308,8 +313,9 @@ export default function ContactPage() {
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className="text-gray-500 hover:text-white text-sm">Terms of Service</a>
-              <a href="#" className="text-gray-500 hover:text-white text-sm">Privacy Policy</a>
+              <Link href="/terms" className="text-gray-500 hover:text-white text-sm">Terms of Service</Link>
+              <Link href="/privacy" className="text-gray-500 hover:text-white text-sm">Privacy Policy</Link>
+              <Link href="/cookies" className="text-gray-500 hover:text-white text-sm">Cookie Policy</Link>
             </div>
           </div>
         </div>
