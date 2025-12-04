@@ -6,19 +6,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   FaPlaneDeparture,
-  FaPlaneArrival,
-  FaCalendarAlt,
-  FaClock,
-  FaUsers,
-  FaSuitcase,
-  FaSearch,
+  FaMapMarkerAlt,
+  FaStar,
+  FaCheckCircle,
   FaShieldAlt,
   FaCar,
   FaGlobe,
   FaHandshake,
-  FaMapMarkerAlt,
-  FaStar,
-  FaCheckCircle,
   FaHeadset,
   FaCreditCard,
   FaUserTie,
@@ -32,7 +26,13 @@ import {
   FaFacebookF,
   FaTwitter,
   FaInstagram,
-  FaLinkedinIn
+  FaLinkedinIn,
+  FaUsers,
+  FaSuitcase,
+  FaPlane,
+  FaClock,
+  FaCalendarCheck,
+  FaRoute
 } from 'react-icons/fa';
 
 interface Airport {
@@ -54,7 +54,6 @@ type LocationItem = (Airport & { type: 'airport' }) | (Zone & { type: 'zone' });
 
 export default function Home() {
   const router = useRouter();
-  const [tripType, setTripType] = useState<'one-way' | 'round-trip'>('one-way');
   const [airports, setAirports] = useState<Airport[]>([]);
   const [filteredZones, setFilteredZones] = useState<Zone[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,11 +76,7 @@ export default function Home() {
   const [formData, setFormData] = useState({
     date: '',
     time: '',
-    returnDate: '',
-    returnTime: '',
     passengers: '2',
-    luggage: '2',
-    flightNumber: '',
   });
 
   // Scroll handler for navbar
@@ -196,48 +191,52 @@ export default function Home() {
       currency: 'EUR',
     });
 
-    if (formData.flightNumber) {
-      params.set('flightNumber', formData.flightNumber);
-    }
-
     router.push(`/search?${params.toString()}`);
   };
 
   const today = new Date().toISOString().split('T')[0];
 
+  // Stats counter animation
+  const stats = [
+    { value: '500+', label: 'Airports' },
+    { value: '100+', label: 'Countries' },
+    { value: '50K+', label: 'Happy Customers' },
+    { value: '4.9', label: 'Rating' },
+  ];
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className={`navbar ${isScrolled ? 'navbar-solid' : 'navbar-transparent'}`}>
-        <div className="container-custom">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'bg-white/95 backdrop-blur-lg shadow-lg' : 'bg-transparent'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center group">
               <Image
                 src="/logo/logo_atp.jpg"
                 alt="Airport Transfer Portal"
                 width={180}
                 height={50}
-                className="h-12 w-auto rounded"
+                className="h-12 w-auto rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
                 priority
               />
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-8">
-              <a href="#how-it-works" className="nav-link text-gray-700">
+            <div className="hidden lg:flex items-center gap-2">
+              <a href="#how-it-works" className={`px-4 py-2 rounded-full font-medium transition-all duration-300 ${isScrolled ? 'text-gray-700 hover:text-[#00b4b4] hover:bg-[#00b4b4]/10' : 'text-white/90 hover:text-white hover:bg-white/10'}`}>
                 How It Works
               </a>
-              <a href="#vehicles" className="nav-link text-gray-700">
-                Vehicles
+              <a href="#fleet" className={`px-4 py-2 rounded-full font-medium transition-all duration-300 ${isScrolled ? 'text-gray-700 hover:text-[#00b4b4] hover:bg-[#00b4b4]/10' : 'text-white/90 hover:text-white hover:bg-white/10'}`}>
+                Our Fleet
               </a>
-              <a href="#reviews" className="nav-link text-gray-700">
+              <a href="#reviews" className={`px-4 py-2 rounded-full font-medium transition-all duration-300 ${isScrolled ? 'text-gray-700 hover:text-[#00b4b4] hover:bg-[#00b4b4]/10' : 'text-white/90 hover:text-white hover:bg-white/10'}`}>
                 Reviews
               </a>
-              <Link href="/supplier/login" className="nav-link text-gray-700">
+              <Link href="/supplier/login" className={`px-4 py-2 rounded-full font-medium transition-all duration-300 ${isScrolled ? 'text-gray-700 hover:text-[#00b4b4] hover:bg-[#00b4b4]/10' : 'text-white/90 hover:text-white hover:bg-white/10'}`}>
                 Partner Login
               </Link>
-              <Link href="/agency/login" className="btn-primary btn-sm">
+              <Link href="/agency/login" className="ml-4 px-6 py-2.5 bg-gradient-to-r from-[#00b4b4] to-[#00d4d4] text-white font-semibold rounded-full hover:shadow-lg hover:shadow-[#00b4b4]/30 transition-all duration-300 hover:-translate-y-0.5">
                 Book Now
               </Link>
             </div>
@@ -245,86 +244,118 @@ export default function Home() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-700"
+              className={`lg:hidden p-2.5 rounded-xl transition-colors ${isScrolled ? 'text-gray-700 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}
             >
               {mobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
             </button>
           </div>
 
           {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="lg:hidden absolute top-20 left-0 right-0 bg-white shadow-xl border-t animate-slide-down">
-              <div className="p-4 space-y-4">
-                <a href="#how-it-works" className="block py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg">How It Works</a>
-                <a href="#vehicles" className="block py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg">Vehicles</a>
-                <a href="#reviews" className="block py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg">Reviews</a>
-                <Link href="/supplier/login" className="block py-3 px-4 text-gray-700 hover:bg-gray-50 rounded-lg">Partner Login</Link>
-                <Link href="/agency/login" className="btn-primary w-full text-center">Book Now</Link>
+          <div className={`lg:hidden absolute top-20 left-0 right-0 bg-white shadow-2xl border-t transition-all duration-300 ${mobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
+            <div className="p-6 space-y-2">
+              <a href="#how-it-works" className="block py-3 px-4 text-gray-700 hover:bg-[#00b4b4]/10 hover:text-[#00b4b4] rounded-xl font-medium transition-colors">How It Works</a>
+              <a href="#fleet" className="block py-3 px-4 text-gray-700 hover:bg-[#00b4b4]/10 hover:text-[#00b4b4] rounded-xl font-medium transition-colors">Our Fleet</a>
+              <a href="#reviews" className="block py-3 px-4 text-gray-700 hover:bg-[#00b4b4]/10 hover:text-[#00b4b4] rounded-xl font-medium transition-colors">Reviews</a>
+              <Link href="/supplier/login" className="block py-3 px-4 text-gray-700 hover:bg-[#00b4b4]/10 hover:text-[#00b4b4] rounded-xl font-medium transition-colors">Partner Login</Link>
+              <div className="pt-4">
+                <Link href="/agency/login" className="block py-3 px-4 bg-gradient-to-r from-[#00b4b4] to-[#00d4d4] text-white text-center font-semibold rounded-xl">Book Now</Link>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="hero">
-        {/* Background Image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url('/assets/airport-pickup.jpg')` }}
-        />
-        
-        <div className="relative z-10 w-full container-custom pt-32 pb-20">
-          {/* Centered Hero Content */}
-          <div className="text-center text-white animate-fade-in mb-10">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-              <FaStar className="text-yellow-400" />
-              <span className="text-sm font-medium">Rated 4.9/5 by 10,000+ customers</span>
+      {/* Hero Section - Clean & Modern */}
+      <section className="relative min-h-[100vh] flex items-center overflow-hidden">
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#1e3a5f] to-[#2d5a87]" />
+
+        {/* Subtle Pattern Overlay */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+            backgroundSize: '40px 40px'
+          }} />
+        </div>
+
+        {/* Floating Elements */}
+        <div className="absolute top-1/4 left-10 w-64 h-64 bg-[#00b4b4]/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-10 w-96 h-96 bg-[#00d4d4]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+            {/* Left Side - Hero Content */}
+            <div className="text-white space-y-8 animate-fade-in">
+              {/* Trust Badge */}
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+                <div className="flex -space-x-1">
+                  {[1,2,3,4,5].map(i => (
+                    <FaStar key={i} className="w-4 h-4 text-yellow-400" />
+                  ))}
+                </div>
+                <span className="text-sm font-medium text-white/90">Rated 4.9/5 by 50,000+ travelers</span>
+              </div>
+
+              {/* Main Headline */}
+              <div className="space-y-4">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
+                  Airport Transfers
+                  <span className="block mt-2 bg-gradient-to-r from-[#00d4d4] via-[#00b4b4] to-[#00d4d4] bg-clip-text text-transparent">
+                    Made Simple.
+                  </span>
+                </h1>
+                <p className="text-xl md:text-2xl text-white/70 max-w-lg leading-relaxed">
+                  Book reliable, pre-arranged transfers in 500+ cities worldwide. Your driver awaits.
+                </p>
+              </div>
+
+              {/* Quick Stats - Desktop */}
+              <div className="hidden md:flex items-center gap-8 pt-4">
+                {stats.map((stat, idx) => (
+                  <div key={idx} className="text-center">
+                    <div className="text-3xl font-bold text-[#00d4d4]">{stat.value}</div>
+                    <div className="text-sm text-white/60">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap gap-4 pt-2">
+                <div className="flex items-center gap-2 text-white/80">
+                  <FaCheckCircle className="text-[#00d4d4]" />
+                  <span className="text-sm">Free Cancellation</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <FaCheckCircle className="text-[#00d4d4]" />
+                  <span className="text-sm">Meet & Greet</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <FaCheckCircle className="text-[#00d4d4]" />
+                  <span className="text-sm">Flight Tracking</span>
+                </div>
+              </div>
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
-              Book Your Airport
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#00b4b4] to-[#00d4d4]">
-                Transfer Worldwide
-              </span>
-            </h1>
-
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto">
-              Reliable, comfortable, and affordable airport transfers from verified local suppliers.
-            </p>
-          </div>
-
-          {/* Wide Centered Search Form */}
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white/70 rounded-xl p-4 animate-slide-up">
-              <form onSubmit={handleSubmit}>
-                {/* Row 1: Trip Type Toggle - Colorful */}
-                <div className="flex justify-center mb-3">
-                  <div className="inline-flex rounded-lg overflow-hidden border border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => setTripType('one-way')}
-                      className={`px-5 py-2 text-sm font-semibold transition-all ${tripType === 'one-way' ? 'bg-[#00b4b4] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      One Way
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTripType('round-trip')}
-                      className={`px-5 py-2 text-sm font-semibold transition-all ${tripType === 'round-trip' ? 'bg-[#00b4b4] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      Round Trip
-                    </button>
-                  </div>
+            {/* Right Side - Booking Form */}
+            <div className="animate-slide-up">
+              <div className="bg-white rounded-3xl p-8 shadow-2xl shadow-black/20">
+                {/* Form Header */}
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Book Your Transfer</h2>
+                  <p className="text-gray-500 mt-1">Get instant quotes from local providers</p>
                 </div>
 
-                {/* Row 2: Pick Up & Drop Off */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* From Field */}
                   <div ref={fromRef} className="relative">
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Pick Up</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <FaPlaneDeparture className="inline mr-2 text-[#00b4b4]" />
+                      Pick-up Location
+                    </label>
                     <input
                       type="text"
-                      placeholder={loading ? 'Loading...' : 'Select airport'}
+                      placeholder={loading ? 'Loading airports...' : 'Airport, city or address'}
                       value={fromSearch}
                       onChange={(e) => {
                         setFromSearch(e.target.value);
@@ -332,25 +363,27 @@ export default function Home() {
                         setShowFromDropdown(true);
                       }}
                       onFocus={() => setShowFromDropdown(true)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
+                      className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#00b4b4] focus:bg-white transition-all duration-200"
                       required
                     />
                     {showFromDropdown && filteredAirports.length > 0 && (
-                      <div className="dropdown">
-                        {filteredAirports.slice(0, 8).map((airport) => (
+                      <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 max-h-72 overflow-y-auto">
+                        {filteredAirports.slice(0, 6).map((airport) => (
                           <button
                             key={airport.id}
                             type="button"
                             onClick={() => handleFromSelect(airport)}
-                            className="dropdown-item"
+                            className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#00b4b4]/5 transition-colors border-b border-gray-50 last:border-0"
                           >
-                            <FaPlaneDeparture className="dropdown-item-icon" />
-                            <div>
-                              <div className="dropdown-item-title flex items-center gap-2">
-                                <span className="badge badge-primary">{airport.code}</span>
-                                {airport.name}
+                            <div className="w-10 h-10 bg-[#00b4b4]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <FaPlane className="text-[#00b4b4]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-900 flex items-center gap-2">
+                                <span className="px-2 py-0.5 bg-[#00b4b4] text-white text-xs rounded-md font-bold">{airport.code}</span>
+                                <span className="truncate">{airport.name}</span>
                               </div>
-                              <div className="dropdown-item-subtitle">{airport.city}, {airport.country}</div>
+                              <div className="text-sm text-gray-500">{airport.city}, {airport.country}</div>
                             </div>
                           </button>
                         ))}
@@ -358,11 +391,15 @@ export default function Home() {
                     )}
                   </div>
 
+                  {/* To Field */}
                   <div ref={toRef} className="relative">
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Drop Off</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <FaMapMarkerAlt className="inline mr-2 text-[#ff6b35]" />
+                      Drop-off Location
+                    </label>
                     <input
                       type="text"
-                      placeholder={selectedFrom ? 'Select destination' : 'Select pickup first'}
+                      placeholder={selectedFrom ? 'Hotel, address or zone' : 'Select pick-up first'}
                       value={toSearch}
                       onChange={(e) => {
                         setToSearch(e.target.value);
@@ -370,260 +407,244 @@ export default function Home() {
                         setShowToDropdown(true);
                       }}
                       onFocus={() => selectedFrom && setShowToDropdown(true)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4] disabled:bg-gray-50"
+                      className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#00b4b4] focus:bg-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={!selectedFrom}
                       required
                     />
                     {showToDropdown && searchedZones.length > 0 && (
-                      <div className="dropdown">
-                        {searchedZones.slice(0, 8).map((zone) => (
+                      <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 max-h-72 overflow-y-auto">
+                        {searchedZones.slice(0, 6).map((zone) => (
                           <button
                             key={zone.id}
                             type="button"
                             onClick={() => handleToSelect(zone)}
-                            className="dropdown-item"
+                            className="w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#ff6b35]/5 transition-colors border-b border-gray-50 last:border-0"
                           >
-                            <FaMapMarkerAlt className="dropdown-item-icon text-[#ff6b35]" />
-                            <div>
-                              <div className="dropdown-item-title">{zone.name}</div>
-                              <div className="dropdown-item-subtitle">{zone.city}, {zone.country}</div>
+                            <div className="w-10 h-10 bg-[#ff6b35]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <FaMapMarkerAlt className="text-[#ff6b35]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-900 truncate">{zone.name}</div>
+                              <div className="text-sm text-gray-500">{zone.city}, {zone.country}</div>
                             </div>
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
-                </div>
 
-                {/* Row 3: Date, Time, Passengers, Luggage, Flight */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Date</label>
-                    <input
-                      type="date"
-                      min={today}
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Time</label>
-                    <input
-                      type="time"
-                      value={formData.time}
-                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Passengers</label>
-                    <select
-                      value={formData.passengers}
-                      onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Luggage</label>
-                    <select
-                      value={formData.luggage}
-                      onChange={(e) => setFormData({ ...formData, luggage: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
-                    >
-                      {[0, 1, 2, 3, 4, 5, 6].map((n) => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Flight No.</label>
-                    <input
-                      type="text"
-                      placeholder="TK1234"
-                      value={formData.flightNumber}
-                      onChange={(e) => setFormData({ ...formData, flightNumber: e.target.value.toUpperCase() })}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
-                    />
-                  </div>
-                </div>
-
-                {/* Round Trip Fields (conditional) */}
-                {tripType === 'round-trip' && (
-                  <div className="grid grid-cols-2 gap-2 mb-3 p-3 bg-[#f0fafa] rounded-lg border border-[#00b4b4]/20">
+                  {/* Date, Time, Passengers Row */}
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Return Date</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
                       <input
                         type="date"
-                        min={formData.date || today}
-                        value={formData.returnDate}
-                        onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
-                        required={tripType === 'round-trip'}
+                        min={today}
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        className="w-full px-3 py-3.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 focus:outline-none focus:border-[#00b4b4] focus:bg-white transition-all duration-200"
+                        required
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Return Time</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Time</label>
                       <input
                         type="time"
-                        value={formData.returnTime}
-                        onChange={(e) => setFormData({ ...formData, returnTime: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00b4b4]"
-                        required={tripType === 'round-trip'}
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        className="w-full px-3 py-3.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 focus:outline-none focus:border-[#00b4b4] focus:bg-white transition-all duration-200"
+                        required
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Guests</label>
+                      <select
+                        value={formData.passengers}
+                        onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
+                        className="w-full px-3 py-3.5 bg-gray-50 border-2 border-gray-100 rounded-xl text-gray-900 focus:outline-none focus:border-[#00b4b4] focus:bg-white transition-all duration-200 cursor-pointer"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                          <option key={n} value={n}>{n} {n === 1 ? 'Guest' : 'Guests'}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                )}
 
-                {/* Row 4: Search Button - Smaller */}
-                <div className="flex justify-center">
-                  <button type="submit" className="bg-[#ff6b35] hover:bg-[#e55a2b] text-white font-semibold px-8 py-2.5 rounded-lg transition-colors flex items-center gap-2 text-sm">
-                    <FaSearch className="text-xs" />
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    className="w-full py-4 bg-gradient-to-r from-[#ff6b35] to-[#ff8b5a] text-white font-bold text-lg rounded-xl hover:shadow-lg hover:shadow-[#ff6b35]/30 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-center gap-2 mt-6"
+                  >
                     Search Transfers
+                    <FaArrowRight className="text-sm" />
                   </button>
-                </div>
-              </form>
-            </div>
+                </form>
 
-            {/* Trust Indicators below form */}
-            <div className="flex flex-wrap justify-center gap-6 mt-6 text-white/90">
-              <div className="flex items-center gap-2">
-                <FaCheckCircle className="text-[#00b4b4]" />
-                <span>Free Cancellation</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FaCheckCircle className="text-[#00b4b4]" />
-                <span>24/7 Support</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FaCheckCircle className="text-[#00b4b4]" />
-                <span>Best Price Guarantee</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <FaCheckCircle className="text-[#00b4b4]" />
-                <span>500+ Airports</span>
+                {/* Form Footer */}
+                <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-gray-100">
+                  <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <FaShieldAlt className="text-green-500" />
+                    <span>Secure booking</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <FaCreditCard className="text-blue-500" />
+                    <span>Pay later</span>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Mobile Stats */}
+          <div className="grid grid-cols-4 gap-4 mt-12 md:hidden">
+            {stats.map((stat, idx) => (
+              <div key={idx} className="text-center">
+                <div className="text-2xl font-bold text-[#00d4d4]">{stat.value}</div>
+                <div className="text-xs text-white/60">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce hidden lg:block">
+          <div className="w-8 h-12 rounded-full border-2 border-white/30 flex items-start justify-center p-2">
+            <div className="w-1.5 h-3 bg-white/50 rounded-full animate-pulse" />
           </div>
         </div>
       </section>
 
-      {/* Trust Badges Section */}
-      <section className="py-6 bg-white border-b">
-        <div className="container-custom">
-          <div className="flex flex-wrap justify-center items-center gap-8 text-gray-500">
-            <div className="flex items-center gap-2">
-              <FaShieldAlt className="text-[#00b4b4]" />
-              <span className="text-sm font-medium">Secure Payment</span>
+      {/* Trusted By Section */}
+      <section className="py-8 bg-gray-50 border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+            <div className="flex items-center gap-2 text-gray-600">
+              <FaShieldAlt className="text-[#00b4b4] text-xl" />
+              <span className="font-medium">Secure Payments</span>
             </div>
-            <div className="flex items-center gap-2">
-              <FaCreditCard className="text-[#00b4b4]" />
-              <span className="text-sm font-medium">All Cards Accepted</span>
+            <div className="flex items-center gap-2 text-gray-600">
+              <FaCreditCard className="text-[#00b4b4] text-xl" />
+              <span className="font-medium">All Cards Accepted</span>
             </div>
-            <div className="flex items-center gap-2">
-              <FaHeadset className="text-[#00b4b4]" />
-              <span className="text-sm font-medium">24/7 Customer Support</span>
+            <div className="flex items-center gap-2 text-gray-600">
+              <FaHeadset className="text-[#00b4b4] text-xl" />
+              <span className="font-medium">24/7 Support</span>
             </div>
-            <div className="flex items-center gap-2">
-              <FaCheckCircle className="text-[#00b4b4]" />
-              <span className="text-sm font-medium">Free Cancellation</span>
+            <div className="flex items-center gap-2 text-gray-600">
+              <FaCheckCircle className="text-[#00b4b4] text-xl" />
+              <span className="font-medium">Free Cancellation</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="section-padding bg-[#f8fafc]" id="how-it-works">
-        <div className="container-custom">
+      <section className="py-24 bg-white" id="how-it-works">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="badge badge-primary mb-4">Simple & Easy</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              How It Works
+            <div className="inline-flex items-center gap-2 bg-[#00b4b4]/10 text-[#00b4b4] px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              <FaRoute /> Simple Process
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Book in 3 Easy Steps
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Book your airport transfer in just 3 simple steps
+              From search to pickup, we make airport transfers effortless
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="feature-card">
-              <div className="feature-icon feature-icon-teal">
-                <FaSearch size={28} />
+          <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
+            {[
+              {
+                step: '01',
+                icon: FaPlaneDeparture,
+                title: 'Search & Compare',
+                description: 'Enter your route and instantly compare prices from verified local suppliers.',
+                color: '#00b4b4'
+              },
+              {
+                step: '02',
+                icon: FaCar,
+                title: 'Choose Vehicle',
+                description: 'Select from economy to luxury vehicles. See photos, reviews, and inclusions.',
+                color: '#ff6b35'
+              },
+              {
+                step: '03',
+                icon: FaCalendarCheck,
+                title: 'Book & Relax',
+                description: 'Confirm with instant booking. Your driver will be waiting with a name sign.',
+                color: '#10b981'
+              }
+            ].map((item, idx) => (
+              <div key={idx} className="relative group">
+                <div className="bg-white rounded-3xl p-8 border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 h-full">
+                  <div className="flex items-center justify-between mb-6">
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                      style={{ backgroundColor: `${item.color}15` }}
+                    >
+                      <item.icon className="text-2xl" style={{ color: item.color }} />
+                    </div>
+                    <span className="text-5xl font-bold text-gray-100 group-hover:text-gray-200 transition-colors">{item.step}</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
+                  <p className="text-gray-600 leading-relaxed">{item.description}</p>
+                </div>
+                {idx < 2 && (
+                  <div className="hidden md:block absolute top-1/2 -right-6 lg:-right-8 w-12 lg:w-16 h-0.5 bg-gradient-to-r from-gray-200 to-transparent" />
+                )}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">1. Search & Compare</h3>
-              <p className="text-gray-600">
-                Enter your pickup and drop-off locations. Compare prices from multiple verified local suppliers.
-              </p>
-            </div>
-
-            <div className="feature-card">
-              <div className="feature-icon feature-icon-orange">
-                <FaCar size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">2. Choose Your Vehicle</h3>
-              <p className="text-gray-600">
-                Select from economy cars to luxury vehicles. Pick the one that fits your needs and budget.
-              </p>
-            </div>
-
-            <div className="feature-card">
-              <div className="feature-icon feature-icon-green">
-                <FaCheckCircle size={28} />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">3. Book & Relax</h3>
-              <p className="text-gray-600">
-                Confirm your booking with instant confirmation. Your driver will be waiting at the airport.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Vehicle Types Section */}
-      <section className="section-padding" id="vehicles">
-        <div className="container-custom">
+      {/* Vehicle Fleet Section */}
+      <section className="py-24 bg-gray-50" id="fleet">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="badge badge-secondary mb-4">Our Fleet</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Choose Your Vehicle
+            <div className="inline-flex items-center gap-2 bg-[#ff6b35]/10 text-[#ff6b35] px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              <FaCar /> Our Fleet
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Choose Your Ride
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              From budget-friendly sedans to luxury SUVs, we have the perfect ride for you
+              From budget-friendly sedans to luxury vehicles for any occasion
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { name: 'Economy Sedan', icon: FaCar, passengers: '1-3', luggage: '2', price: 'From $25' },
-              { name: 'Business Sedan', icon: FaUserTie, passengers: '1-3', luggage: '2', price: 'From $45' },
-              { name: 'Minivan', icon: FaShuttleVan, passengers: '4-6', luggage: '4', price: 'From $55' },
-              { name: 'Minibus', icon: FaBus, passengers: '7-16', luggage: '8', price: 'From $85' },
-            ].map((vehicle) => (
-              <div key={vehicle.name} className="vehicle-card">
-                <div className="vehicle-card-image">
-                  <vehicle.icon size={64} className="text-[#1e3a5f]" />
+              { name: 'Economy', icon: FaCar, passengers: '1-3', luggage: '2', price: 'From $25', desc: 'Comfortable & affordable' },
+              { name: 'Business', icon: FaUserTie, passengers: '1-3', luggage: '2', price: 'From $45', desc: 'Premium sedans' },
+              { name: 'Minivan', icon: FaShuttleVan, passengers: '4-6', luggage: '5', price: 'From $55', desc: 'Perfect for families' },
+              { name: 'Minibus', icon: FaBus, passengers: '7-16', luggage: '10', price: 'From $85', desc: 'Group travel' },
+            ].map((vehicle, idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-3xl overflow-hidden border-2 border-gray-100 hover:border-[#00b4b4] transition-all duration-300 hover:shadow-xl hover:-translate-y-2 group cursor-pointer"
+              >
+                <div className="h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:from-[#00b4b4]/5 group-hover:to-[#00b4b4]/10 transition-colors">
+                  <vehicle.icon className="text-7xl text-gray-300 group-hover:text-[#00b4b4] transition-colors" />
                 </div>
-                <div className="vehicle-card-content">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{vehicle.name}</h3>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                    <span className="flex items-center gap-1">
-                      <FaUsers className="text-[#00b4b4]" /> {vehicle.passengers}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <FaSuitcase className="text-[#00b4b4]" /> {vehicle.luggage}
-                    </span>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-bold text-gray-900">{vehicle.name}</h3>
+                    <span className="text-lg font-bold text-[#00b4b4]">{vehicle.price}</span>
                   </div>
-                  <div className="vehicle-card-price">{vehicle.price}</div>
+                  <p className="text-gray-500 text-sm mb-4">{vehicle.desc}</p>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1.5">
+                      <FaUsers className="text-[#00b4b4]" />
+                      <span>{vehicle.passengers}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <FaSuitcase className="text-[#00b4b4]" />
+                      <span>{vehicle.luggage}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -632,90 +653,87 @@ export default function Home() {
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="section-padding gradient-bg text-white">
-        <div className="container-custom">
+      <section className="py-24 bg-gradient-to-br from-[#0a1628] via-[#1e3a5f] to-[#2d5a87] text-white relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
+            backgroundSize: '50px 50px'
+          }} />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
-            <span className="badge bg-white/20 text-white mb-4">Why Choose Us</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              The Smart Way to Book Transfers
+            <div className="inline-flex items-center gap-2 bg-white/10 text-white px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              <FaStar className="text-yellow-400" /> Why Choose Us
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              The Smart Way to Travel
             </h2>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              Join thousands of satisfied travelers who trust us for their airport transfers
+            <p className="text-xl text-white/70 max-w-2xl mx-auto">
+              Join millions of travelers who trust us for hassle-free airport transfers
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FaGlobe className="w-8 h-8 text-[#00b4b4]" />
+            {[
+              { icon: FaGlobe, title: 'Global Coverage', desc: '500+ airports in 100+ countries', color: '#00b4b4' },
+              { icon: FaCar, title: 'Verified Suppliers', desc: 'Vetted local partners you can trust', color: '#ff6b35' },
+              { icon: FaShieldAlt, title: 'Secure Booking', desc: 'Protected payments & data', color: '#10b981' },
+              { icon: FaClock, title: '24/7 Support', desc: 'We are here when you need us', color: '#8b5cf6' },
+            ].map((item, idx) => (
+              <div key={idx} className="text-center group">
+                <div
+                  className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 transition-transform duration-300 group-hover:scale-110"
+                  style={{ backgroundColor: `${item.color}20` }}
+                >
+                  <item.icon className="text-3xl" style={{ color: item.color }} />
+                </div>
+                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                <p className="text-white/60">{item.desc}</p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Global Coverage</h3>
-              <p className="text-white/70">500+ airports in 100+ countries worldwide</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FaCar className="w-8 h-8 text-[#ff6b35]" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Local Suppliers</h3>
-              <p className="text-white/70">Verified partners with local expertise</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FaShieldAlt className="w-8 h-8 text-[#10b981]" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Secure Booking</h3>
-              <p className="text-white/70">Safe payment & instant confirmation</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FaHandshake className="w-8 h-8 text-[#8b5cf6]" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">24/7 Support</h3>
-              <p className="text-white/70">Customer support around the clock</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Reviews Section */}
-      <section className="section-padding bg-[#f8fafc]" id="reviews">
-        <div className="container-custom">
+      <section className="py-24 bg-white" id="reviews">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="badge badge-primary mb-4">Customer Reviews</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              What Our Customers Say
+            <div className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              <FaStar /> Customer Reviews
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Loved by Travelers
             </h2>
-            <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="flex items-center justify-center gap-2 mb-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <FaStar key={star} className="text-yellow-400 text-2xl" />
               ))}
-              <span className="text-xl font-bold text-gray-900 ml-2">4.9/5</span>
             </div>
-            <p className="text-gray-600">Based on 10,000+ reviews</p>
+            <p className="text-gray-600">4.9 out of 5 based on 50,000+ reviews</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { name: 'Sarah M.', location: 'London, UK', text: 'Excellent service! Driver was waiting right at arrivals with my name. Very professional and the car was spotless.', rating: 5 },
-              { name: 'Marco R.', location: 'Rome, Italy', text: 'Best airport transfer I\'ve ever booked. Great price, punctual driver, and easy booking process. Highly recommend!', rating: 5 },
-              { name: 'John D.', location: 'New York, USA', text: 'Used this service for a business trip. Everything was perfect - from booking to drop-off. Will use again!', rating: 5 },
+              { name: 'Sarah Mitchell', location: 'London, UK', text: 'Exceptional service! Driver was waiting at arrivals with my name. Professional, clean car, and great communication. Will definitely use again!', rating: 5, avatar: 'S' },
+              { name: 'Marco Rossi', location: 'Rome, Italy', text: 'Best transfer service I have used. Competitive prices, punctual drivers, and the booking process was incredibly smooth. Highly recommend!', rating: 5, avatar: 'M' },
+              { name: 'Emily Chen', location: 'Singapore', text: 'Used for a business trip - everything was perfect. Flight was delayed but driver tracked it and was there when I landed. Top notch!', rating: 5, avatar: 'E' },
             ].map((review, idx) => (
-              <div key={idx} className="card p-6">
+              <div key={idx} className="bg-gray-50 rounded-3xl p-8 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
                 <div className="flex items-center gap-1 mb-4">
                   {[...Array(review.rating)].map((_, i) => (
                     <FaStar key={i} className="text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-gray-600 mb-4">&quot;{review.text}&quot;</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-[#1e3a5f] rounded-full flex items-center justify-center text-white font-semibold">
-                    {review.name.charAt(0)}
+                <p className="text-gray-700 mb-6 leading-relaxed">&ldquo;{review.text}&rdquo;</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#00b4b4] to-[#00d4d4] rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {review.avatar}
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900">{review.name}</div>
+                    <div className="font-bold text-gray-900">{review.name}</div>
                     <div className="text-sm text-gray-500">{review.location}</div>
                   </div>
                 </div>
@@ -726,32 +744,38 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="section-padding">
-        <div className="container-custom">
-          <div className="card-glass p-8 md:p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Ready to Book Your Transfer?
-            </h2>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Join thousands of happy travelers. Book your airport transfer now and travel with peace of mind.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#" className="btn-primary btn-lg">
-                <FaSearch />
-                Search Transfers
-              </a>
-              <Link href="/supplier/register" className="btn-outline btn-lg">
-                Become a Partner
-                <FaArrowRight />
-              </Link>
+      <section className="py-24 bg-gray-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-br from-[#1e3a5f] to-[#2d5a87] rounded-[3rem] p-12 md:p-16 text-center text-white relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#00b4b4]/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#ff6b35]/20 rounded-full blur-3xl" />
+
+            <div className="relative z-10">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">
+                Ready to Book?
+              </h2>
+              <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
+                Join thousands of happy travelers. Book your airport transfer now and travel with peace of mind.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-8 py-4 bg-gradient-to-r from-[#ff6b35] to-[#ff8b5a] text-white font-bold text-lg rounded-full hover:shadow-lg hover:shadow-[#ff6b35]/30 transition-all duration-300 hover:-translate-y-0.5 inline-flex items-center justify-center gap-2">
+                  Book Your Transfer
+                  <FaArrowRight />
+                </a>
+                <Link href="/supplier/register" className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold text-lg rounded-full hover:bg-white/20 transition-all duration-300 border border-white/20 inline-flex items-center justify-center gap-2">
+                  Become a Partner
+                  <FaHandshake />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="footer py-16">
-        <div className="container-custom">
+      <footer className="bg-[#0a1628] text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             <div>
               <Image
@@ -759,74 +783,72 @@ export default function Home() {
                 alt="Airport Transfer Portal"
                 width={180}
                 height={54}
-                className="h-12 w-auto bg-white rounded p-1 mb-4"
+                className="h-12 w-auto rounded-lg mb-6"
               />
-              <p className="text-gray-400 mb-6">
-                Book reliable airport transfers worldwide from verified local suppliers.
+              <p className="text-gray-400 mb-6 leading-relaxed">
+                Book reliable airport transfers worldwide from verified local suppliers. Travel with confidence.
               </p>
-              <div className="flex gap-4">
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#00b4b4] hover:text-white transition-colors">
-                  <FaFacebookF />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#00b4b4] hover:text-white transition-colors">
-                  <FaTwitter />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#00b4b4] hover:text-white transition-colors">
-                  <FaInstagram />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-gray-400 hover:bg-[#00b4b4] hover:text-white transition-colors">
-                  <FaLinkedinIn />
-                </a>
+              <div className="flex gap-3">
+                {[FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn].map((Icon, idx) => (
+                  <a key={idx} href="#" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:bg-[#00b4b4] hover:text-white transition-all duration-300">
+                    <Icon />
+                  </a>
+                ))}
               </div>
             </div>
 
             <div>
-              <h4 className="footer-heading">Transfers</h4>
+              <h4 className="text-lg font-bold mb-6">Quick Links</h4>
               <ul className="space-y-3">
-                <li><a href="#" className="footer-link">Search Transfers</a></li>
-                <li><a href="#" className="footer-link">Popular Routes</a></li>
-                <li><a href="#" className="footer-link">Airport Guides</a></li>
-                <li><a href="#" className="footer-link">Travel Tips</a></li>
+                {['Search Transfers', 'Popular Routes', 'Airport Guides', 'Travel Tips'].map((link, idx) => (
+                  <li key={idx}>
+                    <a href="#" className="text-gray-400 hover:text-[#00b4b4] transition-colors">{link}</a>
+                  </li>
+                ))}
               </ul>
             </div>
 
             <div>
-              <h4 className="footer-heading">Support</h4>
+              <h4 className="text-lg font-bold mb-6">Support</h4>
               <ul className="space-y-3">
-                <li><a href="#" className="footer-link">Help Center</a></li>
-                <li><a href="#" className="footer-link">Contact Us</a></li>
-                <li><a href="#" className="footer-link">FAQs</a></li>
-                <li><a href="#" className="footer-link">Manage Booking</a></li>
+                {['Help Center', 'Contact Us', 'FAQs', 'Manage Booking'].map((link, idx) => (
+                  <li key={idx}>
+                    <a href="#" className="text-gray-400 hover:text-[#00b4b4] transition-colors">{link}</a>
+                  </li>
+                ))}
               </ul>
             </div>
 
             <div>
-              <h4 className="footer-heading">Contact</h4>
-              <ul className="space-y-3">
+              <h4 className="text-lg font-bold mb-6">Contact Us</h4>
+              <ul className="space-y-4">
                 <li className="flex items-center gap-3 text-gray-400">
-                  <FaPhone className="text-[#00b4b4]" />
-                  +1 (555) 123-4567
+                  <div className="w-10 h-10 bg-[#00b4b4]/10 rounded-xl flex items-center justify-center">
+                    <FaPhone className="text-[#00b4b4]" />
+                  </div>
+                  <span>+1 (555) 123-4567</span>
                 </li>
                 <li className="flex items-center gap-3 text-gray-400">
-                  <FaEnvelope className="text-[#00b4b4]" />
-                  support@airporttransfer.com
+                  <div className="w-10 h-10 bg-[#00b4b4]/10 rounded-xl flex items-center justify-center">
+                    <FaEnvelope className="text-[#00b4b4]" />
+                  </div>
+                  <span>support@airporttransfer.com</span>
                 </li>
               </ul>
               <div className="mt-6">
-                <h5 className="text-white font-medium mb-2">Become a Partner</h5>
-                <Link href="/supplier/register" className="text-[#00b4b4] hover:text-[#00d4d4] transition-colors flex items-center gap-2">
-                  Join our network <FaArrowRight />
+                <Link href="/supplier/register" className="inline-flex items-center gap-2 text-[#00b4b4] hover:text-[#00d4d4] font-semibold transition-colors">
+                  Become a Partner <FaArrowRight />
                 </Link>
               </div>
             </div>
           </div>
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400">&copy; {new Date().getFullYear()} AirportTransfer Portal. All rights reserved.</p>
+            <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className="footer-link text-sm">Terms of Service</a>
-              <a href="#" className="footer-link text-sm">Privacy Policy</a>
-              <a href="#" className="footer-link text-sm">Cookie Policy</a>
+              {['Terms of Service', 'Privacy Policy', 'Cookie Policy'].map((link, idx) => (
+                <a key={idx} href="#" className="text-gray-500 hover:text-white text-sm transition-colors">{link}</a>
+              ))}
             </div>
           </div>
         </div>

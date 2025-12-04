@@ -9,7 +9,13 @@
       "Bash(ssh root@134.209.137.11:*)",
       "Bash(npm run build:*)",
       "Bash(curl:*)",
-      "WebFetch(domain:www.airporttransfer.com)"
+      "WebFetch(domain:www.airporttransfer.com)",
+      "WebSearch",
+      "WebFetch(domain:www.blacklane.com)",
+      "WebFetch(domain:www.intui.travel)",
+      "WebFetch(domain:www.welcomepickups.com)",
+      "WebFetch(domain:dribbble.com)",
+      "WebFetch(domain:gettransfer.com)"
     ],
     "deny": [],
     "ask": []
