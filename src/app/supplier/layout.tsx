@@ -60,7 +60,16 @@ export default function SupplierLayout({
   const [loading, setLoading] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+  // Skip layout for login and register pages
+  const isAuthPage = pathname === '/supplier/login' || pathname === '/supplier/register';
+
   useEffect(() => {
+    // Don't fetch supplier info for auth pages
+    if (isAuthPage) {
+      setLoading(false);
+      return;
+    }
+
     const fetchSupplierInfo = async () => {
       try {
         const res = await fetch('/api/supplier/me');
@@ -90,7 +99,7 @@ export default function SupplierLayout({
     };
 
     fetchSupplierInfo();
-  }, [router]);
+  }, [router, isAuthPage]);
 
   const handleLogout = async () => {
     try {
@@ -100,6 +109,11 @@ export default function SupplierLayout({
       console.error('Logout error:', error);
     }
   };
+
+  // For login/register pages, just render children without sidebar
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
