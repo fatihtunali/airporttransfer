@@ -223,7 +223,7 @@ function SearchResultsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <div className="relative w-20 h-20 mx-auto mb-6">
             <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
@@ -239,7 +239,7 @@ function SearchResultsContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-slate-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaPlane className="w-8 h-8 text-red-500" />
@@ -259,7 +259,7 @@ function SearchResultsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-slate-100">
       {/* Modern Header */}
       <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -269,7 +269,7 @@ function SearchResultsContent() {
               <span className="font-medium">Back to Search</span>
             </Link>
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center">
                 <FaCar className="w-5 h-5 text-white" />
               </div>
               <span className="font-bold text-xl text-primary hidden sm:block">Airport Transfer Portal</span>
@@ -285,7 +285,7 @@ function SearchResultsContent() {
       </header>
 
       {/* Search Summary Banner */}
-      <div className="bg-gradient-to-r from-primary via-primary-dark to-secondary text-white py-8 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-gray-900 via-teal-900 to-cyan-900 text-white py-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -504,7 +504,7 @@ function SearchResultsContent() {
             </div>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white font-semibold rounded-xl hover:shadow-xl transition-all"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold rounded-xl hover:shadow-xl transition-all"
             >
               <FaArrowLeft />
               Try Different Route
@@ -602,7 +602,7 @@ function SearchResultsContent() {
                     <div className="flex flex-col items-end gap-3">
                       <div className="text-right">
                         <p className="text-sm text-gray-500 mb-1">Total price</p>
-                        <div className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                        <div className="text-3xl font-bold bg-gradient-to-r from-teal-500 to-cyan-500 bg-clip-text text-transparent">
                           {option.currency} {option.totalPrice.toFixed(2)}
                         </div>
                       </div>
@@ -688,7 +688,7 @@ function SearchResultsContent() {
               <p className="text-sm text-gray-500">Verified drivers</p>
             </div>
             <div className="text-center">
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+              <div className="w-14 h-14 bg-gradient-to-br from-teal-400 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
                 <FaCheck className="w-6 h-6 text-white" />
               </div>
               <p className="font-semibold text-gray-800">Best Price</p>
@@ -699,7 +699,7 @@ function SearchResultsContent() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-primary to-primary-dark text-white py-8 mt-12">
+      <footer className="bg-gradient-to-r from-gray-900 to-teal-900 text-white py-8 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -721,7 +721,7 @@ function SearchResultsContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <div className="relative w-20 h-20 mx-auto mb-6">
             <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>

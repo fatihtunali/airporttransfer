@@ -80,7 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-teal-900 to-cyan-900">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -90,12 +90,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-gradient-to-b from-slate-900 to-slate-950 border-r border-white/5 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-gradient-to-b from-gray-900 to-gray-950 border-r border-white/5 transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-20 px-6 border-b border-white/5">
             <Link href="/admin" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20">
                 <FaShieldAlt className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -124,7 +124,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                     isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-600/20'
+                      ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-600/20'
                       : 'text-slate-400 hover:bg-white/5 hover:text-white'
                   }`}
                 >
@@ -147,7 +147,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* User section at bottom */}
           <div className="p-4 border-t border-white/5">
             <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
-              <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+              <div className="w-11 h-11 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
                 {user?.fullName?.charAt(0) || 'A'}
               </div>
               <div className="flex-1 min-w-0">
@@ -169,7 +169,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main content */}
       <div className="lg:pl-72">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 bg-slate-900/80 backdrop-blur-xl border-b border-white/5">
+        <header className="sticky top-0 z-30 bg-gray-900/80 backdrop-blur-xl border-b border-white/5">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6">
             <div className="flex items-center gap-4">
               <button
@@ -186,7 +186,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <input
                     type="text"
                     placeholder="Search..."
-                    className="w-64 pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-colors"
+                    className="w-64 pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500/50 focus:bg-white/10 transition-colors"
                   />
                 </div>
               </div>
@@ -201,7 +201,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {/* Notifications */}
               <button className="relative p-2.5 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors">
                 <FaBell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-slate-900"></span>
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-gray-900"></span>
               </button>
 
               {/* User dropdown */}
@@ -210,7 +210,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl transition-colors"
                 >
-                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold shadow-lg">
+                  <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center text-white font-semibold shadow-lg">
                     {user?.fullName?.charAt(0) || 'A'}
                   </div>
                   <FaChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
@@ -222,7 +222,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       className="fixed inset-0 z-40"
                       onClick={() => setUserMenuOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-56 bg-slate-800 rounded-xl shadow-2xl border border-white/10 py-2 z-50">
+                    <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-xl shadow-2xl border border-white/10 py-2 z-50">
                       <div className="px-4 py-3 border-b border-white/10">
                         <p className="text-sm font-semibold text-white">{user?.fullName}</p>
                         <p className="text-xs text-slate-400">{user?.email}</p>

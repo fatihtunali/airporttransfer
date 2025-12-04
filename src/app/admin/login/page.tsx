@@ -56,14 +56,14 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-teal-900 to-cyan-900 flex">
       {/* Left Side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20"></div>
-          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-600/20 to-cyan-600/20"></div>
+          <div className="absolute top-0 left-0 w-96 h-96 bg-teal-500/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
         </div>
 
         {/* Grid Pattern */}
@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
           {/* Logo */}
           <div className="flex items-center gap-4 mb-16">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/30">
+            <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-teal-500/30">
               <FaShieldAlt className="w-8 h-8 text-white" />
             </div>
             <div>
@@ -88,7 +88,7 @@ export default function AdminLoginPage() {
           {/* Hero Text */}
           <h1 className="text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight">
             Manage Your<br />
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
               Transfer Platform
             </span>
           </h1>
@@ -99,16 +99,16 @@ export default function AdminLoginPage() {
           {/* Features */}
           <div className="grid grid-cols-2 gap-6">
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
-              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
-                <FaChartLine className="w-5 h-5 text-blue-400" />
+              <div className="w-12 h-12 bg-teal-500/20 rounded-xl flex items-center justify-center mb-4">
+                <FaChartLine className="w-5 h-5 text-teal-400" />
               </div>
               <h3 className="text-white font-semibold mb-1">Real-time Analytics</h3>
               <p className="text-slate-500 text-sm">Monitor performance metrics</p>
             </div>
 
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
-              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4">
-                <FaUsers className="w-5 h-5 text-purple-400" />
+              <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center mb-4">
+                <FaUsers className="w-5 h-5 text-cyan-400" />
               </div>
               <h3 className="text-white font-semibold mb-1">User Management</h3>
               <p className="text-slate-500 text-sm">Control access levels</p>
@@ -139,7 +139,7 @@ export default function AdminLoginPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center gap-3">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
                 <FaShieldAlt className="w-7 h-7 text-white" />
               </div>
               <span className="font-bold text-2xl text-white">ATP Admin</span>
@@ -176,7 +176,7 @@ export default function AdminLoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-700/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-colors"
+                    className="w-full pl-12 pr-4 py-4 bg-slate-700/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-colors"
                     placeholder="admin@example.com"
                     required
                   />
@@ -193,7 +193,7 @@ export default function AdminLoginPage() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-700/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-colors"
+                    className="w-full pl-12 pr-4 py-4 bg-slate-700/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 transition-colors"
                     placeholder="Enter your password"
                     required
                   />
@@ -203,7 +203,7 @@ export default function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/25 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
+                className="w-full py-4 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-teal-500/25 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-teal-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">

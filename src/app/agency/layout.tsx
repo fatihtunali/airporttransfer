@@ -107,12 +107,12 @@ export default function AgencyLayout({
                 className="h-8 w-auto rounded"
               />
             </Link>
-            <p className="text-xs text-emerald-600 font-medium mt-1">Agency Portal</p>
+            <p className="text-xs text-teal-600 font-medium mt-1">Agency Portal</p>
           </div>
 
           {/* Agency Info */}
           {agency && (
-            <div className="px-4 py-3 bg-emerald-50 border-b border-emerald-100">
+            <div className="px-4 py-3 bg-teal-50 border-b border-teal-100">
               <p className="text-sm font-medium text-gray-900 truncate">{agency.name}</p>
               <p className="text-xs text-gray-600 mt-1">
                 Credit: {agency.currency} {agency.creditBalance.toFixed(2)}
@@ -131,7 +131,7 @@ export default function AgencyLayout({
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-emerald-100 text-emerald-700'
+                      ? 'bg-teal-100 text-teal-700'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
@@ -170,7 +170,7 @@ export default function AgencyLayout({
             <div className="flex items-center gap-4 ml-auto">
               <Link
                 href="/agency/api"
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-emerald-600"
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-teal-600"
               >
                 <FaKey className="w-4 h-4" />
                 <span className="hidden sm:inline">API Keys</span>

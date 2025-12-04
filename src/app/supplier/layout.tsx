@@ -103,7 +103,7 @@ export default function SupplierLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <div className="relative w-16 h-16 mx-auto mb-4">
             <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
@@ -117,7 +117,7 @@ export default function SupplierLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-100">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -128,7 +128,7 @@ export default function SupplierLayout({
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-72 bg-gradient-to-b from-primary via-primary-dark to-[#0f2744] transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-full w-72 bg-gradient-to-b from-gray-900 via-teal-900 to-gray-950 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -138,7 +138,7 @@ export default function SupplierLayout({
             <div className="flex items-center justify-between">
               <Link href="/supplier" className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <FaPlane className="w-5 h-5 text-accent" />
+                  <FaPlane className="w-5 h-5 text-teal-400" />
                 </div>
                 <div>
                   <span className="font-bold text-white text-lg">ATP</span>
@@ -158,7 +158,7 @@ export default function SupplierLayout({
           {supplier && (
             <div className="p-5 border-b border-white/10">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent-dark rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   {supplier.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -205,14 +205,14 @@ export default function SupplierLayout({
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                     isActive
-                      ? 'bg-accent text-white'
+                      ? 'bg-teal-500 text-white'
                       : 'bg-white/5 group-hover:bg-white/10'
                   }`}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <span className="font-medium">{item.label}</span>
                   {isActive && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent"></div>
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-teal-400"></div>
                   )}
                 </Link>
               );
@@ -281,7 +281,7 @@ export default function SupplierLayout({
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-xl transition-colors"
                 >
-                  <div className="w-9 h-9 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center text-white font-semibold">
+                  <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center text-white font-semibold">
                     {supplier?.name.charAt(0) || 'S'}
                   </div>
                   <div className="hidden md:block text-left">
@@ -360,9 +360,9 @@ export default function SupplierLayout({
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
             <p>© {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
             <div className="flex items-center gap-4">
-              <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-              <a href="mailto:support@airporttransferportal.com" className="hover:text-primary transition-colors">Contact Support</a>
+              <a href="#" className="hover:text-teal-600 transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-teal-600 transition-colors">Terms of Service</a>
+              <a href="mailto:support@airporttransferportal.com" className="hover:text-teal-600 transition-colors">Contact Support</a>
             </div>
           </div>
         </footer>

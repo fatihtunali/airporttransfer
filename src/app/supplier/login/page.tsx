@@ -46,9 +46,9 @@ export default function SupplierLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-slate-100 flex">
       {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary-dark to-secondary relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-teal-900 to-cyan-900 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -59,7 +59,7 @@ export default function SupplierLogin() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 mb-12">
             <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-              <FaPlane className="w-7 h-7 text-accent" />
+              <FaPlane className="w-7 h-7 text-teal-400" />
             </div>
             <div>
               <span className="font-bold text-white text-2xl">Airport Transfer</span>
@@ -79,7 +79,7 @@ export default function SupplierLogin() {
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
-                <FaChartLine className="w-5 h-5 text-accent" />
+                <FaChartLine className="w-5 h-5 text-teal-400" />
               </div>
               <div>
                 <h3 className="text-white font-semibold">Increase Revenue</h3>
@@ -89,7 +89,7 @@ export default function SupplierLogin() {
 
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
-                <FaShieldAlt className="w-5 h-5 text-accent" />
+                <FaShieldAlt className="w-5 h-5 text-teal-400" />
               </div>
               <div>
                 <h3 className="text-white font-semibold">Secure Payments</h3>
@@ -99,7 +99,7 @@ export default function SupplierLogin() {
 
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
-                <FaHeadset className="w-5 h-5 text-accent" />
+                <FaHeadset className="w-5 h-5 text-teal-400" />
               </div>
               <div>
                 <h3 className="text-white font-semibold">24/7 Support</h3>
@@ -110,7 +110,7 @@ export default function SupplierLogin() {
         </div>
 
         {/* Decorative Elements */}
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
         <div className="absolute top-20 right-20 w-64 h-64 bg-white/5 rounded-full blur-2xl"></div>
       </div>
 
@@ -120,10 +120,10 @@ export default function SupplierLogin() {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center">
                 <FaCar className="w-6 h-6 text-white" />
               </div>
-              <span className="font-bold text-2xl text-primary">ATP Supplier</span>
+              <span className="font-bold text-2xl text-teal-600">ATP Supplier</span>
             </Link>
           </div>
 
@@ -202,7 +202,7 @@ export default function SupplierLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-primary to-secondary text-white py-4 rounded-xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white py-4 rounded-xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

@@ -47,7 +47,7 @@ export default function AgencyLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -61,8 +61,8 @@ export default function AgencyLogin() {
             />
           </Link>
           <div className="flex items-center justify-center gap-2 mt-3">
-            <FaBuilding className="text-emerald-600" />
-            <span className="text-emerald-600 font-semibold">Agency Portal</span>
+            <FaBuilding className="text-teal-600" />
+            <span className="text-teal-600 font-semibold">Agency Portal</span>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function AgencyLogin() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="your@email.com"
                 required
               />
@@ -111,7 +111,7 @@ export default function AgencyLogin() {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 placeholder="••••••••"
                 required
               />
@@ -121,7 +121,7 @@ export default function AgencyLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -137,7 +137,7 @@ export default function AgencyLogin() {
         <div className="mt-6 text-center space-y-3">
           <Link
             href="/agency/forgot-password"
-            className="text-emerald-600 hover:text-emerald-700 text-sm"
+            className="text-teal-600 hover:text-teal-700 text-sm"
           >
             Forgot your password?
           </Link>
@@ -147,7 +147,7 @@ export default function AgencyLogin() {
               Don&apos;t have an agency account?{' '}
               <Link
                 href="/agency/register"
-                className="text-emerald-600 hover:text-emerald-700 font-medium"
+                className="text-teal-600 hover:text-teal-700 font-medium"
               >
                 Register Now
               </Link>

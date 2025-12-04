@@ -35,7 +35,7 @@ export default function DispatchLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-teal-950 to-gray-900">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -52,7 +52,7 @@ export default function DispatchLayout({
       >
         <div className="flex items-center justify-between h-16 px-4 bg-gray-900">
           <Link href="/dispatch" className="flex items-center gap-2">
-            <FaHeadset className="w-8 h-8 text-cyan-400" />
+            <FaHeadset className="w-8 h-8 text-teal-400" />
             <span className="text-xl font-bold text-white">Dispatch Center</span>
           </Link>
           <button
@@ -84,7 +84,7 @@ export default function DispatchLayout({
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive
-                    ? 'bg-cyan-600 text-white'
+                    ? 'bg-teal-600 text-white'
                     : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}
               >
@@ -104,7 +104,7 @@ export default function DispatchLayout({
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-700">
           <div className="grid grid-cols-2 gap-3 text-center">
             <div className="bg-gray-800 rounded-lg p-2">
-              <div className="text-2xl font-bold text-cyan-400">24</div>
+              <div className="text-2xl font-bold text-teal-400">24</div>
               <div className="text-xs text-gray-400">Active Rides</div>
             </div>
             <div className="bg-gray-800 rounded-lg p-2">
@@ -148,7 +148,7 @@ export default function DispatchLayout({
 
               {/* User */}
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">D</span>
                 </div>
                 <span className="text-sm text-white hidden sm:block">Dispatcher</span>
