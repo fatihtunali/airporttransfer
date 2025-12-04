@@ -356,7 +356,7 @@ export default function Home() {
                         setShowFromDropdown(true);
                       }}
                       onFocus={() => setShowFromDropdown(true)}
-                      className="w-full px-4 py-4 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm"
+                      className="w-full px-4 py-4 bg-white border-2 border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm"
                       required
                     />
                     {showFromDropdown && filteredAirports.length > 0 && (
@@ -400,7 +400,7 @@ export default function Home() {
                         setShowToDropdown(true);
                       }}
                       onFocus={() => selectedFrom && setShowToDropdown(true)}
-                      className="w-full px-4 py-4 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50"
+                      className="w-full px-4 py-4 bg-white border-2 border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50"
                       disabled={!selectedFrom}
                       required
                     />
@@ -435,7 +435,7 @@ export default function Home() {
                         min={today}
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm"
+                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm"
                         required
                       />
                     </div>
@@ -445,7 +445,7 @@ export default function Home() {
                         type="time"
                         value={formData.time}
                         onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm"
+                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm"
                         required
                       />
                     </div>
@@ -454,7 +454,7 @@ export default function Home() {
                       <select
                         value={formData.passengers}
                         onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm cursor-pointer"
+                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm cursor-pointer"
                       >
                         {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                           <option key={n} value={n}>{n} {n === 1 ? 'Guest' : 'Guests'}</option>
