@@ -81,6 +81,8 @@ export default function BecomePartnerPage() {
     companyName: '',
     contactName: '',
     email: '',
+    password: '',
+    confirmPassword: '',
     phone: '',
     city: '',
     country: '',
@@ -102,31 +104,50 @@ export default function BecomePartnerPage() {
     setLoading(true);
     setError('');
 
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    // Validate password length
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch('/api/supplier-leads', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          companyName: formData.companyName,
-          contactName: formData.contactName,
           email: formData.email,
+          password: formData.password,
+          fullName: formData.contactName,
           phone: formData.phone,
-          city: formData.city,
-          country: formData.country,
-          fleetSize: formData.fleetSize,
-          message: formData.message,
-          source: 'become-partner',
+          role: 'SUPPLIER_OWNER',
+          supplier: {
+            name: formData.companyName,
+            contactName: formData.contactName,
+            contactEmail: formData.email,
+            contactPhone: formData.phone,
+            country: formData.country,
+            city: formData.city,
+          },
         }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to submit application');
+        throw new Error(data.error || 'Failed to register');
       }
 
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit application');
+      setError(err instanceof Error ? err.message : 'Failed to register');
     } finally {
       setLoading(false);
     }
@@ -338,6 +359,32 @@ export default function BecomePartnerPage() {
                 </div>
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Password *</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-teal-500 transition-colors"
+                      placeholder="Min. 8 characters"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password *</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      value={formData.confirmPassword}
+                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-teal-500 transition-colors"
+                      placeholder="Confirm your password"
+                    />
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">City *</label>
                     <input
                       type="text"
@@ -398,15 +445,24 @@ export default function BecomePartnerPage() {
           ) : (
             <div className="bg-white rounded-3xl p-12 shadow-lg text-center">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaCheckCircle className="text-4xl text-green-500" />
+                <FaEnvelope className="text-4xl text-green-500" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Application Submitted!</h2>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Thank you for your interest in partnering with us. Our team will review your application and contact you within 48 hours.
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Check Your Email!</h2>
+              <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                We&apos;ve sent a verification link to <strong>{formData.email}</strong>.
+                Please click the link to verify your email and activate your account.
               </p>
-              <Link href="/" className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold rounded-full">
-                Return to Home <FaArrowRight />
-              </Link>
+              <p className="text-gray-500 text-sm mb-8">
+                After verifying your email, you can log in to your supplier dashboard to complete your profile and start receiving bookings.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/supplier/login" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold rounded-full">
+                  Go to Login <FaArrowRight />
+                </Link>
+                <Link href="/" className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-gray-200 text-gray-700 font-bold rounded-full hover:border-teal-500 hover:text-teal-600 transition-colors">
+                  Return to Home
+                </Link>
+              </div>
             </div>
           )}
         </div>
