@@ -12,6 +12,7 @@ export interface JWTPayload {
   userId: number;
   email: string;
   role: string;
+  impersonatedBy?: number; // Admin user ID if impersonating
 }
 
 // Hash password

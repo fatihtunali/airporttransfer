@@ -96,6 +96,8 @@ export async function GET(request: NextRequest) {
         ratingAvg: supplier.rating_avg,
         ratingCount: supplier.rating_count,
       },
+      // Include impersonation status if applicable
+      impersonatedBy: payload.impersonatedBy || null,
     });
   } catch (error) {
     console.error('Error fetching supplier profile:', error);

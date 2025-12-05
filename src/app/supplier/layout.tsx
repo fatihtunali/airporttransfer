@@ -30,6 +30,7 @@ interface SupplierInfo {
   id: number;
   name: string;
   isVerified: boolean;
+  impersonatedBy?: number | null;
 }
 
 interface ExpiryAlert {
@@ -79,7 +80,12 @@ export default function SupplierLayout({
         const res = await fetch('/api/supplier/me');
         if (res.ok) {
           const data = await res.json();
-          setSupplier(data);
+          setSupplier({
+            id: data.supplier.id,
+            name: data.supplier.name,
+            isVerified: data.supplier.isVerified,
+            impersonatedBy: data.impersonatedBy,
+          });
 
           // Fetch expiry alerts only if authenticated
           const alertRes = await fetch('/api/supplier/expiring-documents');
@@ -114,6 +120,17 @@ export default function SupplierLayout({
     }
   };
 
+  const handleStopImpersonating = async () => {
+    try {
+      const res = await fetch('/api/admin/impersonate', { method: 'DELETE' });
+      if (res.ok) {
+        router.push('/admin/suppliers');
+      }
+    } catch (error) {
+      console.error('Stop impersonating error:', error);
+    }
+  };
+
   // For login/register pages, just render children without sidebar
   if (isAuthPage) {
     return <>{children}</>;
@@ -136,6 +153,22 @@ export default function SupplierLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-100">
+      {/* Impersonation Banner */}
+      {supplier?.impersonatedBy && (
+        <div className="bg-purple-600 text-white px-4 py-2 flex items-center justify-between z-[100] sticky top-0">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">👤</span>
+            <span className="font-medium">Admin View: You are viewing as {supplier.name}</span>
+          </div>
+          <button
+            onClick={handleStopImpersonating}
+            className="px-4 py-1 bg-white text-purple-600 rounded-lg font-medium hover:bg-purple-50 transition-colors"
+          >
+            Stop Impersonating
+          </button>
+        </div>
+      )}
+
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Supplier {
   id: number;
@@ -24,6 +25,7 @@ interface Supplier {
 }
 
 export default function SuppliersPage() {
+  const router = useRouter();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -31,6 +33,7 @@ export default function SuppliersPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [impersonating, setImpersonating] = useState(false);
 
   useEffect(() => {
     loadSuppliers();
@@ -89,6 +92,28 @@ export default function SuppliersPage() {
       console.error('Toggle active error:', error);
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleImpersonate = async (supplierId: number) => {
+    try {
+      setImpersonating(true);
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ supplierId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        router.push(data.redirectTo || '/supplier');
+      } else {
+        alert(data.error || 'Failed to impersonate');
+      }
+    } catch (error) {
+      console.error('Impersonate error:', error);
+      alert('Failed to impersonate supplier');
+    } finally {
+      setImpersonating(false);
     }
   };
 
@@ -246,6 +271,14 @@ export default function SuppliersPage() {
                         >
                           View
                         </button>
+                        <button
+                          onClick={() => handleImpersonate(supplier.id)}
+                          disabled={impersonating}
+                          className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                          title="Login as this supplier"
+                        >
+                          👤
+                        </button>
                         {!supplier.isVerified && (
                           <button
                             onClick={() => handleVerify(supplier.id)}
@@ -373,6 +406,13 @@ export default function SuppliersPage() {
 
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t">
+                <button
+                  onClick={() => handleImpersonate(selectedSupplier.id)}
+                  disabled={impersonating}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                >
+                  👤 Login as Supplier
+                </button>
                 {!selectedSupplier.isVerified && (
                   <button
                     onClick={() => handleVerify(selectedSupplier.id)}
