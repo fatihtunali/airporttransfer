@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, execute } from '@/lib/db';
-import { getSupplierAuth } from '@/lib/supplier-auth';
+import { authenticateSupplier } from '@/lib/supplier-auth';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -9,10 +9,11 @@ interface RouteParams {
 // PUT - Update a service zone
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const auth = await getSupplierAuth(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await authenticateSupplier(request);
+    if (!authResult.success) {
+      return authResult.response;
     }
+    const supplierId = authResult.payload.supplierId;
 
     const { id } = await params;
     const zoneId = parseInt(id);
@@ -22,7 +23,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // Verify ownership
     const existing = await query<{ id: number }>(
       'SELECT id FROM supplier_service_zones WHERE id = ? AND supplier_id = ?',
-      [zoneId, auth.supplierId]
+      [zoneId, supplierId]
     );
 
     if (existing.length === 0) {
@@ -67,10 +68,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // DELETE - Remove a service zone
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const auth = await getSupplierAuth(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await authenticateSupplier(request);
+    if (!authResult.success) {
+      return authResult.response;
     }
+    const supplierId = authResult.payload.supplierId;
 
     const { id } = await params;
     const zoneId = parseInt(id);
@@ -78,7 +80,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Verify ownership
     const existing = await query<{ id: number }>(
       'SELECT id FROM supplier_service_zones WHERE id = ? AND supplier_id = ?',
-      [zoneId, auth.supplierId]
+      [zoneId, supplierId]
     );
 
     if (existing.length === 0) {

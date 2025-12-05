@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, insert } from '@/lib/db';
-import { getSupplierAuth } from '@/lib/supplier-auth';
+import { authenticateSupplier } from '@/lib/supplier-auth';
 
 interface ServiceZone {
   id: number;
@@ -17,10 +17,11 @@ interface ServiceZone {
 // GET - List supplier's service zones
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getSupplierAuth(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await authenticateSupplier(request);
+    if (!authResult.success) {
+      return authResult.response;
     }
+    const supplierId = authResult.payload.supplierId;
 
     const zones = await query<ServiceZone>(`
       SELECT
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       JOIN airports a ON sz.airport_id = a.id
       WHERE sz.supplier_id = ?
       ORDER BY a.country, a.city, a.code
-    `, [auth.supplierId]);
+    `, [supplierId]);
 
     return NextResponse.json(
       zones.map((z) => ({
@@ -63,10 +64,11 @@ export async function GET(request: NextRequest) {
 // POST - Add new service zones
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getSupplierAuth(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const authResult = await authenticateSupplier(request);
+    if (!authResult.success) {
+      return authResult.response;
     }
+    const supplierId = authResult.payload.supplierId;
 
     const body = await request.json();
     const { airportIds, maxDistanceKm } = body;
@@ -85,14 +87,14 @@ export async function POST(request: NextRequest) {
       // Check if already exists
       const existing = await query<{ id: number }>(
         'SELECT id FROM supplier_service_zones WHERE supplier_id = ? AND airport_id = ?',
-        [auth.supplierId, airportId]
+        [supplierId, airportId]
       );
 
       if (existing.length === 0) {
         const id = await insert(
           `INSERT INTO supplier_service_zones (supplier_id, airport_id, max_distance_km, is_active)
            VALUES (?, ?, ?, 1)`,
-          [auth.supplierId, airportId, distance]
+          [supplierId, airportId, distance]
         );
         addedZones.push(id);
       }
