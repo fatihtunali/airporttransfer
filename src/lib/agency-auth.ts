@@ -131,11 +131,13 @@ export async function authenticateApiKey(
 }
 
 // Helper to check if user can manage agency settings
+// Note: role comes from agency_users table (OWNER, MANAGER, BOOKER)
 export function canManageAgency(role: string): boolean {
-  return role === 'OWNER' || role === 'MANAGER';
+  // Support both short and full role names for flexibility
+  return ['OWNER', 'MANAGER', 'AGENCY_OWNER', 'AGENCY_MANAGER'].includes(role);
 }
 
 // Helper to check if user can make bookings
 export function canMakeBookings(role: string): boolean {
-  return role === 'OWNER' || role === 'MANAGER' || role === 'BOOKER';
+  return ['OWNER', 'MANAGER', 'BOOKER', 'AGENCY_OWNER', 'AGENCY_MANAGER', 'AGENCY_BOOKER'].includes(role);
 }

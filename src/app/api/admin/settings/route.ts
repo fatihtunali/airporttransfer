@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { authenticateAdmin } from '@/lib/admin-auth';
 
 interface SettingRow {
   setting_key: string;
   setting_value: string;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Authenticate admin for settings access
+  const authResult = await authenticateAdmin(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+
   try {
     const settings = await query<SettingRow>('SELECT setting_key, setting_value FROM system_settings');
 
@@ -61,6 +68,12 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  // Authenticate admin
+  const authResult = await authenticateAdmin(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+
   try {
     const settings = await request.json();
 

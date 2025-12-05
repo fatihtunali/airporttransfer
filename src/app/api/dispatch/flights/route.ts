@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { authenticateAdmin } from '@/lib/admin-auth';
+
+// Authenticate dispatcher (admin or dispatcher role)
+async function authenticateDispatcher(request: NextRequest) {
+  const authResult = await authenticateAdmin(request);
+  if (!authResult.success) return authResult;
+
+  // Allow ADMIN and DISPATCHER roles
+  if (!['ADMIN', 'DISPATCHER'].includes(authResult.payload.role)) {
+    return {
+      success: false as const,
+      response: NextResponse.json({ error: 'Dispatcher access required' }, { status: 403 })
+    };
+  }
+  return authResult;
+}
 
 interface FlightRow {
   id: number;
@@ -27,6 +43,10 @@ interface FlightRow {
 }
 
 export async function GET(request: NextRequest) {
+  // Authenticate
+  const authResult = await authenticateDispatcher(request);
+  if (!authResult.success) return authResult.response;
+
   const { searchParams } = new URL(request.url);
   const filter = searchParams.get('filter') || 'all';
 
@@ -111,6 +131,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Authenticate
+  const authResult = await authenticateDispatcher(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
     const { bookingId, flightNumber, flightDate, departureAirport, arrivalAirport, scheduledDeparture, scheduledArrival } = body;
@@ -140,6 +164,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  // Authenticate
+  const authResult = await authenticateDispatcher(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
     const { id, status, estimatedArrival, actualArrival, delayMinutes, delayReason, terminal, gate, baggageClaim, trackingSource } = body;

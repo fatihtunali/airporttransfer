@@ -162,6 +162,13 @@ export async function POST(request: NextRequest) {
     [bookingId, tariff.supplier_id]
   );
 
+  // Create supplier payout record
+  await query(
+    `INSERT INTO supplier_payouts (supplier_id, booking_id, amount, currency, status)
+     VALUES (?, ?, ?, ?, 'PENDING')`,
+    [tariff.supplier_id, bookingId, supplierPayout, tariff.currency]
+  );
+
   return NextResponse.json({
     success: true,
     booking: {

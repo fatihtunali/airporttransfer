@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, insert } from '@/lib/db';
+import { authenticateAdmin } from '@/lib/admin-auth';
+
+// Authenticate dispatcher (admin or dispatcher role)
+async function authenticateDispatcher(request: NextRequest) {
+  const authResult = await authenticateAdmin(request);
+  if (!authResult.success) return authResult;
+
+  if (!['ADMIN', 'DISPATCHER'].includes(authResult.payload.role)) {
+    return {
+      success: false as const,
+      response: NextResponse.json({ error: 'Dispatcher access required' }, { status: 403 })
+    };
+  }
+  return authResult;
+}
 
 interface NotificationRow {
   id: number;
@@ -24,6 +39,10 @@ interface NotificationRow {
 }
 
 export async function GET(request: NextRequest) {
+  // Authenticate
+  const authResult = await authenticateDispatcher(request);
+  if (!authResult.success) return authResult.response;
+
   const { searchParams } = new URL(request.url);
   const recipientType = searchParams.get('recipientType');
   const recipientId = searchParams.get('recipientId');
@@ -109,6 +128,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Authenticate
+  const authResult = await authenticateDispatcher(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
     const {
@@ -142,6 +165,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  // Authenticate
+  const authResult = await authenticateDispatcher(request);
+  if (!authResult.success) return authResult.response;
+
   try {
     const body = await request.json();
     const { id, ids, status, markAsRead } = body;

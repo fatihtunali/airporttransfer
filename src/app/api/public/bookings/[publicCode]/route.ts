@@ -8,10 +8,20 @@ export async function GET(
 ) {
   try {
     const { publicCode } = await params;
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get('email');
 
     if (!publicCode) {
       return NextResponse.json(
         { error: 'Public code is required' },
+        { status: 400 }
+      );
+    }
+
+    // Email verification is required for security
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Email is required for verification' },
         { status: 400 }
       );
     }
@@ -57,6 +67,19 @@ export async function GET(
       return NextResponse.json(
         { error: 'Booking not found' },
         { status: 404 }
+      );
+    }
+
+    // Verify email matches lead passenger
+    const leadPassenger = await queryOne<{ email: string | null }>(
+      `SELECT email FROM booking_passengers WHERE booking_id = ? AND is_lead = TRUE`,
+      [booking.id]
+    );
+
+    if (!leadPassenger?.email || leadPassenger.email.toLowerCase() !== email.toLowerCase()) {
+      return NextResponse.json(
+        { error: 'Email does not match booking records' },
+        { status: 403 }
       );
     }
 
