@@ -14,7 +14,7 @@ import {
   FaLinkedinIn,
   FaMapMarkerAlt,
   FaClock,
-  FaHeadset,
+  FaWhatsapp,
   FaComments,
   FaPaperPlane,
 } from 'react-icons/fa';
@@ -94,7 +94,7 @@ export default function ContactPage() {
             {[
               { icon: FaPhone, title: 'Call Us', value: '+90 216 557 52 52', subtitle: 'Available 24/7', color: 'teal', href: 'tel:+902165575252' },
               { icon: FaEnvelope, title: 'Email Us', value: 'support@airporttransferportal.com', subtitle: 'Response within 2 hours', color: 'cyan', href: 'mailto:support@airporttransferportal.com' },
-              { icon: FaHeadset, title: 'Live Chat', value: 'Start a conversation', subtitle: 'Chat with our team', color: 'emerald', href: '#chat' },
+              { icon: FaWhatsapp, title: 'WhatsApp', value: '+90 532 585 87 86', subtitle: 'Chat with us instantly', color: 'emerald', href: 'https://wa.me/905325858786?text=Hello!%20I%20would%20like%20to%20inquire%20about%20airport%20transfer%20services.' },
             ].map((item, idx) => (
               <a
                 key={idx}
