@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '20', 10) || 20));
     const offset = (page - 1) * pageSize;
 
-    // Get drivers for supplier
+    // Get drivers for supplier (LIMIT/OFFSET embedded directly as MySQL2 doesn't support them as bind params)
     const drivers = await query<DriverRow>(
       `SELECT id, supplier_id, user_id, full_name, phone, email,
               license_number, license_expiry, photo_url, languages,
@@ -62,8 +62,8 @@ export async function GET(request: NextRequest) {
        FROM drivers
        WHERE supplier_id = ?
        ORDER BY created_at DESC
-       LIMIT ? OFFSET ?`,
-      [payload.supplierId, pageSize, offset]
+       LIMIT ${pageSize} OFFSET ${offset}`,
+      [payload.supplierId]
     );
 
     // Get total count

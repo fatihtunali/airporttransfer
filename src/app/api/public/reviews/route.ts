@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // LIMIT/OFFSET embedded directly as MySQL2 doesn't support them as bind params
   const reviews = await query<Review>(
     `SELECT
        r.id,
@@ -59,8 +60,8 @@ export async function GET(request: NextRequest) {
      JOIN suppliers s ON s.id = r.supplier_id
      WHERE r.supplier_id = ? AND r.is_published = TRUE
      ORDER BY r.created_at DESC
-     LIMIT ? OFFSET ?`,
-    [supplierId, limit, offset]
+     LIMIT ${limit} OFFSET ${offset}`,
+    [supplierId]
   );
 
   // Get aggregate stats

@@ -83,8 +83,8 @@ export async function GET(request: NextRequest) {
       params.push(parseInt(routeId));
     }
 
-    sql += ` ORDER BY t.created_at DESC LIMIT ? OFFSET ?`;
-    params.push(pageSize, offset);
+    // LIMIT/OFFSET embedded directly as MySQL2 doesn't support them as bind params
+    sql += ` ORDER BY t.created_at DESC LIMIT ${pageSize} OFFSET ${offset}`;
 
     const tariffs = await query<TariffRow>(sql, params);
 

@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') || '20', 10) || 20));
     const offset = (page - 1) * pageSize;
 
-    // Get vehicles for supplier
+    // Get vehicles for supplier (LIMIT/OFFSET embedded directly as MySQL2 doesn't support them as bind params)
     const vehicles = await query<VehicleRow>(
       `SELECT id, supplier_id, plate_number, brand, model, year, color,
               seat_count, luggage_count, vehicle_type, features, images,
@@ -67,8 +67,8 @@ export async function GET(request: NextRequest) {
        FROM vehicles
        WHERE supplier_id = ?
        ORDER BY created_at DESC
-       LIMIT ? OFFSET ?`,
-      [payload.supplierId, pageSize, offset]
+       LIMIT ${pageSize} OFFSET ${offset}`,
+      [payload.supplierId]
     );
 
     // Get total count

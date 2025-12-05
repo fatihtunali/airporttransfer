@@ -102,8 +102,8 @@ export async function GET(request: NextRequest) {
       params.push(toDate);
     }
 
-    sql += ` ORDER BY b.pickup_datetime DESC LIMIT ? OFFSET ?`;
-    params.push(pageSize, offset);
+    // LIMIT/OFFSET embedded directly as MySQL2 doesn't support them as bind params
+    sql += ` ORDER BY b.pickup_datetime DESC LIMIT ${pageSize} OFFSET ${offset}`;
 
     const rides = await query<RideRow>(sql, params);
 
