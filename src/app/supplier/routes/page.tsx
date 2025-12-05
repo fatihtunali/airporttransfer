@@ -79,7 +79,7 @@ export default function SupplierRoutesPage() {
     try {
       const [routesRes, zonesRes, serviceZonesRes] = await Promise.all([
         fetch('/api/supplier/routes'),
-        fetch('/api/zones'),
+        fetch('/api/public/zones'),
         fetch('/api/supplier/zones'),
       ]);
 
