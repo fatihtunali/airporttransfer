@@ -17,7 +17,11 @@
       "WebFetch(domain:dribbble.com)",
       "WebFetch(domain:gettransfer.com)",
       "Bash(grep:*)",
-      "WebFetch(domain:airporttransferportal.com)"
+      "WebFetch(domain:airporttransferportal.com)",
+      "Bash(scp:*)",
+      "Bash(ssh n8n@192.168.1.107 \"docker cp /tmp/supplier-v3.json n8n:/tmp/supplier-v3.json && docker exec n8n n8n import:workflow --input=/tmp/supplier-v3.json 2>&1\")",
+      "WebFetch(domain:www.limousineworldwide.directory)",
+      "WebFetch(domain:nelivery.org)"
     ],
     "deny": [],
     "ask": []

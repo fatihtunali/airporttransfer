@@ -1,8 +1,89 @@
 {
   "metadata": {
     "lastUpdated": "2025-12-05",
-    "totalContacts": 0,
+    "totalContacts": 5,
     "targetCities": 100
   },
-  "contacts": []
+  "contacts": [
+    {
+      "id": "seed-1",
+      "companyName": "Ontario Limousine Operators Association (OLOA)",
+      "contactName": "",
+      "email": "info@oloa.ca",
+      "phone": "+18667006562",
+      "website": "https://www.oloa.ca/",
+      "city": "Toronto",
+      "country": "Canada",
+      "language": "en",
+      "source": "manual-research",
+      "status": "new",
+      "emails": [],
+      "createdAt": "2025-12-05T00:00:00.000Z",
+      "notes": "Association - can provide member referrals"
+    },
+    {
+      "id": "seed-2",
+      "companyName": "National Limousine Association (NLA)",
+      "contactName": "",
+      "email": "info@limo.org",
+      "phone": "+18006527007",
+      "website": "https://www.limo.org/",
+      "city": "Marlton",
+      "country": "USA",
+      "language": "en",
+      "source": "manual-research",
+      "status": "new",
+      "emails": [],
+      "createdAt": "2025-12-05T00:00:00.000Z",
+      "notes": "Major US limousine association - has member directory"
+    },
+    {
+      "id": "seed-3",
+      "companyName": "International Limousine Association",
+      "contactName": "",
+      "email": "contact@limousineassociation.international",
+      "phone": "",
+      "website": "https://www.limousineassociation.international/",
+      "city": "International",
+      "country": "International",
+      "language": "en",
+      "source": "manual-research",
+      "status": "new",
+      "emails": [],
+      "createdAt": "2025-12-05T00:00:00.000Z",
+      "notes": "Global directory for limousine companies"
+    },
+    {
+      "id": "seed-4",
+      "companyName": "Blacklane GmbH",
+      "contactName": "",
+      "email": "partners@blacklane.com",
+      "phone": "",
+      "website": "https://www.blacklane.com/",
+      "city": "Berlin",
+      "country": "Germany",
+      "language": "en",
+      "source": "manual-research",
+      "status": "new",
+      "emails": [],
+      "createdAt": "2025-12-05T00:00:00.000Z",
+      "notes": "Major global chauffeur service - potential partner or competitor intel"
+    },
+    {
+      "id": "seed-5",
+      "companyName": "Welcome Pickups",
+      "contactName": "",
+      "email": "partners@welcomepickups.com",
+      "phone": "",
+      "website": "https://www.welcomepickups.com/",
+      "city": "Athens",
+      "country": "Greece",
+      "language": "en",
+      "source": "manual-research",
+      "status": "new",
+      "emails": [],
+      "createdAt": "2025-12-05T00:00:00.000Z",
+      "notes": "Major European transfer service - operates in multiple cities"
+    }
+  ]
 }
