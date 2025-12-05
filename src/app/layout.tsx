@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   title: "AirportTransfer Portal - Global Airport Transfers",
   description: "Book reliable airport transfers worldwide. Compare prices from local suppliers and book your ride in seconds.",
   keywords: "airport transfer, taxi, shuttle, private transfer, airport pickup, global transfers",
+  icons: {
+    icon: '/icon.svg',
+    apple: '/apple-icon.svg',
+  },
 };
 
 export default function RootLayout({
