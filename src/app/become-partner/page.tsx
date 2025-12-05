@@ -88,6 +88,8 @@ export default function BecomePartnerPage() {
     message: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -95,9 +97,39 @@ export default function BecomePartnerPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/supplier-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: formData.companyName,
+          contactName: formData.contactName,
+          email: formData.email,
+          phone: formData.phone,
+          city: formData.city,
+          country: formData.country,
+          fleetSize: formData.fleetSize,
+          message: formData.message,
+          source: 'become-partner',
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to submit application');
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit application');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -249,6 +281,12 @@ export default function BecomePartnerPage() {
                 <p className="text-gray-600">Fill out the form below and our team will contact you within 48 hours.</p>
               </div>
 
+              {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                  {error}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid md:grid-cols-2 gap-5">
                   <div>
@@ -350,9 +388,10 @@ export default function BecomePartnerPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold text-lg rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all flex items-center justify-center gap-2"
+                  disabled={loading}
+                  className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold text-lg rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit Application <FaArrowRight />
+                  {loading ? 'Submitting...' : 'Submit Application'} {!loading && <FaArrowRight />}
                 </button>
               </form>
             </div>
