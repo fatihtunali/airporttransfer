@@ -1,7 +1,7 @@
 // Fetch received emails from Resend and forward to inbox
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY || 'RESEND_API_KEY_REMOVED');
+const resend = new Resend(process.env.RESEND_API_KEY || process.env.RESEND_API_KEY);
 
 const FORWARD_TO = 'info@airporttransferportal.com';
 const PROCESSED_FILE = '/tmp/processed-emails.json';

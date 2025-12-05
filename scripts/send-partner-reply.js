@@ -1,6 +1,6 @@
 // Send partnership reply emails to specific suppliers
 const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY || 'RESEND_API_KEY_REMOVED');
+const resend = new Resend(process.env.RESEND_API_KEY || process.env.RESEND_API_KEY);
 
 const recipients = [
   { email: 'fatihtunali@funnytourism.com', name: 'Partner' }

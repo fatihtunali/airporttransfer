@@ -24,7 +24,7 @@ const CONFIG = {
     secure: false,
     auth: {
       user: 'partners@airporttransferportal.com',
-      pass: process.env.SMTP_PASSWORD || 'SMTP_PASSWORD_REMOVED'
+      pass: process.env.SMTP_PASSWORD
     },
     tls: {
       rejectUnauthorized: false

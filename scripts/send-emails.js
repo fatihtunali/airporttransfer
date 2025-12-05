@@ -3,7 +3,7 @@ const { Resend } = require('resend');
 const fs = require('fs');
 const path = require('path');
 
-const resend = new Resend('RESEND_API_KEY_REMOVED');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const CONTACTS_PATH = path.join(__dirname, 'supplier-outreach', 'contacts.json');
 const LOGO_URL = 'https://airporttransferportal.com/logo/logo_atp.jpg';

@@ -1,5 +1,5 @@
 const { Resend } = require('resend');
-const resend = new Resend('RESEND_API_KEY_REMOVED');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function send() {
   const result = await resend.emails.send({
