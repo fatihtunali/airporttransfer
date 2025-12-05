@@ -863,3 +863,117 @@ h1, h2, h3, h4, h5, h6 {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
+
+/* ============================================
+   MOBILE SPECIFIC FIXES
+   ============================================ */
+
+/* Prevent iOS zoom on input focus - inputs need 16px+ font size */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  input[type="time"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Fix iOS Safari tap highlight */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fix iOS button styling */
+input[type="submit"],
+input[type="button"],
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Fix iOS date/time input styling */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 48px;
+}
+
+/* Fix iOS select styling */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Safe area padding for iPhone X+ notch */
+@supports (padding: max(0px)) {
+  .safe-area-inset {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Touch-friendly tap targets - minimum 44x44px */
+@media screen and (max-width: 768px) {
+  button,
+  a,
+  input[type="submit"],
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Fix sticky header on iOS */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Smooth scrolling for mobile (but respect user preferences) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Hide scrollbars on mobile but keep functionality */
+@media screen and (max-width: 768px) {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Mobile-friendly modal positioning */
+@media screen and (max-width: 768px) {
+  .modal-mobile {
+    max-height: 90vh;
+    max-height: 90dvh; /* Dynamic viewport height for mobile browsers */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}

@@ -434,7 +434,7 @@ export default function Home() {
                   </div>
 
                   {/* Date, Time, Passengers Row */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
                       <input
@@ -442,7 +442,7 @@ export default function Home() {
                         min={today}
                         value={formData.date}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm"
+                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm text-base"
                         required
                       />
                     </div>
@@ -452,16 +452,16 @@ export default function Home() {
                         type="time"
                         value={formData.time}
                         onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm"
+                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm text-base"
                         required
                       />
                     </div>
-                    <div>
+                    <div className="col-span-2 sm:col-span-1">
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Guests</label>
                       <select
                         value={formData.passengers}
                         onChange={(e) => setFormData({ ...formData, passengers: e.target.value })}
-                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm cursor-pointer"
+                        className="w-full px-3 py-3.5 bg-white border-2 border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all duration-200 shadow-sm cursor-pointer text-base"
                       >
                         {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
                           <option key={n} value={n}>{n} {n === 1 ? 'Guest' : 'Guests'}</option>

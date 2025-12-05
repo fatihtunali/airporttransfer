@@ -20,6 +20,18 @@ export const metadata: Metadata = {
     icon: '/icon.svg',
     apple: '/apple-icon.svg',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  themeColor: '#0d9488',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Airport Transfer',
+  },
 };
 
 export default function RootLayout({

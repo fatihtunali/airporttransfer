@@ -214,42 +214,44 @@ export default function ZonesPage() {
       </div>
 
       {/* Search & Stats */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder={activeTab === 'official' ? "Search zones by name, city, country..." : "Search supplier destinations..."}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder={activeTab === 'official' ? "Search zones..." : "Search destinations..."}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={expandAll}
+              className="flex-1 sm:flex-none px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              Expand All
+            </button>
+            <button
+              onClick={collapseAll}
+              className="flex-1 sm:flex-none px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              Collapse All
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={expandAll}
-            className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-          >
-            Expand All
-          </button>
-          <button
-            onClick={collapseAll}
-            className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-          >
-            Collapse All
-          </button>
-        </div>
-        <div className="flex gap-4">
-          <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
-            <span className="text-sm text-gray-500">Cities: </span>
+        <div className="flex flex-wrap gap-2 sm:gap-4">
+          <div className="bg-white rounded-lg px-3 py-2 shadow-sm text-sm">
+            <span className="text-gray-500">Cities: </span>
             <span className="font-bold">{Object.keys(groupedZones).length}</span>
           </div>
-          <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
-            <span className="text-sm text-gray-500">{activeTab === 'official' ? 'Zones' : 'Destinations'}: </span>
+          <div className="bg-white rounded-lg px-3 py-2 shadow-sm text-sm">
+            <span className="text-gray-500">{activeTab === 'official' ? 'Zones' : 'Dest.'}: </span>
             <span className="font-bold">{activeTab === 'official' ? zones.length : supplierDestinations.length}</span>
           </div>
           {activeTab === 'official' && (
-            <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
-              <span className="text-sm text-gray-500">Active: </span>
+            <div className="bg-white rounded-lg px-3 py-2 shadow-sm text-sm">
+              <span className="text-gray-500">Active: </span>
               <span className="font-bold text-green-600">{zones.filter(z => z.isActive).length}</span>
             </div>
           )}
