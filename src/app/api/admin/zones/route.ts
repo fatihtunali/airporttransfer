@@ -16,6 +16,16 @@ interface ZoneRow {
   is_popular: boolean;
   is_active: boolean;
   created_at: Date;
+  route_count?: number;
+}
+
+interface SupplierDestination {
+  destination_name: string;
+  destination_address: string | null;
+  airport_city: string;
+  airport_country: string;
+  supplier_count: number;
+  route_count: number;
 }
 
 interface ZoneCreateRequest {
@@ -40,15 +50,37 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Get official zones with route count
     const zones = await query<ZoneRow>(
-      `SELECT id, name, name_local, city, country, country_code, zone_type,
-              parent_zone_id, latitude, longitude, is_popular, is_active, created_at
-       FROM zones
-       ORDER BY country, city, name`
+      `SELECT z.id, z.name, z.name_local, z.city, z.country, z.country_code, z.zone_type,
+              z.parent_zone_id, z.latitude, z.longitude, z.is_popular, z.is_active, z.created_at,
+              COUNT(DISTINCT r.id) as route_count
+       FROM zones z
+       LEFT JOIN routes r ON r.zone_id = z.id AND r.is_active = TRUE
+       GROUP BY z.id
+       ORDER BY z.country, z.city, z.name`
     );
 
-    return NextResponse.json(
-      zones.map((z) => ({
+    // Get supplier custom destinations (not linked to official zones)
+    const supplierDestinations = await query<SupplierDestination>(
+      `SELECT
+         sr.destination_name,
+         sr.destination_address,
+         a.city as airport_city,
+         a.country as airport_country,
+         COUNT(DISTINCT sr.supplier_id) as supplier_count,
+         COUNT(sr.id) as route_count
+       FROM supplier_routes sr
+       INNER JOIN airports a ON sr.airport_id = a.id
+       WHERE sr.zone_id IS NULL
+         AND sr.destination_name IS NOT NULL
+         AND sr.is_active = 1
+       GROUP BY sr.destination_name, sr.destination_address, a.city, a.country
+       ORDER BY a.country, a.city, sr.destination_name`
+    );
+
+    return NextResponse.json({
+      zones: zones.map((z) => ({
         id: z.id,
         name: z.name,
         nameLocal: z.name_local,
@@ -61,8 +93,17 @@ export async function GET(request: NextRequest) {
         longitude: z.longitude,
         isPopular: z.is_popular,
         isActive: z.is_active,
-      }))
-    );
+        routeCount: Number(z.route_count) || 0,
+      })),
+      supplierDestinations: supplierDestinations.map((d) => ({
+        name: d.destination_name,
+        address: d.destination_address,
+        city: d.airport_city,
+        country: d.airport_country,
+        supplierCount: Number(d.supplier_count) || 0,
+        routeCount: Number(d.route_count) || 0,
+      })),
+    });
   } catch (error) {
     console.error('Error fetching zones:', error);
     return NextResponse.json(
