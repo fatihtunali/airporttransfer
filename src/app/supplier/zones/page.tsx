@@ -63,7 +63,7 @@ export default function SupplierZones() {
 
   const fetchAirports = async () => {
     try {
-      const res = await fetch('/api/airports?limit=1000');
+      const res = await fetch('/api/public/airports?limit=1000');
       if (res.ok) {
         const data = await res.json();
         setAirports(data.airports || data);
