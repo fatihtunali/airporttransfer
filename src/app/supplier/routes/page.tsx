@@ -85,17 +85,20 @@ export default function SupplierRoutesPage() {
 
       if (routesRes.ok) {
         const data = await routesRes.json();
-        setRoutes(data);
+        // Handle both array and paginated response formats
+        setRoutes(Array.isArray(data) ? data : (data.items || []));
       }
 
       if (zonesRes.ok) {
         const data = await zonesRes.json();
-        setZones(data);
+        // Handle both array and paginated response formats
+        setZones(Array.isArray(data) ? data : (data.items || []));
       }
 
       if (serviceZonesRes.ok) {
         const data = await serviceZonesRes.json();
-        setServiceZones(data);
+        // Handle both array and paginated response formats
+        setServiceZones(Array.isArray(data) ? data : (data.items || []));
       }
     } catch (error) {
       console.error('Error fetching data:', error);

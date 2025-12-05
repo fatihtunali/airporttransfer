@@ -63,7 +63,8 @@ export default function SupplierPricing() {
       const res = await fetch('/api/supplier/tariffs');
       if (res.ok) {
         const data = await res.json();
-        setTariffs(data);
+        // Handle both array and paginated response formats
+        setTariffs(Array.isArray(data) ? data : (data.items || []));
       }
     } catch (error) {
       console.error('Error fetching tariffs:', error);
@@ -77,7 +78,9 @@ export default function SupplierPricing() {
       const res = await fetch('/api/supplier/routes');
       if (res.ok) {
         const data = await res.json();
-        setRoutes(data.map((r: { id: number; airportCode: string; airportName: string; zoneName: string }) => ({
+        // Handle both array and paginated response formats
+        const routesArray = Array.isArray(data) ? data : (data.items || []);
+        setRoutes(routesArray.map((r: { id: number; airportCode: string; airportName: string; zoneName: string }) => ({
           id: r.id,
           airportCode: r.airportCode,
           airportName: r.airportName,

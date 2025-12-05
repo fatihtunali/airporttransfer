@@ -55,7 +55,8 @@ export default function SupplierVehicles() {
       const res = await fetch('/api/supplier/vehicles');
       if (res.ok) {
         const data = await res.json();
-        setVehicles(data);
+        // Handle both array and paginated response formats
+        setVehicles(Array.isArray(data) ? data : (data.items || []));
       }
     } catch (error) {
       console.error('Error fetching vehicles:', error);

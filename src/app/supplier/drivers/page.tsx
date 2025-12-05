@@ -55,7 +55,8 @@ export default function SupplierDrivers() {
       const res = await fetch('/api/supplier/drivers');
       if (res.ok) {
         const data = await res.json();
-        setDrivers(data);
+        // Handle both array and paginated response formats
+        setDrivers(Array.isArray(data) ? data : (data.items || []));
       }
     } catch (error) {
       console.error('Error fetching drivers:', error);

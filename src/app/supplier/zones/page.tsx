@@ -52,7 +52,8 @@ export default function SupplierZones() {
       const res = await fetch('/api/supplier/zones');
       if (res.ok) {
         const data = await res.json();
-        setZones(data);
+        // Ensure data is an array
+        setZones(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Error fetching zones:', error);
