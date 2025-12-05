@@ -128,7 +128,6 @@ export async function POST(request: NextRequest) {
       userId,
       email: body.email.toLowerCase(),
       role,
-      supplierId: supplierId || undefined,
     });
 
     // Set auth cookie
