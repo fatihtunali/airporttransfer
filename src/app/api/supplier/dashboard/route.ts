@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne } from '@/lib/db';
+import { queryOne, query } from '@/lib/db';
 import { authenticateSupplier, canManageFleet } from '@/lib/supplier-auth';
+
+interface SupplierRow {
+  id: number;
+  name: string;
+  is_verified: boolean;
+  rating_avg: number;
+  rating_count: number;
+}
+
+interface BookingRow {
+  id: number;
+  public_code: string;
+  customer_name: string;
+  pickup_datetime: Date;
+  status: string;
+  vehicle_type: string;
+  total_price: number;
+  currency: string;
+}
 
 // GET /api/supplier/dashboard - Get supplier dashboard summary
 export async function GET(request: NextRequest) {
@@ -21,8 +40,25 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get upcoming rides count (rides with pickup in the future, not completed/cancelled)
-    const upcomingRides = await queryOne<{ count: number }>(
+    // Get supplier info
+    const supplier = await queryOne<SupplierRow>(
+      `SELECT id, name, is_verified, rating_avg, rating_count
+       FROM suppliers WHERE id = ?`,
+      [payload.supplierId]
+    );
+
+    // Get today's bookings count
+    const todayBookings = await queryOne<{ count: number }>(
+      `SELECT COUNT(*) as count
+       FROM rides r
+       JOIN bookings b ON b.id = r.booking_id
+       WHERE r.supplier_id = ?
+       AND DATE(b.pickup_datetime) = CURDATE()`,
+      [payload.supplierId]
+    );
+
+    // Get upcoming bookings count (future rides not completed/cancelled)
+    const upcomingBookings = await queryOne<{ count: number }>(
       `SELECT COUNT(*) as count
        FROM rides r
        JOIN bookings b ON b.id = r.booking_id
@@ -32,29 +68,20 @@ export async function GET(request: NextRequest) {
       [payload.supplierId]
     );
 
-    // Get completed rides today
-    const completedToday = await queryOne<{ count: number }>(
+    // Get completed this month
+    const completedThisMonth = await queryOne<{ count: number }>(
       `SELECT COUNT(*) as count
-       FROM rides
-       WHERE supplier_id = ?
-       AND DATE(completed_at) = CURDATE()
-       AND status = 'FINISHED'`,
+       FROM rides r
+       JOIN bookings b ON b.id = r.booking_id
+       WHERE r.supplier_id = ?
+       AND YEAR(r.completed_at) = YEAR(CURDATE())
+       AND MONTH(r.completed_at) = MONTH(CURDATE())
+       AND r.status = 'FINISHED'`,
       [payload.supplierId]
     );
 
-    // Get total earnings this month (from supplier_payouts)
-    const earningsThisMonth = await queryOne<{ total: number }>(
-      `SELECT COALESCE(SUM(amount), 0) as total
-       FROM supplier_payouts
-       WHERE supplier_id = ?
-       AND YEAR(created_at) = YEAR(CURDATE())
-       AND MONTH(created_at) = MONTH(CURDATE())
-       AND status != 'CANCELLED'`,
-      [payload.supplierId]
-    );
-
-    // Get pending payouts (sum of PENDING status)
-    const pendingPayouts = await queryOne<{ total: number }>(
+    // Get pending payout
+    const pendingPayout = await queryOne<{ total: number }>(
       `SELECT COALESCE(SUM(amount), 0) as total
        FROM supplier_payouts
        WHERE supplier_id = ?
@@ -62,54 +89,51 @@ export async function GET(request: NextRequest) {
       [payload.supplierId]
     );
 
-    // Additional useful stats
-    // Get today's rides count
-    const todaysRides = await queryOne<{ count: number }>(
-      `SELECT COUNT(*) as count
+    // Get recent bookings
+    const recentBookings = await query<BookingRow>(
+      `SELECT
+         b.id,
+         b.public_code,
+         COALESCE(bp.full_name, 'Guest') as customer_name,
+         b.pickup_datetime,
+         b.status,
+         b.vehicle_type,
+         b.total_price,
+         b.currency
        FROM rides r
        JOIN bookings b ON b.id = r.booking_id
+       LEFT JOIN booking_passengers bp ON bp.booking_id = b.id AND bp.is_lead = TRUE
        WHERE r.supplier_id = ?
-       AND DATE(b.pickup_datetime) = CURDATE()`,
-      [payload.supplierId]
-    );
-
-    // Get rides pending assignment
-    const pendingAssignment = await queryOne<{ count: number }>(
-      `SELECT COUNT(*) as count
-       FROM rides
-       WHERE supplier_id = ?
-       AND status = 'PENDING_ASSIGN'`,
-      [payload.supplierId]
-    );
-
-    // Get active drivers count
-    const activeDrivers = await queryOne<{ count: number }>(
-      `SELECT COUNT(*) as count
-       FROM drivers
-       WHERE supplier_id = ?
-       AND is_active = TRUE`,
-      [payload.supplierId]
-    );
-
-    // Get active vehicles count
-    const activeVehicles = await queryOne<{ count: number }>(
-      `SELECT COUNT(*) as count
-       FROM vehicles
-       WHERE supplier_id = ?
-       AND is_active = TRUE`,
+       ORDER BY b.pickup_datetime DESC
+       LIMIT 5`,
       [payload.supplierId]
     );
 
     return NextResponse.json({
-      upcomingRides: upcomingRides?.count || 0,
-      completedRidesToday: completedToday?.count || 0,
-      totalEarningsThisMonth: earningsThisMonth?.total || 0,
-      pendingPayouts: pendingPayouts?.total || 0,
-      // Additional stats
-      todaysRides: todaysRides?.count || 0,
-      pendingAssignment: pendingAssignment?.count || 0,
-      activeDrivers: activeDrivers?.count || 0,
-      activeVehicles: activeVehicles?.count || 0,
+      supplier: {
+        id: supplier?.id || payload.supplierId,
+        name: supplier?.name || 'Supplier',
+        isVerified: supplier?.is_verified || false,
+        rating: supplier?.rating_avg || 0,
+        ratingCount: supplier?.rating_count || 0,
+      },
+      stats: {
+        todayBookings: todayBookings?.count || 0,
+        upcomingBookings: upcomingBookings?.count || 0,
+        completedThisMonth: completedThisMonth?.count || 0,
+        pendingPayout: pendingPayout?.total || 0,
+        currency: 'EUR',
+      },
+      recentBookings: recentBookings.map((b) => ({
+        id: b.id,
+        publicCode: b.public_code,
+        customerName: b.customer_name,
+        pickupDatetime: b.pickup_datetime,
+        status: b.status,
+        vehicleType: b.vehicle_type,
+        totalPrice: b.total_price,
+        currency: b.currency,
+      })),
     });
   } catch (error) {
     console.error('Error fetching dashboard:', error);
