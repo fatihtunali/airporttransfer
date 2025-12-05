@@ -781,7 +781,7 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-lg font-bold mb-6">Quick Links</h4>
+              <h4 className="text-lg font-bold mb-6 text-white">Quick Links</h4>
               <ul className="space-y-3">
                 <li><Link href="/" className="text-gray-300 hover:text-teal-400 transition-colors">Search Transfers</Link></li>
                 <li><Link href="/popular-routes" className="text-gray-300 hover:text-teal-400 transition-colors">Popular Routes</Link></li>
@@ -791,7 +791,7 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-lg font-bold mb-6">Support</h4>
+              <h4 className="text-lg font-bold mb-6 text-white">Support</h4>
               <ul className="space-y-3">
                 <li><Link href="/help" className="text-gray-300 hover:text-teal-400 transition-colors">Help Center</Link></li>
                 <li><Link href="/contact" className="text-gray-300 hover:text-teal-400 transition-colors">Contact Us</Link></li>
@@ -799,7 +799,7 @@ export default function Home() {
                 <li><Link href="/manage-booking" className="text-gray-300 hover:text-teal-400 transition-colors">Manage Booking</Link></li>
               </ul>
 
-              <h4 className="text-lg font-bold mb-4 mt-8">Partner Portal</h4>
+              <h4 className="text-lg font-bold mb-4 mt-8 text-white">Partner Portal</h4>
               <ul className="space-y-3">
                 <li><Link href="/supplier/login" className="text-gray-300 hover:text-teal-400 transition-colors">Supplier Login</Link></li>
                 <li><Link href="/agency/login" className="text-gray-300 hover:text-teal-400 transition-colors">Agency Login</Link></li>
@@ -807,7 +807,7 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-lg font-bold mb-6">Contact Us</h4>
+              <h4 className="text-lg font-bold mb-6 text-white">Contact Us</h4>
               <ul className="space-y-4">
                 <li className="flex items-center gap-3 text-gray-300">
                   <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center">

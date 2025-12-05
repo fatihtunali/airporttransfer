@@ -254,7 +254,7 @@ export default function ContactPage() {
               <p className="text-gray-300 mb-6">Book reliable airport transfers worldwide from verified local suppliers.</p>
             </div>
             <div>
-              <h4 className="text-lg font-bold mb-6">Quick Links</h4>
+              <h4 className="text-lg font-bold mb-6 text-white">Quick Links</h4>
               <ul className="space-y-3">
                 <li><Link href="/" className="text-gray-300 hover:text-teal-400">Search Transfers</Link></li>
                 <li><Link href="/popular-routes" className="text-gray-300 hover:text-teal-400">Popular Routes</Link></li>
@@ -263,7 +263,7 @@ export default function ContactPage() {
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-bold mb-6">Support</h4>
+              <h4 className="text-lg font-bold mb-6 text-white">Support</h4>
               <ul className="space-y-3">
                 <li><Link href="/help" className="text-gray-300 hover:text-teal-400">Help Center</Link></li>
                 <li><Link href="/contact" className="text-gray-300 hover:text-teal-400">Contact Us</Link></li>
@@ -272,7 +272,7 @@ export default function ContactPage() {
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-bold mb-6">Contact Us</h4>
+              <h4 className="text-lg font-bold mb-6 text-white">Contact Us</h4>
               <ul className="space-y-4">
                 <li className="flex items-center gap-3 text-gray-300"><FaPhone className="text-teal-400" /><span>+90 216 557 52 52</span></li>
                 <li className="flex items-center gap-3 text-gray-300"><FaEnvelope className="text-teal-400" /><span>support@airporttransferportal.com</span></li>
