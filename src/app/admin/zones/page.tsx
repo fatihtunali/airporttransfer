@@ -19,6 +19,7 @@ export default function ZonesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingZone, setEditingZone] = useState<Zone | null>(null);
   const [search, setSearch] = useState('');
+  const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     name: '',
     city: '',
@@ -141,6 +142,24 @@ export default function ZonesPage() {
     return acc;
   }, {} as Record<string, Zone[]>);
 
+  const toggleCity = (city: string) => {
+    const newExpanded = new Set(expandedCities);
+    if (newExpanded.has(city)) {
+      newExpanded.delete(city);
+    } else {
+      newExpanded.add(city);
+    }
+    setExpandedCities(newExpanded);
+  };
+
+  const expandAll = () => {
+    setExpandedCities(new Set(Object.keys(groupedZones)));
+  };
+
+  const collapseAll = () => {
+    setExpandedCities(new Set());
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -164,9 +183,27 @@ export default function ZonesPage() {
             className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
+        <div className="flex gap-2">
+          <button
+            onClick={expandAll}
+            className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+          >
+            Expand All
+          </button>
+          <button
+            onClick={collapseAll}
+            className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+          >
+            Collapse All
+          </button>
+        </div>
         <div className="flex gap-4">
           <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
-            <span className="text-sm text-gray-500">Total: </span>
+            <span className="text-sm text-gray-500">Cities: </span>
+            <span className="font-bold">{Object.keys(groupedZones).length}</span>
+          </div>
+          <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
+            <span className="text-sm text-gray-500">Zones: </span>
             <span className="font-bold">{zones.length}</span>
           </div>
           <div className="bg-white rounded-lg px-4 py-2 shadow-sm">
@@ -189,51 +226,62 @@ export default function ZonesPage() {
         ) : (
           Object.entries(groupedZones).map(([city, cityZones]) => (
             <div key={city} className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b">
-                <h3 className="font-medium text-gray-900">
+              <button
+                onClick={() => toggleCity(city)}
+                className="w-full bg-gray-50 px-4 py-3 border-b flex items-center justify-between hover:bg-gray-100 transition-colors"
+              >
+                <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                  <span className={`transform transition-transform ${expandedCities.has(city) ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
                   📍 {city}
                   <span className="ml-2 text-sm text-gray-500">({cityZones.length} zones)</span>
                 </h3>
-              </div>
-              <div className="divide-y">
-                {cityZones.map((zone) => (
-                  <div key={zone.id} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{zone.name}</p>
-                      {zone.routeCount !== undefined && (
-                        <p className="text-xs text-gray-500">{zone.routeCount} routes</p>
-                      )}
+                <span className="text-sm text-gray-400">
+                  {expandedCities.has(city) ? 'Click to collapse' : 'Click to expand'}
+                </span>
+              </button>
+              {expandedCities.has(city) && (
+                <div className="divide-y">
+                  {cityZones.map((zone) => (
+                    <div key={zone.id} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{zone.name}</p>
+                        {zone.routeCount !== undefined && (
+                          <p className="text-xs text-gray-500">{zone.routeCount} routes</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {zone.isActive ? (
+                          <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                            Inactive
+                          </span>
+                        )}
+                        <button
+                          onClick={() => openModal(zone)}
+                          className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(zone)}
+                          className={`px-3 py-1 text-sm rounded ${
+                            zone.isActive
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {zone.isActive ? 'Disable' : 'Enable'}
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {zone.isActive ? (
-                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                          Inactive
-                        </span>
-                      )}
-                      <button
-                        onClick={() => openModal(zone)}
-                        className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(zone)}
-                        className={`px-3 py-1 text-sm rounded ${
-                          zone.isActive
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
-                      >
-                        {zone.isActive ? 'Disable' : 'Enable'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))
         )}
@@ -241,8 +289,9 @@ export default function ZonesPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
+        <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-start justify-center p-4 pt-16">
+            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-semibold">
                 {editingZone ? 'Edit Zone' : 'Add Zone'}
@@ -337,6 +386,7 @@ export default function ZonesPage() {
                 </button>
               </div>
             </form>
+          </div>
           </div>
         </div>
       )}
