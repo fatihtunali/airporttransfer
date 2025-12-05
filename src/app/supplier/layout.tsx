@@ -23,6 +23,7 @@ import {
   FaPlane,
   FaHeadset,
   FaMapMarkerAlt,
+  FaRoute,
 } from 'react-icons/fa';
 
 interface SupplierInfo {
@@ -40,6 +41,7 @@ const navItems = [
   { href: '/supplier', label: 'Dashboard', icon: FaHome },
   { href: '/supplier/bookings', label: 'Bookings', icon: FaCalendarAlt },
   { href: '/supplier/zones', label: 'Service Zones', icon: FaMapMarkerAlt },
+  { href: '/supplier/routes', label: 'Routes', icon: FaRoute },
   { href: '/supplier/vehicles', label: 'Vehicles', icon: FaCar },
   { href: '/supplier/drivers', label: 'Drivers', icon: FaUsers },
   { href: '/supplier/pricing', label: 'Pricing', icon: FaTags },
