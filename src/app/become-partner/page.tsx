@@ -497,31 +497,31 @@ export default function BecomePartnerPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             <div>
               <Image src="/logo/logo_atp.jpg" alt="Airport Transfer Portal" width={180} height={54} className="h-12 w-auto rounded-lg mb-6" />
-              <p className="text-gray-400 mb-6">Book reliable airport transfers worldwide from verified local suppliers.</p>
+              <p className="text-gray-300 mb-6">Book reliable airport transfers worldwide from verified local suppliers.</p>
             </div>
             <div>
               <h4 className="text-lg font-bold mb-6">Quick Links</h4>
               <ul className="space-y-3">
-                <li><Link href="/" className="text-gray-400 hover:text-teal-400">Search Transfers</Link></li>
-                <li><Link href="/popular-routes" className="text-gray-400 hover:text-teal-400">Popular Routes</Link></li>
-                <li><Link href="/airport-guides" className="text-gray-400 hover:text-teal-400">Airport Guides</Link></li>
-                <li><Link href="/travel-tips" className="text-gray-400 hover:text-teal-400">Travel Tips</Link></li>
+                <li><Link href="/" className="text-gray-300 hover:text-teal-400">Search Transfers</Link></li>
+                <li><Link href="/popular-routes" className="text-gray-300 hover:text-teal-400">Popular Routes</Link></li>
+                <li><Link href="/airport-guides" className="text-gray-300 hover:text-teal-400">Airport Guides</Link></li>
+                <li><Link href="/travel-tips" className="text-gray-300 hover:text-teal-400">Travel Tips</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-lg font-bold mb-6">Support</h4>
               <ul className="space-y-3">
-                <li><Link href="/help" className="text-gray-400 hover:text-teal-400">Help Center</Link></li>
-                <li><Link href="/contact" className="text-gray-400 hover:text-teal-400">Contact Us</Link></li>
-                <li><Link href="/faq" className="text-gray-400 hover:text-teal-400">FAQs</Link></li>
-                <li><Link href="/manage-booking" className="text-gray-400 hover:text-teal-400">Manage Booking</Link></li>
+                <li><Link href="/help" className="text-gray-300 hover:text-teal-400">Help Center</Link></li>
+                <li><Link href="/contact" className="text-gray-300 hover:text-teal-400">Contact Us</Link></li>
+                <li><Link href="/faq" className="text-gray-300 hover:text-teal-400">FAQs</Link></li>
+                <li><Link href="/manage-booking" className="text-gray-300 hover:text-teal-400">Manage Booking</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-lg font-bold mb-6">Contact Us</h4>
               <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-400"><FaPhone className="text-teal-400" /><span>+90 216 557 52 52</span></li>
-                <li className="flex items-center gap-3 text-gray-400"><FaEnvelope className="text-teal-400" /><span>support@airporttransferportal.com</span></li>
+                <li className="flex items-center gap-3 text-gray-300"><FaPhone className="text-teal-400" /><span>+90 216 557 52 52</span></li>
+                <li className="flex items-center gap-3 text-gray-300"><FaEnvelope className="text-teal-400" /><span>support@airporttransferportal.com</span></li>
               </ul>
               <Link href="/become-partner" className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 font-semibold mt-6">
                 Become a Partner <FaArrowRight />
