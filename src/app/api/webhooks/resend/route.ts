@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import crypto from 'crypto';
+import { query, insert } from '@/lib/db';
 
 const RESEND_WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET || 'whsec_LgRodqbiYcbzug0Jama2cjBkMi7Xxhp1';
 
@@ -154,8 +155,32 @@ https://airporttransferportal.com
 `;
 }
 
-// Track replied emails to avoid duplicates
-const repliedEmails = new Set<string>();
+// Check if we've already auto-replied to this sender
+async function hasAlreadyReplied(senderEmail: string): Promise<boolean> {
+  try {
+    const result = await query<{ id: number }>(
+      'SELECT id FROM email_auto_replies WHERE sender_email = ?',
+      [senderEmail.toLowerCase()]
+    );
+    return result.length > 0;
+  } catch (error) {
+    // Table might not exist, return false
+    console.log('Auto-reply check error (table may not exist):', error);
+    return false;
+  }
+}
+
+// Record that we sent an auto-reply to this sender
+async function recordAutoReply(senderEmail: string, subject: string): Promise<void> {
+  try {
+    await insert(
+      'INSERT INTO email_auto_replies (sender_email, subject, replied_at) VALUES (?, ?, NOW())',
+      [senderEmail.toLowerCase(), subject]
+    );
+  } catch (error) {
+    console.error('Error recording auto-reply:', error);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -175,17 +200,16 @@ export async function POST(request: NextRequest) {
     // Handle email.received event
     if (body.type === 'email.received') {
       const email = body.data;
-      const messageId = email.message_id || email.id;
-
-      // Skip if already replied
-      if (repliedEmails.has(messageId)) {
-        console.log('Already replied to this email, skipping');
-        return NextResponse.json({ success: true, skipped: true });
-      }
 
       // Skip auto-replies, bounces, and system emails
       const fromEmail = email.from?.toLowerCase() || '';
       const subject = email.subject?.toLowerCase() || '';
+
+      // Check if we've already sent an auto-reply to this sender
+      if (await hasAlreadyReplied(fromEmail)) {
+        console.log(`Already sent auto-reply to ${fromEmail}, skipping`);
+        return NextResponse.json({ success: true, skipped: true, reason: 'already_replied' });
+      }
 
       if (
         fromEmail.includes('noreply') ||
@@ -222,8 +246,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: result.error }, { status: 500 });
       }
 
-      // Mark as replied
-      repliedEmails.add(messageId);
+      // Record in database so we don't reply again
+      await recordAutoReply(fromEmail, email.subject || '');
 
       console.log('Auto-reply sent successfully:', result.data?.id);
 
