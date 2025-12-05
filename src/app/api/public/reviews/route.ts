@@ -28,8 +28,9 @@ interface Booking {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const supplierId = searchParams.get('supplierId');
-  const limit = parseInt(searchParams.get('limit') || '10');
-  const offset = parseInt(searchParams.get('offset') || '0');
+  // Ensure integers for MySQL prepared statements
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10', 10) || 10));
+  const offset = Math.max(0, parseInt(searchParams.get('offset') || '0', 10) || 0);
 
   if (!supplierId) {
     return NextResponse.json(
