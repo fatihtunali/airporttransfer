@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import crypto from 'crypto';
+
+const RESEND_WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET || 'whsec_LgRodqbiYcbzug0Jama2cjBkMi7Xxhp1';
 
 // Initialize Resend lazily to avoid build errors
 let resend: Resend | null = null;
@@ -8,6 +11,25 @@ function getResend() {
     resend = new Resend(process.env.RESEND_API_KEY);
   }
   return resend;
+}
+
+// Verify webhook signature
+function verifyWebhookSignature(payload: string, signature: string | null): boolean {
+  if (!signature) return false;
+
+  try {
+    const expectedSignature = crypto
+      .createHmac('sha256', RESEND_WEBHOOK_SECRET)
+      .update(payload)
+      .digest('hex');
+
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch {
+    return false;
+  }
 }
 
 // Auto-reply template
@@ -137,7 +159,16 @@ const repliedEmails = new Set<string>();
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const rawBody = await request.text();
+    const signature = request.headers.get('resend-signature') || request.headers.get('svix-signature');
+
+    // Verify signature (optional - skip if no signature header for testing)
+    if (signature && !verifyWebhookSignature(rawBody, signature)) {
+      console.error('Invalid webhook signature');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    const body = JSON.parse(rawBody);
 
     console.log('Resend webhook received:', JSON.stringify(body, null, 2));
 
