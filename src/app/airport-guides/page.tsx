@@ -226,18 +226,6 @@ export default function AirportGuidesPage() {
             <div>
               <Image src="/logo/logo_atp.jpg" alt="Airport Transfer Portal" width={180} height={54} className="h-12 w-auto rounded-lg mb-6" />
               <p className="text-gray-400 mb-6">Book reliable airport transfers worldwide from verified local suppliers.</p>
-              <div className="flex gap-3">
-                {[
-                  { Icon: FaFacebookF, href: 'https://facebook.com' },
-                  { Icon: FaTwitter, href: 'https://twitter.com' },
-                  { Icon: FaInstagram, href: 'https://instagram.com' },
-                  { Icon: FaLinkedinIn, href: 'https://linkedin.com' },
-                ].map(({ Icon, href }, idx) => (
-                  <a key={idx} href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-500 hover:text-white transition-all">
-                    <Icon />
-                  </a>
-                ))}
-              </div>
             </div>
             <div>
               <h4 className="text-lg font-bold mb-6">Quick Links</h4>
@@ -260,8 +248,8 @@ export default function AirportGuidesPage() {
             <div>
               <h4 className="text-lg font-bold mb-6">Contact Us</h4>
               <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-400"><FaPhone className="text-teal-400" /><span>+1 (555) 123-4567</span></li>
-                <li className="flex items-center gap-3 text-gray-400"><FaEnvelope className="text-teal-400" /><span>support@airporttransfer.com</span></li>
+                <li className="flex items-center gap-3 text-gray-400"><FaPhone className="text-teal-400" /><span>+90 216 557 52 52</span></li>
+                <li className="flex items-center gap-3 text-gray-400"><FaEnvelope className="text-teal-400" /><span>support@airporttransferportal.com</span></li>
               </ul>
               <Link href="/become-partner" className="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 font-semibold mt-6">
                 Become a Partner <FaArrowRight />
@@ -269,11 +257,11 @@ export default function AirportGuidesPage() {
             </div>
           </div>
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
+            <p className="text-gray-300 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link href="/terms" className="text-gray-500 hover:text-white text-sm">Terms of Service</Link>
-              <Link href="/privacy" className="text-gray-500 hover:text-white text-sm">Privacy Policy</Link>
-              <Link href="/cookies" className="text-gray-500 hover:text-white text-sm">Cookie Policy</Link>
+              <Link href="/terms" className="text-gray-300 hover:text-white text-sm">Terms of Service</Link>
+              <Link href="/privacy" className="text-gray-300 hover:text-white text-sm">Privacy Policy</Link>
+              <Link href="/cookies" className="text-gray-300 hover:text-white text-sm">Cookie Policy</Link>
             </div>
           </div>
         </div>

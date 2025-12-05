@@ -778,18 +778,6 @@ export default function Home() {
               <p className="text-gray-400 mb-6 leading-relaxed">
                 Book reliable airport transfers worldwide from verified local suppliers. Travel with confidence.
               </p>
-              <div className="flex gap-3">
-                {[
-                  { Icon: FaFacebookF, href: 'https://facebook.com' },
-                  { Icon: FaTwitter, href: 'https://twitter.com' },
-                  { Icon: FaInstagram, href: 'https://instagram.com' },
-                  { Icon: FaLinkedinIn, href: 'https://linkedin.com' },
-                ].map(({ Icon, href }, idx) => (
-                  <a key={idx} href={href} target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:bg-teal-500 hover:text-white transition-all duration-300">
-                    <Icon />
-                  </a>
-                ))}
-              </div>
             </div>
 
             <div>
@@ -825,13 +813,13 @@ export default function Home() {
                   <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center">
                     <FaPhone className="text-teal-400" />
                   </div>
-                  <span>+1 (555) 123-4567</span>
+                  <span>+90 216 557 52 52</span>
                 </li>
                 <li className="flex items-center gap-3 text-gray-400">
                   <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center">
                     <FaEnvelope className="text-teal-400" />
                   </div>
-                  <span>support@airporttransfer.com</span>
+                  <span>support@airporttransferportal.com</span>
                 </li>
               </ul>
               <div className="mt-6">
@@ -843,11 +831,11 @@ export default function Home() {
           </div>
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
+            <p className="text-gray-300 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link href="/terms" className="text-gray-500 hover:text-white text-sm transition-colors">Terms of Service</Link>
-              <Link href="/privacy" className="text-gray-500 hover:text-white text-sm transition-colors">Privacy Policy</Link>
-              <Link href="/cookies" className="text-gray-500 hover:text-white text-sm transition-colors">Cookie Policy</Link>
+              <Link href="/terms" className="text-gray-300 hover:text-white text-sm transition-colors">Terms of Service</Link>
+              <Link href="/privacy" className="text-gray-300 hover:text-white text-sm transition-colors">Privacy Policy</Link>
+              <Link href="/cookies" className="text-gray-300 hover:text-white text-sm transition-colors">Cookie Policy</Link>
             </div>
           </div>
         </div>

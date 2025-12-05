@@ -75,7 +75,7 @@ INSERT INTO users (id, email, password_hash, full_name, phone, role, is_active, 
 
 INSERT INTO suppliers (id, name, legal_name, tax_number, contact_name, contact_email, contact_phone, whatsapp, country, city, address, description, is_verified, is_active, commission_rate, rating_avg, rating_count) VALUES
 -- London Supplier
-(1, 'Premium London Transfers', 'Premium London Transfers Ltd', 'GB123456789', 'James Wilson', 'london@premiumtransfers.com', '+44-20-7946-0958', '+447700900000', 'United Kingdom', 'London', '123 Transfer Street, London EC1A 1BB', 'Premium airport transfer service in London with luxury vehicles and professional drivers.', TRUE, TRUE, 15.00, 4.85, 1250),
+(1, 'Premium London Transfers', 'Premium London Transfers Ltd', 'GB123456789', 'James Wilson', 'london@premiumtransfers.com', '+44-20-7946-0958', '+447700900000', 'United Kingdom', 'London', 'Mehmet Akif Ersoy Mah Hanimeli Sok NO 5/B, Uskudar, Istanbul', 'Premium airport transfer service in London with luxury vehicles and professional drivers.', TRUE, TRUE, 15.00, 4.85, 1250),
 
 -- Paris Supplier
 (2, 'Elite Paris Transfers', 'Elite Transfers SARL', 'FR12345678901', 'Pierre Dubois', 'paris@elitetransfers.fr', '+33-1-42-96-0001', '+33612345678', 'France', 'Paris', '45 Rue de Transfer, 75001 Paris', 'Service de transfert aéroport de luxe à Paris avec des chauffeurs professionnels.', TRUE, TRUE, 15.00, 4.78, 890),
