@@ -1,0 +1,231 @@
+{
+  "name": "Batch Supplier Scraper - 100 Cities",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule",
+      "name": "Run Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 100 Target Cities with metadata\nconst cities = [\n  // Turkey (Priority 0)\n  { city: 'Istanbul', country: 'Turkey', language: 'tr', priority: 0 },\n  { city: 'Antalya', country: 'Turkey', language: 'tr', priority: 0 },\n  { city: 'Bodrum', country: 'Turkey', language: 'tr', priority: 0 },\n  { city: 'Izmir', country: 'Turkey', language: 'tr', priority: 1 },\n  { city: 'Dalaman', country: 'Turkey', language: 'tr', priority: 1 },\n  { city: 'Cappadocia', country: 'Turkey', language: 'tr', priority: 1 },\n  \n  // Greece (Priority 0-1)\n  { city: 'Athens', country: 'Greece', language: 'en', priority: 0 },\n  { city: 'Santorini', country: 'Greece', language: 'en', priority: 0 },\n  { city: 'Mykonos', country: 'Greece', language: 'en', priority: 0 },\n  { city: 'Heraklion', country: 'Greece', language: 'en', priority: 0 },\n  { city: 'Rhodes', country: 'Greece', language: 'en', priority: 1 },\n  { city: 'Corfu', country: 'Greece', language: 'en', priority: 1 },\n  \n  // Cyprus\n  { city: 'Larnaca', country: 'Cyprus', language: 'en', priority: 0 },\n  { city: 'Paphos', country: 'Cyprus', language: 'en', priority: 1 },\n  \n  // UAE\n  { city: 'Dubai', country: 'UAE', language: 'en', priority: 0 },\n  { city: 'Abu Dhabi', country: 'UAE', language: 'en', priority: 1 },\n  \n  // Egypt\n  { city: 'Cairo', country: 'Egypt', language: 'ar', priority: 0 },\n  { city: 'Hurghada', country: 'Egypt', language: 'ar', priority: 0 },\n  { city: 'Sharm El Sheikh', country: 'Egypt', language: 'ar', priority: 0 },\n  { city: 'Luxor', country: 'Egypt', language: 'ar', priority: 1 },\n  \n  // Morocco\n  { city: 'Marrakech', country: 'Morocco', language: 'en', priority: 0 },\n  { city: 'Casablanca', country: 'Morocco', language: 'en', priority: 1 },\n  { city: 'Agadir', country: 'Morocco', language: 'en', priority: 1 },\n  \n  // Thailand\n  { city: 'Bangkok', country: 'Thailand', language: 'en', priority: 0 },\n  { city: 'Phuket', country: 'Thailand', language: 'en', priority: 0 },\n  { city: 'Krabi', country: 'Thailand', language: 'en', priority: 1 },\n  { city: 'Koh Samui', country: 'Thailand', language: 'en', priority: 1 },\n  { city: 'Chiang Mai', country: 'Thailand', language: 'en', priority: 1 },\n  \n  // Indonesia\n  { city: 'Bali', country: 'Indonesia', language: 'en', priority: 0 },\n  { city: 'Jakarta', country: 'Indonesia', language: 'en', priority: 1 },\n  \n  // Malaysia\n  { city: 'Kuala Lumpur', country: 'Malaysia', language: 'en', priority: 0 },\n  { city: 'Langkawi', country: 'Malaysia', language: 'en', priority: 1 },\n  \n  // Singapore\n  { city: 'Singapore', country: 'Singapore', language: 'en', priority: 0 },\n  \n  // Vietnam\n  { city: 'Ho Chi Minh City', country: 'Vietnam', language: 'en', priority: 0 },\n  { city: 'Hanoi', country: 'Vietnam', language: 'en', priority: 1 },\n  { city: 'Da Nang', country: 'Vietnam', language: 'en', priority: 1 },\n  \n  // Cambodia\n  { city: 'Siem Reap', country: 'Cambodia', language: 'en', priority: 0 },\n  \n  // Sri Lanka\n  { city: 'Colombo', country: 'Sri Lanka', language: 'en', priority: 0 },\n  \n  // Maldives\n  { city: 'Male', country: 'Maldives', language: 'en', priority: 0 },\n  \n  // India\n  { city: 'Goa', country: 'India', language: 'en', priority: 0 },\n  { city: 'Delhi', country: 'India', language: 'en', priority: 1 },\n  { city: 'Mumbai', country: 'India', language: 'en', priority: 1 },\n  { city: 'Jaipur', country: 'India', language: 'en', priority: 1 },\n  \n  // Georgia\n  { city: 'Tbilisi', country: 'Georgia', language: 'en', priority: 0 },\n  { city: 'Batumi', country: 'Georgia', language: 'en', priority: 1 },\n  \n  // Balkans\n  { city: 'Tirana', country: 'Albania', language: 'en', priority: 0 },\n  { city: 'Tivat', country: 'Montenegro', language: 'en', priority: 0 },\n  { city: 'Podgorica', country: 'Montenegro', language: 'en', priority: 1 },\n  { city: 'Sofia', country: 'Bulgaria', language: 'en', priority: 1 },\n  { city: 'Varna', country: 'Bulgaria', language: 'en', priority: 1 },\n  { city: 'Bucharest', country: 'Romania', language: 'en', priority: 1 },\n  { city: 'Belgrade', country: 'Serbia', language: 'en', priority: 1 },\n  { city: 'Sarajevo', country: 'Bosnia', language: 'en', priority: 1 },\n  { city: 'Skopje', country: 'North Macedonia', language: 'en', priority: 1 },\n  \n  // Middle East\n  { city: 'Amman', country: 'Jordan', language: 'ar', priority: 1 },\n  { city: 'Doha', country: 'Qatar', language: 'ar', priority: 1 },\n  { city: 'Muscat', country: 'Oman', language: 'ar', priority: 1 },\n  \n  // Africa\n  { city: 'Cape Town', country: 'South Africa', language: 'en', priority: 1 },\n  { city: 'Zanzibar', country: 'Tanzania', language: 'en', priority: 1 },\n  { city: 'Nairobi', country: 'Kenya', language: 'en', priority: 1 },\n  { city: 'Mauritius', country: 'Mauritius', language: 'en', priority: 1 }\n];\n\n// Process 5 cities per run (to avoid rate limits)\nconst now = new Date();\nconst runIndex = Math.floor(now.getTime() / (6 * 60 * 60 * 1000)) % Math.ceil(cities.length / 5);\nconst batch = cities.slice(runIndex * 5, (runIndex + 1) * 5);\n\nreturn batch.map(c => ({ json: c }));"
+      },
+      "id": "city-list",
+      "name": "Get City Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate DuckDuckGo search URL\nconst city = $input.first().json.city;\nconst country = $input.first().json.country;\nconst language = $input.first().json.language;\nconst query = `${city} airport transfer company`;\n\nreturn [{\n  json: {\n    city,\n    country,\n    language,\n    searchUrl: `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`\n  }\n}];"
+      },
+      "id": "build-search",
+      "name": "Build Search URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.searchUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "search",
+      "name": "Search DuckDuckGo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [840, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract website URLs from search results\nconst html = $input.first().json.body || '';\nconst city = $input.first().json.city;\nconst country = $input.first().json.country;\nconst language = $input.first().json.language;\n\n// Extract URLs\nconst urlRegex = /href=\"\\/\\/duckduckgo\\.com\\/l\\/\\?uddg=([^&\"]+)/g;\nconst urls = [];\nlet match;\n\nwhile ((match = urlRegex.exec(html)) !== null) {\n  try {\n    const decoded = decodeURIComponent(match[1]);\n    // Filter aggregators\n    const excludePatterns = [\n      'tripadvisor', 'viator', 'getyourguide', 'booking.com',\n      'gettransfer', 'hoppa', 'wikipedia', 'facebook.com',\n      'youtube.com', 'instagram.com', 'twitter.com', 'linkedin.com',\n      'yelp.com', 'trustpilot', 'google.com'\n    ];\n    \n    if (!excludePatterns.some(p => decoded.toLowerCase().includes(p))) {\n      urls.push(decoded);\n    }\n  } catch (e) {}\n}\n\nconst uniqueUrls = [...new Set(urls)].slice(0, 5); // Max 5 per city\n\nreturn uniqueUrls.map(url => ({\n  json: { city, country, language, websiteUrl: url }\n}));"
+      },
+      "id": "extract-urls",
+      "name": "Extract URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.websiteUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "timeout": 10000
+        }
+      },
+      "id": "fetch-site",
+      "name": "Fetch Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1240, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract email and contact info\nconst html = $input.first().json.body || '';\nconst url = $input.first().json.websiteUrl || '';\nconst city = $input.first().json.city;\nconst country = $input.first().json.country;\nconst language = $input.first().json.language;\n\nif (!html || html.length < 100) return [];\n\n// Extract emails\nconst emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;\nconst allEmails = html.match(emailRegex) || [];\n\n// Filter junk emails\nconst junkPatterns = [\n  'example.com', 'sentry', 'schema.org', 'w3.org', 'google',\n  'facebook', 'cloudflare', 'wordpress', 'wix', 'squarespace',\n  '@2x', '.png', '.jpg', '.svg', 'webpack', 'localhost'\n];\n\nconst emails = [...new Set(allEmails)].filter(e =>\n  !junkPatterns.some(p => e.toLowerCase().includes(p))\n).slice(0, 2);\n\nif (emails.length === 0) return [];\n\n// Extract phone\nconst phoneRegex = /(?:\\+|00)[1-9][0-9\\s.-]{8,15}/g;\nconst phones = [...new Set(html.match(phoneRegex) || [])].slice(0, 1);\n\n// Extract title for company name\nconst titleMatch = html.match(/<title>([^<]{3,100})<\\/title>/i);\nlet name = titleMatch ? titleMatch[1].split(/[|\\-–—]/)[0].trim() : '';\nname = name.replace(/home|transfer|taxi|airport/gi, '').trim() || 'Unknown';\n\nreturn [{\n  json: {\n    company: name.substring(0, 50),\n    email: emails[0],\n    phone: phones[0] || '',\n    website: url,\n    city,\n    country,\n    language,\n    source: 'n8n-scraper',\n    foundAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "extract-contact",
+      "name": "Extract Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://airporttransferportal.com/api/supplier-leads",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "company",
+              "value": "={{ $json.company }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "website",
+              "value": "={{ $json.website }}"
+            },
+            {
+              "name": "city",
+              "value": "={{ $json.city }}"
+            },
+            {
+              "name": "country",
+              "value": "={{ $json.country }}"
+            },
+            {
+              "name": "language",
+              "value": "={{ $json.language }}"
+            },
+            {
+              "name": "source",
+              "value": "={{ $json.source }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-lead",
+      "name": "Save to API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1640, 300],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Run Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Get City Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get City Batch": {
+      "main": [
+        [
+          {
+            "node": "Build Search URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Search URL": {
+      "main": [
+        [
+          {
+            "node": "Search DuckDuckGo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search DuckDuckGo": {
+      "main": [
+        [
+          {
+            "node": "Extract URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract URLs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Website": {
+      "main": [
+        [
+          {
+            "node": "Extract Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Contact": {
+      "main": [
+        [
+          {
+            "node": "Save to API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

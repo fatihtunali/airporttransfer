@@ -1,0 +1,270 @@
+{
+  "name": "Supplier Contact Finder",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "supplier-finder"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "city",
+              "value": "={{ $json.body.city || 'Istanbul' }}"
+            },
+            {
+              "name": "country",
+              "value": "={{ $json.body.country || 'Turkey' }}"
+            },
+            {
+              "name": "language",
+              "value": "={{ $json.body.language || 'en' }}"
+            }
+          ]
+        }
+      },
+      "id": "set-params",
+      "name": "Set Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate search URLs for finding transfer companies\nconst city = $input.first().json.city;\nconst country = $input.first().json.country;\n\nconst searchQueries = [\n  `${city} airport transfer company`,\n  `${city} airport taxi service`,\n  `${city} private transfer`,\n  `${city} vip transfer service`,\n  `best ${city} airport transfer`\n];\n\n// Use DuckDuckGo HTML (doesn't block like Google)\nconst searches = searchQueries.map(query => ({\n  json: {\n    city,\n    country,\n    query,\n    searchUrl: `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`\n  }\n}));\n\nreturn searches;"
+      },
+      "id": "generate-searches",
+      "name": "Generate Search URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.searchUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "search-duckduckgo",
+      "name": "Search DuckDuckGo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [840, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse DuckDuckGo results to extract website URLs\nconst html = $input.first().json.body || '';\nconst city = $input.first().json.city;\nconst country = $input.first().json.country;\n\n// Extract URLs from DuckDuckGo results\nconst urlRegex = /href=\"\\/\\/duckduckgo\\.com\\/l\\/\\?uddg=([^&\"]+)/g;\nconst urls = [];\nlet match;\n\nwhile ((match = urlRegex.exec(html)) !== null) {\n  try {\n    const decodedUrl = decodeURIComponent(match[1]);\n    // Filter out aggregators and keep only company websites\n    if (!decodedUrl.includes('tripadvisor') &&\n        !decodedUrl.includes('viator') &&\n        !decodedUrl.includes('getyourguide') &&\n        !decodedUrl.includes('booking.com') &&\n        !decodedUrl.includes('gettransfer') &&\n        !decodedUrl.includes('hoppa') &&\n        !decodedUrl.includes('wikipedia') &&\n        !decodedUrl.includes('facebook.com') &&\n        !decodedUrl.includes('youtube.com')) {\n      urls.push(decodedUrl);\n    }\n  } catch (e) {}\n}\n\n// Remove duplicates and limit\nconst uniqueUrls = [...new Set(urls)].slice(0, 5); // Max 5 per city\n\nreturn uniqueUrls.map(url => ({\n  json: {\n    city,\n    country,\n    websiteUrl: url\n  }\n}));"
+      },
+      "id": "extract-urls",
+      "name": "Extract Website URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.websiteUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "timeout": 10000
+        }
+      },
+      "id": "fetch-website",
+      "name": "Fetch Company Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1240, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract contact info from website HTML\nconst html = $input.first().json.body || '';\nconst websiteUrl = $input.first().json.websiteUrl || '';\nconst city = $input.first().json.city;\nconst country = $input.first().json.country;\n\n// Extract emails\nconst emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;\nconst emails = [...new Set(html.match(emailRegex) || [])];\n\n// Filter out common non-business emails\nconst businessEmails = emails.filter(e => \n  !e.includes('example.com') &&\n  !e.includes('sentry.io') &&\n  !e.includes('schema.org') &&\n  !e.includes('w3.org') &&\n  !e.includes('google.com') &&\n  !e.includes('facebook.com') &&\n  !e.includes('cloudflare') &&\n  !e.includes('wordpress') &&\n  !e.includes('wix') &&\n  !e.includes('@2x') &&\n  !e.includes('.png') &&\n  !e.includes('.jpg')\n).slice(0, 3);\n\n// Extract phone numbers\nconst phoneRegex = /(?:\\+|00)[1-9][0-9\\s.-]{8,15}/g;\nconst phones = [...new Set(html.match(phoneRegex) || [])].slice(0, 2);\n\n// Try to extract company name from title\nconst titleMatch = html.match(/<title>([^<]+)<\\/title>/i);\nlet companyName = titleMatch ? titleMatch[1].split(/[|\\-–]/)[0].trim() : '';\n\n// Clean up company name\ncompanyName = companyName\n  .replace(/Airport Transfer/gi, '')\n  .replace(/Private Transfer/gi, '')\n  .replace(/Taxi Service/gi, '')\n  .replace(/Home/gi, '')\n  .trim() || 'Unknown Company';\n\nif (businessEmails.length === 0) {\n  return []; // Skip if no email found\n}\n\nreturn [{\n  json: {\n    companyName,\n    email: businessEmails[0],\n    allEmails: businessEmails,\n    phone: phones[0] || '',\n    website: websiteUrl,\n    city,\n    country,\n    source: 'duckduckgo-scrape',\n    scrapedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "extract-contacts",
+      "name": "Extract Contact Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 300]
+    },
+    {
+      "parameters": {
+        "operation": "aggregateItems",
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "companyName"
+            },
+            {
+              "fieldToAggregate": "email"
+            },
+            {
+              "fieldToAggregate": "phone"
+            },
+            {
+              "fieldToAggregate": "website"
+            },
+            {
+              "fieldToAggregate": "city"
+            },
+            {
+              "fieldToAggregate": "country"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aggregate",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 3,
+      "position": [1640, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deduplicate by email and format final output\nconst items = $input.first().json;\nconst seen = new Set();\nconst unique = [];\n\n// Handle aggregated arrays\nconst companies = items.companyName || [];\nconst emails = items.email || [];\nconst phones = items.phone || [];\nconst websites = items.website || [];\nconst cities = items.city || [];\nconst countries = items.country || [];\n\nfor (let i = 0; i < emails.length; i++) {\n  const email = emails[i];\n  if (email && !seen.has(email.toLowerCase())) {\n    seen.add(email.toLowerCase());\n    unique.push({\n      companyName: companies[i] || 'Unknown',\n      email: email,\n      phone: phones[i] || '',\n      website: websites[i] || '',\n      city: cities[i] || '',\n      country: countries[i] || ''\n    });\n  }\n}\n\nreturn [{\n  json: {\n    success: true,\n    count: unique.length,\n    suppliers: unique\n  }\n}];"
+      },
+      "id": "deduplicate",
+      "name": "Deduplicate & Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1840, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2040, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Parameters": {
+      "main": [
+        [
+          {
+            "node": "Generate Search URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Search URLs": {
+      "main": [
+        [
+          {
+            "node": "Search DuckDuckGo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search DuckDuckGo": {
+      "main": [
+        [
+          {
+            "node": "Extract Website URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Website URLs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Company Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Company Website": {
+      "main": [
+        [
+          {
+            "node": "Extract Contact Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Contact Info": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Deduplicate & Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicate & Format": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-12-05T08:00:00.000Z",
+  "versionId": "1"
+}

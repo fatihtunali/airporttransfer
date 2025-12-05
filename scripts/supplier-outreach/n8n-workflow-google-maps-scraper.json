@@ -1,0 +1,121 @@
+{
+  "name": "Google Maps Supplier Scraper",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "searchQuery",
+              "value": "airport transfer"
+            },
+            {
+              "name": "cities",
+              "value": "Istanbul,Antalya,Bodrum,Athens,Santorini,Dubai,Cairo,Marrakech,Bangkok,Phuket,Bali,Singapore"
+            }
+          ]
+        }
+      },
+      "id": "set-cities",
+      "name": "Set Target Cities",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Split cities into array\nconst cities = $input.first().json.cities.split(',');\nconst searchQuery = $input.first().json.searchQuery;\n\n// Create items for each city\nreturn cities.map(city => ({\n  json: {\n    city: city.trim(),\n    searchQuery: searchQuery,\n    googleMapsUrl: `https://www.google.com/maps/search/${encodeURIComponent(city.trim() + ' ' + searchQuery)}`\n  }\n}));"
+      },
+      "id": "split-cities",
+      "name": "Split Cities",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.googleMapsUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "http-google-maps",
+      "name": "Fetch Google Maps",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [840, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Google Maps HTML to extract business listings\n// Note: Google Maps is heavily JS-rendered, so this is limited\n// We'll extract what we can from the initial HTML\n\nconst html = $input.first().json.body || '';\nconst city = $input.first().json.city;\n\n// Try to find business names and data from the response\nconst businesses = [];\n\n// Look for structured data or visible business names\n// This is a simplified approach - real scraping would need Puppeteer/Playwright\n\nreturn [{\n  json: {\n    city: city,\n    message: 'Google Maps requires browser rendering. Use SerpAPI or browser automation.',\n    alternative: 'Switching to website-based scraping approach',\n    htmlLength: html.length\n  }\n}];"
+      },
+      "id": "parse-results",
+      "name": "Parse Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1040, 300]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Target Cities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Target Cities": {
+      "main": [
+        [
+          {
+            "node": "Split Cities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Cities": {
+      "main": [
+        [
+          {
+            "node": "Fetch Google Maps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Google Maps": {
+      "main": [
+        [
+          {
+            "node": "Parse Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
