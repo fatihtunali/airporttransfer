@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne, transaction } from '@/lib/db';
+import { sendBookingConfirmationEmail } from '@/lib/email';
 
 type BookingChannel = 'B2C' | 'B2B' | 'AGENCY_API';
 type VehicleType = 'SEDAN' | 'VAN' | 'MINIBUS' | 'BUS' | 'VIP';
@@ -206,7 +207,7 @@ export async function POST(request: NextRequest) {
       return newBookingId;
     });
 
-    // Fetch created booking
+    // Fetch created booking with location details for email
     const booking = await queryOne<{
       id: number;
       public_code: string;
@@ -214,11 +215,56 @@ export async function POST(request: NextRequest) {
       payment_status: string;
       total_price: number;
       currency: string;
+      pickup_datetime: string;
+      pickup_address: string;
+      dropoff_address: string;
+      vehicle_type: string;
+      pax_adults: number;
+      flight_number: string | null;
+      customer_notes: string | null;
+      airport_name: string;
+      zone_name: string;
+      direction: string;
     }>(
-      `SELECT id, public_code, status, payment_status, total_price, currency
-       FROM bookings WHERE id = ?`,
+      `SELECT b.id, b.public_code, b.status, b.payment_status, b.total_price, b.currency,
+              b.pickup_datetime, b.pickup_address, b.dropoff_address, b.vehicle_type,
+              b.pax_adults, b.flight_number, b.customer_notes, b.direction,
+              a.name as airport_name, z.name as zone_name
+       FROM bookings b
+       LEFT JOIN airports a ON a.id = b.airport_id
+       LEFT JOIN zones z ON z.id = b.zone_id
+       WHERE b.id = ?`,
       [bookingId]
     );
+
+    // Send booking confirmation email (async, don't block response)
+    if (leadPassenger.email) {
+      const fullName = `${leadPassenger.firstName} ${leadPassenger.lastName}`.trim();
+      const pickupLocation = booking!.direction === 'FROM_AIRPORT'
+        ? booking!.airport_name
+        : (booking!.pickup_address || booking!.zone_name);
+      const dropoffLocation = booking!.direction === 'FROM_AIRPORT'
+        ? (booking!.dropoff_address || booking!.zone_name)
+        : booking!.airport_name;
+
+      sendBookingConfirmationEmail({
+        publicCode: booking!.public_code,
+        customerName: fullName,
+        customerEmail: leadPassenger.email,
+        pickupDatetime: booking!.pickup_datetime,
+        pickupAddress: pickupLocation,
+        dropoffAddress: dropoffLocation,
+        vehicleType: booking!.vehicle_type,
+        passengers: booking!.pax_adults,
+        flightNumber: booking!.flight_number || undefined,
+        totalPrice: Number(booking!.total_price),
+        currency: booking!.currency,
+        paymentStatus: booking!.payment_status,
+        specialRequests: booking!.customer_notes || undefined,
+      }).catch((err) => {
+        console.error('Failed to send booking confirmation email:', err);
+      });
+    }
 
     return NextResponse.json(
       {
