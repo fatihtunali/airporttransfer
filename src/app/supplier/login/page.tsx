@@ -1,18 +1,30 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { FaEnvelope, FaLock, FaSpinner, FaCar, FaShieldAlt, FaCheck } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaSpinner, FaCar, FaShieldAlt, FaCheck, FaCheckCircle } from 'react-icons/fa';
 
-export default function SupplierLogin() {
+function SupplierLoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  useEffect(() => {
+    const verified = searchParams.get('verified');
+    const message = searchParams.get('message');
+    if (verified === 'success' && message) {
+      setSuccessMessage(message);
+    } else if (verified === 'error' && message) {
+      setError(message);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +79,13 @@ export default function SupplierLogin() {
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {successMessage && (
+              <div className="bg-green-50 border border-green-100 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                <FaCheckCircle className="w-5 h-5 flex-shrink-0" />
+                {successMessage}
+              </div>
+            )}
+
             {error && (
               <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
                 <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -179,5 +198,17 @@ export default function SupplierLogin() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SupplierLogin() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-slate-100 flex items-center justify-center">
+        <FaSpinner className="w-8 h-8 text-teal-500 animate-spin" />
+      </div>
+    }>
+      <SupplierLoginContent />
+    </Suspense>
   );
 }

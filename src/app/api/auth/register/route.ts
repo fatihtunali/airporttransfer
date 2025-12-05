@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne, insert } from '@/lib/db';
-import { hashPassword, generateToken, setAuthCookie } from '@/lib/auth';
+import { queryOne, insert, execute } from '@/lib/db';
+import { hashPassword } from '@/lib/auth';
+import { sendVerificationEmail } from '@/lib/email';
+import crypto from 'crypto';
 
 type Role = 'ADMIN' | 'SUPPLIER_OWNER' | 'DISPATCHER' | 'DRIVER' | 'END_CUSTOMER';
 
@@ -84,11 +86,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insert user
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Insert user with verification token
     const userId = await insert(
-      `INSERT INTO users (email, password_hash, full_name, phone, role, is_active)
-       VALUES (?, ?, ?, ?, ?, TRUE)`,
-      [body.email.toLowerCase(), passwordHash, body.fullName, body.phone || null, role]
+      `INSERT INTO users (email, password_hash, full_name, phone, role, is_active, email_verified, email_verification_token, email_verification_expires)
+       VALUES (?, ?, ?, ?, ?, TRUE, FALSE, ?, ?)`,
+      [body.email.toLowerCase(), passwordHash, body.fullName, body.phone || null, role, verificationToken, tokenExpires]
     );
 
     let supplierId: number | null = null;
@@ -123,17 +129,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate JWT token
-    const token = await generateToken({
-      userId,
-      email: body.email.toLowerCase(),
-      role,
-    });
+    // Send verification email
+    try {
+      await sendVerificationEmail(body.email.toLowerCase(), body.fullName, verificationToken);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Continue registration even if email fails
+    }
 
-    // Set auth cookie
-    await setAuthCookie(token);
-
-    // Return user without password
+    // Return success - user needs to verify email before logging in
     return NextResponse.json(
       {
         id: userId,
@@ -143,6 +147,8 @@ export async function POST(request: NextRequest) {
         role,
         isActive: true,
         supplierId,
+        message: 'Registration successful. Please check your email to verify your account.',
+        requiresVerification: true,
       },
       { status: 201 }
     );

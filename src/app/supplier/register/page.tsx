@@ -13,6 +13,8 @@ import {
   FaMapMarkerAlt,
   FaSpinner,
   FaCheck,
+  FaCheckCircle,
+  FaPaperPlane,
 } from 'react-icons/fa';
 
 interface FormData {
@@ -45,6 +47,7 @@ export default function SupplierRegister() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [registrationComplete, setRegistrationComplete] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     companyName: '',
     legalName: '',
@@ -156,14 +159,45 @@ export default function SupplierRegister() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Redirect to onboarding or dashboard
-      router.push('/supplier/onboarding');
+      // Show verification message
+      setRegistrationComplete(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
+
+  // Show success message after registration
+  if (registrationComplete) {
+    return (
+      <div className="min-h-screen bg-gray-100 py-12 px-4">
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FaPaperPlane className="w-8 h-8 text-green-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Check Your Email!
+            </h1>
+            <p className="text-gray-600 mb-6">
+              We've sent a verification link to <strong>{formData.contactEmail}</strong>.
+              Please click the link to verify your email and complete your registration.
+            </p>
+            <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-500 mb-6">
+              <p>Didn't receive the email? Check your spam folder or wait a few minutes.</p>
+            </div>
+            <Link
+              href="/supplier/login"
+              className="inline-block px-6 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors"
+            >
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4">

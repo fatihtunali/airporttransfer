@@ -15,6 +15,7 @@ interface UserRow {
   phone: string | null;
   role: string;
   is_active: boolean;
+  email_verified: boolean;
 }
 
 // POST /api/auth/login - Login user
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Find user by email
     const user = await queryOne<UserRow>(
-      `SELECT id, email, password_hash, full_name, phone, role, is_active
+      `SELECT id, email, password_hash, full_name, phone, role, is_active, email_verified
        FROM users WHERE email = ?`,
       [body.email.toLowerCase()]
     );
@@ -48,6 +49,14 @@ export async function POST(request: NextRequest) {
     if (!user.is_active) {
       return NextResponse.json(
         { error: 'Account is disabled' },
+        { status: 401 }
+      );
+    }
+
+    // Check if email is verified (only for supplier roles)
+    if (!user.email_verified && user.role === 'SUPPLIER_OWNER') {
+      return NextResponse.json(
+        { error: 'Please verify your email before logging in. Check your inbox for the verification link.' },
         { status: 401 }
       );
     }
