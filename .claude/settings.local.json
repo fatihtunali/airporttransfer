@@ -16,7 +16,8 @@
       "WebFetch(domain:www.welcomepickups.com)",
       "WebFetch(domain:dribbble.com)",
       "WebFetch(domain:gettransfer.com)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:airporttransferportal.com)"
     ],
     "deny": [],
     "ask": []

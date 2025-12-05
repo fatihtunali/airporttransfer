@@ -233,12 +233,12 @@ export default function Home() {
               <a href="#reviews" className={`px-4 py-2 rounded-full font-medium transition-all duration-300 ${isScrolled ? 'text-gray-700 hover:text-teal-600 hover:bg-teal-50' : 'text-white/90 hover:text-white hover:bg-white/10'}`}>
                 Reviews
               </a>
-              <Link href="/supplier/login" className={`px-4 py-2 rounded-full font-medium transition-all duration-300 ${isScrolled ? 'text-gray-700 hover:text-teal-600 hover:bg-teal-50' : 'text-white/90 hover:text-white hover:bg-white/10'}`}>
-                Partner Login
+              <Link href="/manage-booking" className={`px-4 py-2 rounded-full font-medium transition-all duration-300 ${isScrolled ? 'text-gray-700 hover:text-teal-600 hover:bg-teal-50' : 'text-white/90 hover:text-white hover:bg-white/10'}`}>
+                Manage Booking
               </Link>
-              <Link href="/agency/login" className="ml-4 px-6 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold rounded-full hover:from-teal-600 hover:to-cyan-600 hover:shadow-lg hover:shadow-teal-500/30 transition-all duration-300 hover:-translate-y-0.5">
+              <a href="#book-transfer" className="ml-4 px-6 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold rounded-full hover:from-teal-600 hover:to-cyan-600 hover:shadow-lg hover:shadow-teal-500/30 transition-all duration-300 hover:-translate-y-0.5">
                 Book Now
-              </Link>
+              </a>
             </div>
 
             {/* Mobile Menu Button */}
@@ -256,9 +256,9 @@ export default function Home() {
               <a href="#how-it-works" className="block py-3 px-4 text-gray-700 hover:bg-teal-50 hover:text-teal-600 rounded-xl font-medium transition-colors">How It Works</a>
               <a href="#fleet" className="block py-3 px-4 text-gray-700 hover:bg-teal-50 hover:text-teal-600 rounded-xl font-medium transition-colors">Our Fleet</a>
               <a href="#reviews" className="block py-3 px-4 text-gray-700 hover:bg-teal-50 hover:text-teal-600 rounded-xl font-medium transition-colors">Reviews</a>
-              <Link href="/supplier/login" className="block py-3 px-4 text-gray-700 hover:bg-teal-50 hover:text-teal-600 rounded-xl font-medium transition-colors">Partner Login</Link>
+              <Link href="/manage-booking" className="block py-3 px-4 text-gray-700 hover:bg-teal-50 hover:text-teal-600 rounded-xl font-medium transition-colors">Manage Booking</Link>
               <div className="pt-4">
-                <Link href="/agency/login" className="block py-3 px-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-center font-semibold rounded-xl">Book Now</Link>
+                <a href="#book-transfer" onClick={() => setMobileMenuOpen(false)} className="block py-3 px-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-center font-semibold rounded-xl">Book Now</a>
               </div>
             </div>
           </div>
@@ -293,14 +293,21 @@ export default function Home() {
               {/* Main Headline */}
               <div className="space-y-4">
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight">
-                  Airport Transfers
+                  Book Airport Transfers
                   <span className="block mt-2 bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                    Made Simple.
+                    in 60 Seconds
                   </span>
                 </h1>
                 <p className="text-xl md:text-2xl text-gray-300 max-w-lg leading-relaxed">
-                  Book reliable, pre-arranged transfers in <strong className="text-white">500+ cities</strong> worldwide. Your driver awaits.
+                  Compare prices from <strong className="text-white">verified transfer companies</strong> worldwide. Your driver awaits.
                 </p>
+              </div>
+
+              {/* Supplier Microtag */}
+              <div className="pt-2">
+                <Link href="/become-partner" className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-300 text-sm transition-colors group">
+                  Are you a supplier? <span className="group-hover:underline">Join our partner program</span> <FaArrowRight className="text-xs group-hover:translate-x-1 transition-transform" />
+                </Link>
               </div>
 
               {/* Quick Stats - Desktop */}
@@ -331,7 +338,7 @@ export default function Home() {
             </div>
 
             {/* Right Side - Booking Form */}
-            <div className="animate-slide-up">
+            <div id="book-transfer" className="animate-slide-up scroll-mt-24">
               <div className="bg-white rounded-3xl p-8 shadow-2xl shadow-black/20 border border-white/10">
                 {/* Form Header */}
                 <div className="text-center mb-6">
@@ -802,6 +809,12 @@ export default function Home() {
                 <li><Link href="/contact" className="text-gray-400 hover:text-teal-400 transition-colors">Contact Us</Link></li>
                 <li><Link href="/faq" className="text-gray-400 hover:text-teal-400 transition-colors">FAQs</Link></li>
                 <li><Link href="/manage-booking" className="text-gray-400 hover:text-teal-400 transition-colors">Manage Booking</Link></li>
+              </ul>
+
+              <h4 className="text-lg font-bold mb-4 mt-8">Partner Portal</h4>
+              <ul className="space-y-3">
+                <li><Link href="/supplier/login" className="text-gray-400 hover:text-teal-400 transition-colors">Supplier Login</Link></li>
+                <li><Link href="/agency/login" className="text-gray-400 hover:text-teal-400 transition-colors">Agency Login</Link></li>
               </ul>
             </div>
 

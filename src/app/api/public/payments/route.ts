@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryOne, query } from '@/lib/db';
-import { createPaymentIntent, generateBankTransferDetails } from '@/lib/payments';
+import {
+  createPaymentRedirectUrl,
+  generateBankTransferDetails,
+  PaymentRequest,
+} from '@/lib/payment-gateway';
 
 interface BookingRow {
   id: number;
@@ -60,16 +64,18 @@ export async function POST(request: NextRequest) {
     const amount = Number(booking.total_price);
 
     if (paymentMethod === 'card') {
-      // Create Stripe Payment Intent
-      const result = await createPaymentIntent({
-        amount: Math.round(amount * 100), // Convert to cents
-        currency: paymentCurrency,
-        bookingId: booking.id,
+      // Create payment redirect URL for external gateway
+      const paymentRequest: PaymentRequest = {
         bookingCode: booking.public_code,
+        bookingId: booking.id,
+        amount,
+        currency: paymentCurrency,
         customerEmail: booking.customer_email || '',
         customerName: booking.customer_name || '',
-        description: `Airport Transfer - Booking ${booking.public_code}`
-      });
+        description: `Airport Transfer - Booking ${booking.public_code}`,
+      };
+
+      const result = createPaymentRedirectUrl(paymentRequest);
 
       if (!result.success) {
         return NextResponse.json(
@@ -78,20 +84,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Store payment intent ID in booking
+      // Update booking status
       await query(
         `UPDATE bookings
-         SET payment_intent_id = ?, payment_status = 'PENDING'
+         SET payment_status = 'PENDING', payment_method = 'CARD'
          WHERE id = ?`,
-        [result.paymentIntentId, booking.id]
+        [booking.id]
       );
 
       return NextResponse.json({
         paymentMethod: 'card',
-        clientSecret: result.clientSecret,
-        paymentIntentId: result.paymentIntentId,
+        redirectUrl: result.redirectUrl,
+        transactionId: result.transactionId,
         amount,
-        currency: paymentCurrency
+        currency: paymentCurrency,
       });
     } else {
       // Generate bank transfer details

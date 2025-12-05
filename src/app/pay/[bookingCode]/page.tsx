@@ -10,6 +10,8 @@ import {
   FaCheck,
   FaArrowLeft,
   FaShieldAlt,
+  FaExclamationTriangle,
+  FaRedo,
 } from 'react-icons/fa';
 
 function PaymentContent() {
@@ -17,23 +19,32 @@ function PaymentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const bookingCode = params.bookingCode as string;
-  const clientSecret = searchParams.get('secret');
+  const status = searchParams.get('status');
+  const errorMessage = searchParams.get('error');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'failed'>('pending');
+  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'failed' | 'cancelled'>('pending');
   const [bookingDetails, setBookingDetails] = useState<{
     amount: number;
     currency: string;
   } | null>(null);
-
-  // Card input state
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvc, setCvc] = useState('');
-  const [cardName, setCardName] = useState('');
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
+    // Handle payment status from URL params (callback from payment gateway)
+    if (status === 'cancelled') {
+      setPaymentStatus('cancelled');
+      setError('Payment was cancelled. You can try again or choose a different payment method.');
+      setLoading(false);
+      return;
+    } else if (status === 'failed') {
+      setPaymentStatus('failed');
+      setError(errorMessage || 'Payment failed. Please try again or contact support.');
+      setLoading(false);
+      return;
+    }
+
     // Fetch booking payment details
     const fetchPaymentDetails = async () => {
       try {
@@ -59,58 +70,38 @@ function PaymentContent() {
     };
 
     fetchPaymentDetails();
-  }, [bookingCode]);
+  }, [bookingCode, status, errorMessage]);
 
-  const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = (matches && matches[0]) || '';
-    const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    return parts.length ? parts.join(' ') : value;
-  };
-
-  const formatExpiry = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4);
-    }
-    return v;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!cardNumber || !expiry || !cvc || !cardName) {
-      setError('Please fill in all card details');
-      return;
-    }
-
-    setPaymentStatus('processing');
+  const handlePayWithCard = async () => {
+    setRedirecting(true);
     setError(null);
 
-    // Note: In production, this would use Stripe.js/Elements
-    // For now, simulate payment processing
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const res = await fetch('/api/public/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingCode,
+          paymentMethod: 'card',
+          currency: bookingDetails?.currency || 'EUR'
+        }),
+      });
 
-      // In production, you would use:
-      // const stripe = await loadStripe(publishableKey);
-      // const result = await stripe.confirmCardPayment(clientSecret, {...});
-
-      // For demo, assume success
-      setPaymentStatus('success');
-
-      // Redirect to confirmation after delay
-      setTimeout(() => {
-        router.push(`/manage-booking?ref=${bookingCode}&payment=success`);
-      }, 3000);
-    } catch {
-      setPaymentStatus('failed');
-      setError('Payment failed. Please try again.');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.redirectUrl) {
+          window.location.href = data.redirectUrl;
+          return;
+        } else {
+          throw new Error('No payment URL received');
+        }
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to initiate payment');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process payment');
+      setRedirecting(false);
     }
   };
 
@@ -185,13 +176,32 @@ function PaymentContent() {
 
       <main className="max-w-xl mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaCreditCard className="w-8 h-8 text-blue-600" />
+          {/* Status-based header */}
+          {paymentStatus === 'cancelled' ? (
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaExclamationTriangle className="w-8 h-8 text-yellow-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Payment Cancelled</h1>
+              <p className="text-gray-600 mt-1">Booking: {bookingCode}</p>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Complete Payment</h1>
-            <p className="text-gray-600 mt-1">Booking: {bookingCode}</p>
-          </div>
+          ) : paymentStatus === 'failed' ? (
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaExclamationTriangle className="w-8 h-8 text-red-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Payment Failed</h1>
+              <p className="text-gray-600 mt-1">Booking: {bookingCode}</p>
+            </div>
+          ) : (
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaCreditCard className="w-8 h-8 text-blue-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Complete Payment</h1>
+              <p className="text-gray-600 mt-1">Booking: {bookingCode}</p>
+            </div>
+          )}
 
           {bookingDetails && (
             <div className="bg-gray-50 rounded-xl p-4 mb-6 text-center">
@@ -208,85 +218,42 @@ function PaymentContent() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Cardholder Name
-              </label>
-              <input
-                type="text"
-                value={cardName}
-                onChange={(e) => setCardName(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
-                placeholder="John Doe"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Card Number
-              </label>
-              <input
-                type="text"
-                value={cardNumber}
-                onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-mono"
-                placeholder="1234 5678 9012 3456"
-                maxLength={19}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Expiry Date
-                </label>
-                <input
-                  type="text"
-                  value={expiry}
-                  onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-mono"
-                  placeholder="MM/YY"
-                  maxLength={5}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  CVC
-                </label>
-                <input
-                  type="text"
-                  value={cvc}
-                  onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-mono"
-                  placeholder="123"
-                  maxLength={4}
-                  required
-                />
-              </div>
-            </div>
-
+          {/* Payment Actions */}
+          <div className="space-y-4">
             <button
-              type="submit"
-              disabled={paymentStatus === 'processing'}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+              onClick={handlePayWithCard}
+              disabled={redirecting}
+              className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {paymentStatus === 'processing' ? (
+              {redirecting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Processing Payment...
+                  Redirecting to Payment...
                 </>
               ) : (
                 <>
-                  <FaLock />
-                  Pay {bookingDetails ? `${bookingDetails.currency} ${bookingDetails.amount.toFixed(2)}` : ''}
+                  {paymentStatus === 'failed' || paymentStatus === 'cancelled' ? (
+                    <>
+                      <FaRedo />
+                      Try Again
+                    </>
+                  ) : (
+                    <>
+                      <FaCreditCard />
+                      Pay with Card
+                    </>
+                  )}
                 </>
               )}
             </button>
-          </form>
+
+            <Link
+              href={`/manage-booking?ref=${bookingCode}`}
+              className="block w-full py-3 text-center bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all"
+            >
+              View Booking Details
+            </Link>
+          </div>
 
           {/* Security Badges */}
           <div className="mt-8 pt-6 border-t">
@@ -301,7 +268,7 @@ function PaymentContent() {
               </div>
             </div>
             <p className="text-xs text-center text-gray-400 mt-4">
-              Your payment information is encrypted and secure. We never store your full card details.
+              Your payment is processed securely through our payment partner. We never store your card details.
             </p>
           </div>
         </div>

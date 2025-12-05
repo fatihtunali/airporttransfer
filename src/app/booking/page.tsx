@@ -204,7 +204,7 @@ function BookingContent() {
 
       // Step 2: Handle payment based on selected method
       if (paymentMethod === 'card') {
-        // Redirect to Stripe checkout
+        // Redirect to external payment gateway
         setPaymentProcessing(true);
         const paymentRes = await fetch('/api/public/payments', {
           method: 'POST',
@@ -218,10 +218,11 @@ function BookingContent() {
 
         if (paymentRes.ok) {
           const paymentData = await paymentRes.json();
-          // Store client secret for Stripe Elements (would need Stripe.js integration)
-          // For now, redirect to a payment page
-          window.location.href = `/pay/${result.publicCode}?secret=${paymentData.clientSecret}`;
-          return;
+          // Redirect to external payment gateway
+          if (paymentData.redirectUrl) {
+            window.location.href = paymentData.redirectUrl;
+            return;
+          }
         }
         setPaymentProcessing(false);
       } else if (paymentMethod === 'bank_transfer') {
