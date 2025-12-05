@@ -775,7 +775,7 @@ export default function Home() {
                 height={54}
                 className="h-12 w-auto rounded-lg mb-6"
               />
-              <p className="text-gray-300 mb-6 leading-relaxed">
+              <p className="text-white/80 mb-6 leading-relaxed">
                 Book reliable airport transfers worldwide from verified local suppliers. Travel with confidence.
               </p>
             </div>
@@ -783,40 +783,40 @@ export default function Home() {
             <div>
               <h4 className="text-lg font-bold mb-6 text-white">Quick Links</h4>
               <ul className="space-y-3">
-                <li><Link href="/" className="text-gray-300 hover:text-teal-400 transition-colors">Search Transfers</Link></li>
-                <li><Link href="/popular-routes" className="text-gray-300 hover:text-teal-400 transition-colors">Popular Routes</Link></li>
-                <li><Link href="/airport-guides" className="text-gray-300 hover:text-teal-400 transition-colors">Airport Guides</Link></li>
-                <li><Link href="/travel-tips" className="text-gray-300 hover:text-teal-400 transition-colors">Travel Tips</Link></li>
+                <li><Link href="/" className="text-white/80 hover:text-white transition-colors">Search Transfers</Link></li>
+                <li><Link href="/popular-routes" className="text-white/80 hover:text-white transition-colors">Popular Routes</Link></li>
+                <li><Link href="/airport-guides" className="text-white/80 hover:text-white transition-colors">Airport Guides</Link></li>
+                <li><Link href="/travel-tips" className="text-white/80 hover:text-white transition-colors">Travel Tips</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-lg font-bold mb-6 text-white">Support</h4>
               <ul className="space-y-3">
-                <li><Link href="/help" className="text-gray-300 hover:text-teal-400 transition-colors">Help Center</Link></li>
-                <li><Link href="/contact" className="text-gray-300 hover:text-teal-400 transition-colors">Contact Us</Link></li>
-                <li><Link href="/faq" className="text-gray-300 hover:text-teal-400 transition-colors">FAQs</Link></li>
-                <li><Link href="/manage-booking" className="text-gray-300 hover:text-teal-400 transition-colors">Manage Booking</Link></li>
+                <li><Link href="/help" className="text-white/80 hover:text-white transition-colors">Help Center</Link></li>
+                <li><Link href="/contact" className="text-white/80 hover:text-white transition-colors">Contact Us</Link></li>
+                <li><Link href="/faq" className="text-white/80 hover:text-white transition-colors">FAQs</Link></li>
+                <li><Link href="/manage-booking" className="text-white/80 hover:text-white transition-colors">Manage Booking</Link></li>
               </ul>
 
               <h4 className="text-lg font-bold mb-4 mt-8 text-white">Partner Portal</h4>
               <ul className="space-y-3">
-                <li><Link href="/supplier/login" className="text-gray-300 hover:text-teal-400 transition-colors">Supplier Login</Link></li>
-                <li><Link href="/agency/login" className="text-gray-300 hover:text-teal-400 transition-colors">Agency Login</Link></li>
+                <li><Link href="/supplier/login" className="text-white/80 hover:text-white transition-colors">Supplier Login</Link></li>
+                <li><Link href="/agency/login" className="text-white/80 hover:text-white transition-colors">Agency Login</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-lg font-bold mb-6 text-white">Contact Us</h4>
               <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-300">
-                  <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center">
+                <li className="flex items-center gap-3 text-white">
+                  <div className="w-10 h-10 bg-teal-500/20 rounded-xl flex items-center justify-center">
                     <FaPhone className="text-teal-400" />
                   </div>
                   <span>+90 216 557 52 52</span>
                 </li>
-                <li className="flex items-center gap-3 text-gray-300">
-                  <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center">
+                <li className="flex items-center gap-3 text-white">
+                  <div className="w-10 h-10 bg-teal-500/20 rounded-xl flex items-center justify-center">
                     <FaEnvelope className="text-teal-400" />
                   </div>
                   <span>support@airporttransferportal.com</span>
@@ -831,11 +831,11 @@ export default function Home() {
           </div>
 
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-300 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
+            <p className="text-white/70 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link href="/terms" className="text-gray-300 hover:text-white text-sm transition-colors">Terms of Service</Link>
-              <Link href="/privacy" className="text-gray-300 hover:text-white text-sm transition-colors">Privacy Policy</Link>
-              <Link href="/cookies" className="text-gray-300 hover:text-white text-sm transition-colors">Cookie Policy</Link>
+              <Link href="/terms" className="text-white/70 hover:text-white text-sm transition-colors">Terms of Service</Link>
+              <Link href="/privacy" className="text-white/70 hover:text-white text-sm transition-colors">Privacy Policy</Link>
+              <Link href="/cookies" className="text-white/70 hover:text-white text-sm transition-colors">Cookie Policy</Link>
             </div>
           </div>
         </div>

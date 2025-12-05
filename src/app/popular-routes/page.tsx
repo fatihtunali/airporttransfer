@@ -211,24 +211,24 @@ export default function PopularRoutesPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             <div>
               <Image src="/logo/logo_atp.jpg" alt="Airport Transfer Portal" width={180} height={54} className="h-12 w-auto rounded-lg mb-6" />
-              <p className="text-gray-300 mb-6">Book reliable airport transfers worldwide from verified local suppliers.</p>
+              <p className="text-white/80 mb-6">Book reliable airport transfers worldwide from verified local suppliers.</p>
             </div>
             <div>
               <h4 className="text-lg font-bold mb-6 text-white">Quick Links</h4>
               <ul className="space-y-3">
-                <li><Link href="/" className="text-gray-300 hover:text-teal-400">Search Transfers</Link></li>
-                <li><Link href="/popular-routes" className="text-gray-300 hover:text-teal-400">Popular Routes</Link></li>
-                <li><Link href="/airport-guides" className="text-gray-300 hover:text-teal-400">Airport Guides</Link></li>
-                <li><Link href="/travel-tips" className="text-gray-300 hover:text-teal-400">Travel Tips</Link></li>
+                <li><Link href="/" className="text-white/80 hover:text-white">Search Transfers</Link></li>
+                <li><Link href="/popular-routes" className="text-white/80 hover:text-white">Popular Routes</Link></li>
+                <li><Link href="/airport-guides" className="text-white/80 hover:text-white">Airport Guides</Link></li>
+                <li><Link href="/travel-tips" className="text-white/80 hover:text-white">Travel Tips</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-lg font-bold mb-6 text-white">Support</h4>
               <ul className="space-y-3">
-                <li><Link href="/help" className="text-gray-300 hover:text-teal-400">Help Center</Link></li>
-                <li><Link href="/contact" className="text-gray-300 hover:text-teal-400">Contact Us</Link></li>
-                <li><Link href="/faq" className="text-gray-300 hover:text-teal-400">FAQs</Link></li>
-                <li><Link href="/manage-booking" className="text-gray-300 hover:text-teal-400">Manage Booking</Link></li>
+                <li><Link href="/help" className="text-white/80 hover:text-white">Help Center</Link></li>
+                <li><Link href="/contact" className="text-white/80 hover:text-white">Contact Us</Link></li>
+                <li><Link href="/faq" className="text-white/80 hover:text-white">FAQs</Link></li>
+                <li><Link href="/manage-booking" className="text-white/80 hover:text-white">Manage Booking</Link></li>
               </ul>
             </div>
             <div>
@@ -249,11 +249,11 @@ export default function PopularRoutesPage() {
             </div>
           </div>
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-300 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
+            <p className="text-white/70 text-sm">&copy; {new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link href="/terms" className="text-gray-300 hover:text-white text-sm">Terms of Service</Link>
-              <Link href="/privacy" className="text-gray-300 hover:text-white text-sm">Privacy Policy</Link>
-              <Link href="/cookies" className="text-gray-300 hover:text-white text-sm">Cookie Policy</Link>
+              <Link href="/terms" className="text-white/70 hover:text-white text-sm">Terms of Service</Link>
+              <Link href="/privacy" className="text-white/70 hover:text-white text-sm">Privacy Policy</Link>
+              <Link href="/cookies" className="text-white/70 hover:text-white text-sm">Cookie Policy</Link>
             </div>
           </div>
         </div>
