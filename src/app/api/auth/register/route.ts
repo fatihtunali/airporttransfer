@@ -4,12 +4,26 @@ import { hashPassword, generateToken, setAuthCookie } from '@/lib/auth';
 
 type Role = 'ADMIN' | 'SUPPLIER_OWNER' | 'DISPATCHER' | 'DRIVER' | 'END_CUSTOMER';
 
+interface SupplierData {
+  name: string;
+  legalName?: string;
+  taxNumber?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  whatsapp?: string;
+  country?: string;
+  city?: string;
+  address?: string;
+}
+
 interface RegisterRequest {
   email: string;
   password: string;
   fullName: string;
   phone?: string;
   role?: Role;
+  supplier?: SupplierData;
 }
 
 // POST /api/auth/register - Register a new user
@@ -77,11 +91,44 @@ export async function POST(request: NextRequest) {
       [body.email.toLowerCase(), passwordHash, body.fullName, body.phone || null, role]
     );
 
+    let supplierId: number | null = null;
+
+    // If registering as SUPPLIER_OWNER and supplier data is provided, create supplier
+    if (role === 'SUPPLIER_OWNER' && body.supplier) {
+      // Create supplier company
+      supplierId = await insert(
+        `INSERT INTO suppliers (name, legal_name, tax_number, contact_name, contact_email,
+                                contact_phone, whatsapp, country, city, address,
+                                commission_rate, is_verified, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 15.00, FALSE, TRUE)`,
+        [
+          body.supplier.name,
+          body.supplier.legalName || null,
+          body.supplier.taxNumber || null,
+          body.supplier.contactName || body.fullName,
+          body.supplier.contactEmail || body.email.toLowerCase(),
+          body.supplier.contactPhone || body.phone || null,
+          body.supplier.whatsapp || null,
+          body.supplier.country || null,
+          body.supplier.city || null,
+          body.supplier.address || null,
+        ]
+      );
+
+      // Link user to supplier as OWNER
+      await insert(
+        `INSERT INTO supplier_users (supplier_id, user_id, role, is_active)
+         VALUES (?, ?, 'OWNER', TRUE)`,
+        [supplierId, userId]
+      );
+    }
+
     // Generate JWT token
     const token = await generateToken({
       userId,
       email: body.email.toLowerCase(),
       role,
+      supplierId: supplierId || undefined,
     });
 
     // Set auth cookie
@@ -96,6 +143,7 @@ export async function POST(request: NextRequest) {
         phone: body.phone || null,
         role,
         isActive: true,
+        supplierId,
       },
       { status: 201 }
     );

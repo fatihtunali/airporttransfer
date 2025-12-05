@@ -21,7 +21,9 @@
       "Bash(scp:*)",
       "Bash(ssh n8n@192.168.1.107 \"docker cp /tmp/supplier-v3.json n8n:/tmp/supplier-v3.json && docker exec n8n n8n import:workflow --input=/tmp/supplier-v3.json 2>&1\")",
       "WebFetch(domain:www.limousineworldwide.directory)",
-      "WebFetch(domain:nelivery.org)"
+      "WebFetch(domain:nelivery.org)",
+      "Bash(ssh n8n@192.168.1.107:*)",
+      "Bash(ssh:*)"
     ],
     "deny": [],
     "ask": []
