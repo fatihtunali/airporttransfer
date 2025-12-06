@@ -22,6 +22,7 @@ import {
   FaInfoCircle,
   FaSave,
   FaArrowLeft,
+  FaCreditCard,
 } from 'react-icons/fa';
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -96,12 +97,15 @@ function ManageBookingContent() {
   // Modal states
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showModifyModal, setShowModifyModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [cancelInfo, setCancelInfo] = useState<CancellationInfo | null>(null);
   const [modifyInfo, setModifyInfo] = useState<ModificationInfo | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelLoading, setCancelLoading] = useState(false);
   const [modifyLoading, setModifyLoading] = useState(false);
-  const [actionSuccess, setActionSuccess] = useState<{ type: 'cancel' | 'modify'; message: string } | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState<{ type: 'cancel' | 'modify' | 'payment'; message: string } | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Modification form
   const [modifyForm, setModifyForm] = useState({
@@ -119,6 +123,30 @@ function ManageBookingContent() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Check if logged in and auto-load booking if ref is in URL
+  useEffect(() => {
+    const checkLoginAndLoad = async () => {
+      try {
+        const res = await fetch('/api/customer/me');
+        if (res.ok) {
+          const data = await res.json();
+          setIsLoggedIn(true);
+          setUserEmail(data.customer.email);
+          setSearchForm(prev => ({ ...prev, email: data.customer.email }));
+
+          // Auto-load booking if ref in URL
+          if (refFromUrl) {
+            handleSearch(refFromUrl, data.customer.email);
+          }
+        }
+      } catch {
+        // Not logged in, that's fine
+      }
+    };
+    checkLoginAndLoad();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refFromUrl]);
 
   const handleSearch = useCallback(async (ref?: string, email?: string) => {
     const bookingRef = ref || searchForm.bookingRef;
@@ -332,6 +360,45 @@ function ManageBookingContent() {
     }
   };
 
+  // Handle payment
+  const handlePayment = async (method: 'card' | 'bank_transfer') => {
+    if (!booking) return;
+
+    setPaymentLoading(true);
+    try {
+      if (method === 'card') {
+        // Redirect to payment page
+        window.location.href = `/pay/${booking.ref}`;
+      } else {
+        // Show bank transfer details
+        const res = await fetch('/api/public/payments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bookingCode: booking.ref,
+            email: userEmail,
+            paymentMethod: 'bank_transfer',
+          }),
+        });
+
+        if (res.ok) {
+          setShowPaymentModal(false);
+          setActionSuccess({
+            type: 'payment',
+            message: 'Bank transfer details have been sent to your email. Please complete the transfer within 24 hours.',
+          });
+          handleSearch(booking.ref, userEmail);
+        } else {
+          setError('Failed to process payment request');
+        }
+      }
+    } catch {
+      setError('Payment failed. Please try again.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
       case 'CONFIRMED':
@@ -353,6 +420,8 @@ function ManageBookingContent() {
 
   const canCancelBooking = booking && !['CANCELLED', 'COMPLETED', 'IN_PROGRESS'].includes(booking.status.toUpperCase());
   const canModifyBooking = booking && !['CANCELLED', 'COMPLETED', 'IN_PROGRESS'].includes(booking.status.toUpperCase());
+  const needsPayment = booking && !['CANCELLED', 'COMPLETED'].includes(booking.status.toUpperCase()) &&
+    !['PAID', 'REFUNDED'].includes(booking.paymentStatus?.toUpperCase() || '');
 
   return (
     <div className="min-h-screen bg-white">
@@ -581,6 +650,29 @@ function ManageBookingContent() {
                   </div>
                 )}
               </div>
+
+              {/* Payment Button - Show prominently if payment needed */}
+              {needsPayment && (
+                <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-xl p-6">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                        <FaCreditCard className="text-orange-500" />
+                        Payment Required
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Complete your payment to confirm your booking
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowPaymentModal(true)}
+                      className="px-8 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold rounded-xl hover:from-orange-600 hover:to-yellow-600 transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                    >
+                      <FaCreditCard /> Pay Now - {booking.price}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="grid md:grid-cols-2 gap-4">
@@ -879,6 +971,67 @@ function ManageBookingContent() {
                   )}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && booking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="p-6 border-b flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Complete Payment</h3>
+              <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-gray-600">
+                <FaTimes size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-center mb-6">
+                <p className="text-gray-600">Amount to pay</p>
+                <p className="text-4xl font-bold text-gray-900">{booking.price}</p>
+              </div>
+
+              <button
+                onClick={() => handlePayment('card')}
+                disabled={paymentLoading}
+                className="w-full py-4 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold rounded-xl hover:from-teal-600 hover:to-cyan-600 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                <FaCreditCard className="text-xl" />
+                Pay with Card
+              </button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-white text-gray-500">or</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => handlePayment('bank_transfer')}
+                disabled={paymentLoading}
+                className="w-full py-4 bg-white border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:border-teal-500 hover:text-teal-600 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                Bank Transfer
+              </button>
+
+              {paymentLoading && (
+                <div className="text-center py-4">
+                  <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Processing...</p>
+                </div>
+              )}
+
+              <p className="text-xs text-gray-500 text-center mt-4">
+                Your payment is secured with SSL encryption
+              </p>
             </div>
           </div>
         </div>
