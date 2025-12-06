@@ -18,7 +18,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { action } = body;
+    let { action } = body;
+
+    // Auto-detect action if not provided
+    if (!action) {
+      if (body.googleCredential) {
+        action = 'google';
+      } else if (body.email && body.password) {
+        action = 'login';
+      }
+    }
 
     switch (action) {
       case 'register': {
@@ -252,4 +261,28 @@ export async function POST(request: NextRequest) {
       { status: 500, headers: getRateLimitHeaders(rateLimitResult) }
     );
   }
+}
+
+// DELETE /api/customer/auth - Logout
+export async function DELETE(request: NextRequest) {
+  const { result: rateLimitResult } = applyRateLimit(request, RateLimits.GENERAL);
+
+  const token = request.cookies.get('customer_token')?.value ||
+                request.headers.get('authorization')?.replace('Bearer ', '');
+
+  if (token) {
+    await logoutCustomer(token);
+  }
+
+  const response = NextResponse.json({
+    success: true,
+    message: 'Logged out successfully',
+  }, {
+    headers: getRateLimitHeaders(rateLimitResult),
+  });
+
+  // Clear cookie
+  response.cookies.delete('customer_token');
+
+  return response;
 }
