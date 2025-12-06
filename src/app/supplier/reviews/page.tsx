@@ -99,12 +99,19 @@ export default function SupplierReviews() {
     );
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return 'Invalid date';
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return 'Invalid date';
+    }
   };
 
   return (
@@ -130,7 +137,7 @@ export default function SupplierReviews() {
             <p className="text-gray-500 text-sm">Average Rating</p>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-3xl font-bold text-gray-900">
-                {stats.avgRating.toFixed(1)}
+                {(Number(stats.avgRating) || 0).toFixed(1)}
               </span>
               <FaStar className="w-6 h-6 text-yellow-400" />
             </div>
@@ -238,7 +245,7 @@ export default function SupplierReviews() {
                     {review.supplierResponse ? (
                       <div className="bg-gray-50 rounded-lg p-4 mt-4">
                         <p className="text-sm font-medium text-gray-700 mb-1">
-                          Your Response ({formatDate(review.responseAt!)}):
+                          Your Response ({formatDate(review.responseAt)}):
                         </p>
                         <p className="text-gray-600">{review.supplierResponse}</p>
                       </div>

@@ -23,12 +23,20 @@ interface Document {
   createdAt: string;
 }
 
+// Company document types
+const companyDocTypes = [
+  { value: 'BUSINESS_LICENSE', label: 'Business Registration / License', required: true, description: 'Official business registration certificate' },
+  { value: 'TRANSPORT_LICENSE', label: 'Transport Operating License', required: true, description: 'License to operate passenger transport services' },
+  { value: 'LIABILITY_INSURANCE', label: 'Public Liability Insurance', required: true, description: 'Insurance covering passenger injuries and damages' },
+  { value: 'FLEET_INSURANCE', label: 'Fleet/Vehicle Insurance', required: true, description: 'Commercial vehicle insurance for your fleet' },
+  { value: 'TAX_CERT', label: 'Tax Registration Certificate', required: true, description: 'VAT/Tax registration document' },
+  { value: 'COMPANY_ID', label: 'Company ID / Registration Number', required: false, description: 'Official company identification' },
+  { value: 'OTHER_COMPANY', label: 'Other Company Document', required: false, description: 'Any other relevant company document' },
+];
+
+// All doc types for the dropdown
 const docTypes = [
-  { value: 'LICENSE', label: 'Business License' },
-  { value: 'INSURANCE', label: 'Insurance Certificate' },
-  { value: 'TAX_CERT', label: 'Tax Registration Certificate' },
-  { value: 'ID_CARD', label: 'ID Card / Passport' },
-  { value: 'OTHER', label: 'Other Document' },
+  ...companyDocTypes,
 ];
 
 export default function SupplierDocuments() {
@@ -36,7 +44,7 @@ export default function SupplierDocuments() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
-    docType: 'LICENSE',
+    docType: 'BUSINESS_LICENSE',
     docName: '',
     fileUrl: '',
     expiryDate: '',
@@ -100,8 +108,8 @@ export default function SupplierDocuments() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-          <p className="text-gray-600">Manage your company documents</p>
+          <h1 className="text-2xl font-bold text-gray-900">Company Documents</h1>
+          <p className="text-gray-600">Upload required documents for verification</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -109,6 +117,44 @@ export default function SupplierDocuments() {
         >
           <FaPlus /> Upload Document
         </button>
+      </div>
+
+      {/* Requirements Checklist */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <h2 className="font-semibold text-blue-900 mb-4">Required Documents Checklist</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {companyDocTypes.filter(d => d.required).map((docType) => {
+            const uploaded = documents.find(d => d.docType === docType.value);
+            return (
+              <div key={docType.value} className="flex items-start gap-3">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  uploaded?.isVerified
+                    ? 'bg-green-500 text-white'
+                    : uploaded
+                      ? 'bg-yellow-500 text-white'
+                      : 'bg-gray-300 text-gray-500'
+                }`}>
+                  {uploaded?.isVerified ? (
+                    <FaCheck className="w-3 h-3" />
+                  ) : uploaded ? (
+                    <FaClock className="w-3 h-3" />
+                  ) : (
+                    <span className="text-xs">!</span>
+                  )}
+                </div>
+                <div>
+                  <p className={`font-medium ${uploaded ? 'text-gray-900' : 'text-gray-600'}`}>
+                    {docType.label}
+                  </p>
+                  <p className="text-sm text-gray-500">{docType.description}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-sm text-blue-700 mt-4">
+          <strong>Note:</strong> Driver documents (license, ID, photo) should be uploaded in each driver&apos;s profile under Drivers → Documents.
+        </p>
       </div>
 
       {/* Document List */}

@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     responseFilter = 'AND r.supplier_response IS NULL';
   }
 
-  const reviews = await query<SupplierReview>(
+  const reviewRows = await query<SupplierReview>(
     `SELECT
        r.id,
        r.booking_id,
@@ -57,10 +57,27 @@ export async function GET(request: NextRequest) {
     [supplierId]
   );
 
+  // Map to camelCase for frontend
+  const reviews = reviewRows.map(r => ({
+    id: r.id,
+    bookingId: r.booking_id,
+    bookingCode: r.public_code,
+    customerName: r.customer_name,
+    ratingOverall: Number(r.rating_overall) || 0,
+    ratingPunctuality: r.rating_punctuality ? Number(r.rating_punctuality) : null,
+    ratingVehicle: r.rating_vehicle ? Number(r.rating_vehicle) : null,
+    ratingDriver: r.rating_driver ? Number(r.rating_driver) : null,
+    reviewText: r.review_text,
+    supplierResponse: r.supplier_response,
+    responseAt: r.response_at,
+    isPublished: r.is_published,
+    createdAt: r.created_at,
+  }));
+
   // Get stats
-  const pendingResponse = reviews.filter(r => !r.supplier_response).length;
+  const pendingResponse = reviews.filter(r => !r.supplierResponse).length;
   const avgRating = reviews.length > 0
-    ? reviews.reduce((sum, r) => sum + r.rating_overall, 0) / reviews.length
+    ? reviews.reduce((sum, r) => sum + r.ratingOverall, 0) / reviews.length
     : 0;
 
   return NextResponse.json({
