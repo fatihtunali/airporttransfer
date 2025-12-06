@@ -36,6 +36,13 @@ interface StatsRow {
   count: number;
 }
 
+interface EarningsRow {
+  total_revenue: number;
+  total_supplier_payouts: number;
+  total_commission: number;
+  completed_bookings: number;
+}
+
 // GET /api/admin/payouts - List all supplier payouts
 export async function GET(request: NextRequest) {
   // Authenticate admin
@@ -101,6 +108,25 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Get company earnings (commission)
+    const earningsRow = await queryOne<EarningsRow>(`
+      SELECT
+        COALESCE(SUM(b.total_price), 0) as total_revenue,
+        COALESCE(SUM(sp.amount), 0) as total_supplier_payouts,
+        COALESCE(SUM(b.total_price - sp.amount), 0) as total_commission,
+        COUNT(DISTINCT b.id) as completed_bookings
+      FROM supplier_payouts sp
+      JOIN bookings b ON b.id = sp.booking_id
+      WHERE sp.status != 'CANCELLED'
+    `, []);
+
+    const companyEarnings = {
+      totalRevenue: Number(earningsRow?.total_revenue) || 0,
+      totalSupplierPayouts: Number(earningsRow?.total_supplier_payouts) || 0,
+      totalCommission: Number(earningsRow?.total_commission) || 0,
+      completedBookings: Number(earningsRow?.completed_bookings) || 0,
+    };
+
     return NextResponse.json({
       payouts: payouts.map((p) => ({
         id: p.id,
@@ -127,6 +153,7 @@ export async function GET(request: NextRequest) {
         preferredPaymentMethod: p.preferred_payment_method,
       })),
       stats,
+      companyEarnings,
     });
   } catch (error) {
     console.error('Error fetching payouts:', error);

@@ -33,6 +33,13 @@ interface PayoutStats {
   countPaid: number;
 }
 
+interface CompanyEarnings {
+  totalRevenue: number;
+  totalSupplierPayouts: number;
+  totalCommission: number;
+  completedBookings: number;
+}
+
 interface SupplierGroup {
   payouts: Payout[];
   total: number;
@@ -51,6 +58,7 @@ interface SupplierGroup {
 export default function PayoutsPage() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [stats, setStats] = useState<PayoutStats | null>(null);
+  const [companyEarnings, setCompanyEarnings] = useState<CompanyEarnings | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -72,6 +80,7 @@ export default function PayoutsPage() {
         const data = await res.json();
         setPayouts(data.payouts || []);
         setStats(data.stats || null);
+        setCompanyEarnings(data.companyEarnings || null);
       }
     } catch (error) {
       console.error('Load payouts error:', error);
@@ -180,7 +189,43 @@ export default function PayoutsPage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Company Earnings */}
+      <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl shadow-sm p-6 text-white">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Company Earnings (Commission)</h2>
+          <span className="text-sm opacity-75">{companyEarnings?.completedBookings || 0} completed bookings</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div>
+            <p className="text-sm opacity-75">Total Revenue</p>
+            <p className="text-2xl font-bold">
+              EUR {companyEarnings?.totalRevenue?.toFixed(2) || '0.00'}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm opacity-75">Supplier Payouts</p>
+            <p className="text-2xl font-bold">
+              EUR {companyEarnings?.totalSupplierPayouts?.toFixed(2) || '0.00'}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm opacity-75">Your Commission</p>
+            <p className="text-3xl font-bold">
+              EUR {companyEarnings?.totalCommission?.toFixed(2) || '0.00'}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm opacity-75">Avg Commission Rate</p>
+            <p className="text-2xl font-bold">
+              {companyEarnings?.totalRevenue && companyEarnings.totalRevenue > 0
+                ? ((companyEarnings.totalCommission / companyEarnings.totalRevenue) * 100).toFixed(1)
+                : '0'}%
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Payout Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm p-6">
           <p className="text-sm text-gray-500">Pending Payouts</p>

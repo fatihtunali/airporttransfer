@@ -57,11 +57,30 @@ export default function SupplierPricing() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [vehicleFilter, setVehicleFilter] = useState<string>('');
+  const [commissionRate, setCommissionRate] = useState<number>(0);
 
   useEffect(() => {
     fetchTariffs();
     fetchRoutes();
+    fetchSupplierInfo();
   }, []);
+
+  const fetchSupplierInfo = async () => {
+    try {
+      const res = await fetch('/api/supplier/me');
+      if (res.ok) {
+        const data = await res.json();
+        setCommissionRate(data.supplier?.commissionRate || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching supplier info:', error);
+    }
+  };
+
+  // Calculate net amount after commission
+  const calculateNet = (grossPrice: number): number => {
+    return grossPrice * (1 - commissionRate / 100);
+  };
 
   const fetchTariffs = async () => {
     try {
@@ -317,6 +336,9 @@ export default function SupplierPricing() {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         Base Price
                       </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-green-600 uppercase">
+                        Net You Receive
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         Per Pax
                       </th>
@@ -346,6 +368,16 @@ export default function SupplierPricing() {
                           <span className="font-semibold text-gray-900">
                             {tariff.currency} {tariff.basePrice.toFixed(2)}
                           </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="font-semibold text-green-600">
+                            {tariff.currency} {calculateNet(tariff.basePrice).toFixed(2)}
+                          </span>
+                          {commissionRate > 0 && (
+                            <span className="block text-xs text-gray-400">
+                              -{commissionRate}% commission
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-gray-600">
                           {tariff.pricePerPax
@@ -491,7 +523,7 @@ export default function SupplierPricing() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        basePrice: parseFloat(e.target.value),
+                        basePrice: parseFloat(e.target.value) || 0,
                       })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -510,7 +542,7 @@ export default function SupplierPricing() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        pricePerPax: parseFloat(e.target.value),
+                        pricePerPax: parseFloat(e.target.value) || 0,
                       })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -519,6 +551,36 @@ export default function SupplierPricing() {
                   />
                 </div>
               </div>
+
+              {/* Net Amount Preview */}
+              {formData.basePrice > 0 && commissionRate > 0 && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Your Net Earnings</span>
+                    <span className="text-xs text-gray-500">After {commissionRate}% commission</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-xs text-gray-500">Gross Price</p>
+                      <p className="font-semibold text-gray-900">
+                        {formData.currency} {formData.basePrice.toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Commission</p>
+                      <p className="font-semibold text-red-600">
+                        -{formData.currency} {(formData.basePrice * commissionRate / 100).toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">You Receive</p>
+                      <p className="font-bold text-green-600 text-lg">
+                        {formData.currency} {calculateNet(formData.basePrice).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
