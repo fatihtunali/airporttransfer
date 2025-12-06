@@ -89,6 +89,8 @@ export default function SupplierBookings() {
             zoneName: string;
             paxAdults: number;
             flightNumber: string | null;
+            totalPrice: number;
+            currency: string;
           };
           passenger: { name: string | null; phone: string | null };
           driver: { name: string | null } | null;
@@ -108,8 +110,8 @@ export default function SupplierBookings() {
           paxAdults: r.booking.paxAdults,
           luggageCount: 0,
           status: r.status,
-          totalPrice: 0,
-          currency: 'EUR',
+          totalPrice: r.booking.totalPrice || 0,
+          currency: r.booking.currency || 'EUR',
           flightNumber: r.booking.flightNumber,
           driverName: r.driver?.name || null,
         })));
@@ -146,12 +148,12 @@ export default function SupplierBookings() {
     });
   };
 
-  const handleAccept = async (bookingId: number) => {
+  const handleAccept = async (publicCode: string) => {
     try {
-      const res = await fetch(`/api/supplier/rides/${bookingId}/status`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/supplier/rides/${publicCode}/status`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'CONFIRMED' }),
+        body: JSON.stringify({ status: 'ASSIGNED' }),
       });
       if (res.ok) {
         fetchBookings();
@@ -161,13 +163,13 @@ export default function SupplierBookings() {
     }
   };
 
-  const handleDecline = async (bookingId: number) => {
+  const handleDecline = async (publicCode: string) => {
     const reason = prompt('Please provide a reason for declining:');
     if (!reason) return;
 
     try {
-      const res = await fetch(`/api/supplier/rides/${bookingId}/status`, {
-        method: 'PATCH',
+      const res = await fetch(`/api/supplier/rides/${publicCode}/status`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'CANCELLED', reason }),
       });
@@ -320,16 +322,16 @@ export default function SupplierBookings() {
 
                   {/* Actions */}
                   <div className="flex lg:flex-col gap-2">
-                    {booking.status === 'PENDING' && (
+                    {booking.status === 'PENDING_ASSIGN' && (
                       <>
                         <button
-                          onClick={() => handleAccept(booking.id)}
+                          onClick={() => handleAccept(booking.publicCode)}
                           className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
                           <FaCheck /> Accept
                         </button>
                         <button
-                          onClick={() => handleDecline(booking.id)}
+                          onClick={() => handleDecline(booking.publicCode)}
                           className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                         >
                           <FaTimes /> Decline

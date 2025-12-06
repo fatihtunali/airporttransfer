@@ -33,6 +33,8 @@ interface RideRow {
   zone_name: string;
   direction: string;
   flight_number: string | null;
+  total_price: number;
+  currency: string;
   // Passenger info
   passenger_name: string | null;
   passenger_phone: string | null;
@@ -92,7 +94,7 @@ export async function GET(request: NextRequest) {
              r.current_lat, r.current_lng, r.assigned_at, r.started_at,
              r.arrived_at, r.picked_up_at, r.completed_at, r.driver_note, r.created_at,
              b.public_code, b.pickup_datetime, b.pax_adults, b.pax_children,
-             b.direction, b.flight_number,
+             b.direction, b.flight_number, b.total_price, b.currency,
              a.code as airport_code,
              z.name as zone_name,
              bp.full_name as passenger_name, bp.phone as passenger_phone,
@@ -183,6 +185,8 @@ export async function GET(request: NextRequest) {
           zoneName: r.zone_name,
           direction: r.direction,
           flightNumber: r.flight_number,
+          totalPrice: Number(r.total_price) || 0,
+          currency: r.currency || 'EUR',
         },
         passenger: {
           name: r.passenger_name,
