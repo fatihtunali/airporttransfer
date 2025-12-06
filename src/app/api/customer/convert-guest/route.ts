@@ -15,8 +15,7 @@ const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 interface BookingPassenger {
   booking_id: number;
   email: string;
-  first_name: string;
-  last_name: string;
+  full_name: string;
 }
 
 interface CustomerRow {
@@ -59,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     // Verify booking exists and matches email
     const booking = await queryOne<BookingPassenger>(
-      `SELECT bp.booking_id, bp.email, bp.first_name, bp.last_name
+      `SELECT bp.booking_id, bp.email, bp.full_name
        FROM bookings b
        INNER JOIN booking_passengers bp ON bp.booking_id = b.id AND bp.is_lead = TRUE
        WHERE b.public_code = ? AND LOWER(bp.email) = LOWER(?)`,
@@ -79,9 +78,11 @@ export async function POST(request: NextRequest) {
       [email]
     );
 
-    // Parse name if provided
-    let firstName = booking.first_name;
-    let lastName = booking.last_name;
+    // Parse name from booking or provided name
+    const bookingNameParts = booking.full_name.trim().split(' ');
+    let firstName = bookingNameParts[0] || '';
+    let lastName = bookingNameParts.slice(1).join(' ') || '';
+
     if (name) {
       const nameParts = name.trim().split(' ');
       firstName = nameParts[0] || firstName;
