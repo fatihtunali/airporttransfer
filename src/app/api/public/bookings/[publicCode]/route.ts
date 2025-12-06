@@ -203,6 +203,7 @@ export async function GET(
       totalPrice: Number(booking.total_price),
       status: booking.status,
       paymentStatus: booking.payment_status,
+      customerNotes: booking.customer_notes,
       supplier: supplier ? {
         name: supplier.name,
         rating: Number(supplier.rating_avg),
