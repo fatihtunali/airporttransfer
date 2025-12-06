@@ -10,6 +10,8 @@ import {
   FaTimes,
   FaMapMarkerAlt,
   FaCar,
+  FaSearch,
+  FaFilter,
 } from 'react-icons/fa';
 
 interface Tariff {
@@ -53,6 +55,8 @@ export default function SupplierPricing() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [vehicleFilter, setVehicleFilter] = useState<string>('');
 
   useEffect(() => {
     fetchTariffs();
@@ -175,7 +179,19 @@ export default function SupplierPricing() {
     }
   };
 
-  const groupedTariffs = tariffs.reduce((acc, tariff) => {
+  // Filter tariffs based on search and vehicle filter
+  const filteredTariffs = tariffs.filter(tariff => {
+    const matchesSearch = searchTerm === '' ||
+      tariff.airportCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tariff.airportName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tariff.zoneName.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesVehicle = vehicleFilter === '' || tariff.vehicleType === vehicleFilter;
+
+    return matchesSearch && matchesVehicle;
+  });
+
+  const groupedTariffs = filteredTariffs.reduce((acc, tariff) => {
     const key = `${tariff.airportCode}-${tariff.zoneName}`;
     if (!acc[key]) {
       acc[key] = {
@@ -195,7 +211,14 @@ export default function SupplierPricing() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Pricing</h1>
-          <p className="text-gray-600">Manage your route pricing</p>
+          <p className="text-gray-600">
+            Manage your route pricing
+            {!loading && (
+              <span className="ml-2 px-2 py-0.5 bg-sky-100 text-sky-700 rounded-full text-sm font-medium">
+                {tariffs.length} tariffs total
+              </span>
+            )}
+          </p>
         </div>
         <button
           onClick={openAddModal}
@@ -204,6 +227,50 @@ export default function SupplierPricing() {
           <FaPlus /> Add Tariff
         </button>
       </div>
+
+      {/* Search and Filter */}
+      {!loading && tariffs.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by airport code, name or zone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+            <div className="relative">
+              <FaFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <select
+                value={vehicleFilter}
+                onChange={(e) => setVehicleFilter(e.target.value)}
+                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              >
+                <option value="">All Vehicle Types</option>
+                {vehicleTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {(searchTerm || vehicleFilter) && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+              <span>
+                Showing {filteredTariffs.length} of {tariffs.length} tariffs
+              </span>
+              <button
+                onClick={() => { setSearchTerm(''); setVehicleFilter(''); }}
+                className="text-sky-600 hover:text-sky-700 underline"
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tariffs by Route */}
       {loading ? (
