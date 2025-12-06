@@ -33,6 +33,7 @@ interface BookingRow {
   // Passenger info via JOIN
   passenger_name: string | null;
   passenger_phone: string | null;
+  passenger_email: string | null;
 }
 
 // GET /api/admin/bookings - List all bookings
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
              a.code as airport_code, a.name as airport_name,
              z.name as zone_name,
              s.name as supplier_name,
-             bp.full_name as passenger_name, bp.phone as passenger_phone
+             bp.full_name as passenger_name, bp.phone as passenger_phone, bp.email as passenger_email
       FROM bookings b
       JOIN airports a ON a.id = b.airport_id
       JOIN zones z ON z.id = b.zone_id
@@ -84,12 +85,44 @@ export async function GET(request: NextRequest) {
       params.push(toDate);
     }
 
-    sql += ` ORDER BY b.created_at DESC LIMIT 100`;
+    // Get page and pageSize from query params
+    const pageParam = searchParams.get('page');
+    const pageSizeParam = searchParams.get('pageSize');
+    const page = pageParam ? parseInt(pageParam, 10) : 1;
+    const pageSize = pageSizeParam ? parseInt(pageSizeParam, 10) : 20;
+    const offset = (page - 1) * pageSize;
+
+    // Get total count first
+    let countSql = `
+      SELECT COUNT(*) as total
+      FROM bookings b
+      WHERE 1=1
+    `;
+    const countParams: string[] = [];
+
+    if (status) {
+      countSql += ` AND b.status = ?`;
+      countParams.push(status);
+    }
+    if (fromDate) {
+      countSql += ` AND DATE(b.pickup_datetime) >= ?`;
+      countParams.push(fromDate);
+    }
+    if (toDate) {
+      countSql += ` AND DATE(b.pickup_datetime) <= ?`;
+      countParams.push(toDate);
+    }
+
+    const countResult = await query<{ total: number }>(countSql, countParams);
+    const total = countResult[0]?.total || 0;
+
+    sql += ` ORDER BY b.created_at DESC LIMIT ? OFFSET ?`;
+    params.push(pageSize.toString(), offset.toString());
 
     const bookings = await query<BookingRow>(sql, params);
 
-    return NextResponse.json(
-      bookings.map((b) => ({
+    return NextResponse.json({
+      bookings: bookings.map((b) => ({
         id: b.id,
         publicCode: b.public_code,
         customerId: b.customer_id,
@@ -102,31 +135,24 @@ export async function GET(request: NextRequest) {
         paxChildren: b.pax_children,
         vehicleType: b.vehicle_type,
         currency: b.currency,
-        totalPrice: b.total_price,
-        commission: b.commission,
+        totalPrice: Number(b.total_price),
+        commission: Number(b.commission),
         status: b.status,
         paymentStatus: b.payment_status,
-        airport: {
-          id: b.airport_id,
-          code: b.airport_code,
-          name: b.airport_name,
-        },
-        zone: {
-          id: b.zone_id,
-          name: b.zone_name,
-        },
-        supplier: b.supplier_id
-          ? {
-              id: b.supplier_id,
-              name: b.supplier_name,
-            }
-          : null,
-        passenger: {
-          name: b.passenger_name,
-          phone: b.passenger_phone,
-        },
-      }))
-    );
+        createdAt: b.created_at,
+        // Flat fields for the frontend
+        airportCode: b.airport_code,
+        airportName: b.airport_name,
+        zoneName: b.zone_name,
+        supplierName: b.supplier_name,
+        customerName: b.passenger_name,
+        customerPhone: b.passenger_phone,
+        customerEmail: b.passenger_email,
+      })),
+      total,
+      page,
+      pageSize,
+    });
   } catch (error) {
     console.error('Error fetching bookings:', error);
     return NextResponse.json(

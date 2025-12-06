@@ -341,3 +341,154 @@ export async function sendBookingConfirmationEmail(data: BookingConfirmationData
     replyTo: 'support@airporttransferportal.com',
   });
 }
+
+export interface SupplierNewBookingData {
+  publicCode: string;
+  supplierName: string;
+  supplierEmail: string;
+  customerName: string;
+  customerPhone: string;
+  pickupDatetime: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  vehicleType: string;
+  passengers: number;
+  flightNumber?: string;
+  totalPrice: number;
+  supplierPayout: number;
+  currency: string;
+  specialRequests?: string;
+}
+
+export async function sendSupplierNewBookingEmail(data: SupplierNewBookingData) {
+  const dashboardUrl = `${BASE_URL}/supplier/bookings`;
+
+  const pickupDate = new Date(data.pickupDatetime);
+  const formattedDate = pickupDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const formattedTime = pickupDate.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f5f7fa;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%); border-radius: 16px 16px 0 0; padding: 30px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 24px;">New Booking Received!</h1>
+      <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 18px;">Reference: <strong>${data.publicCode}</strong></p>
+    </div>
+
+    <!-- Main Content -->
+    <div style="background: white; padding: 40px 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <p style="font-size: 16px; color: #1f2937; margin: 0 0 20px 0;">
+        Hi ${data.supplierName},
+      </p>
+
+      <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin: 0 0 25px 0;">
+        You have received a new booking! Please log in to your dashboard to assign a driver.
+      </p>
+
+      <!-- Payout Highlight -->
+      <div style="background: #ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 20px; text-align: center; margin: 0 0 25px 0;">
+        <span style="color: #059669; font-size: 14px; font-weight: 600;">YOUR PAYOUT</span>
+        <div style="color: #059669; font-size: 32px; font-weight: 700; margin: 5px 0;">${data.currency} ${data.supplierPayout.toFixed(2)}</div>
+      </div>
+
+      <!-- Booking Details Card -->
+      <div style="background: #f8fafc; border-radius: 12px; padding: 25px; margin: 0 0 25px 0;">
+        <h3 style="color: #1f2937; margin: 0 0 20px 0; font-size: 18px;">Booking Details</h3>
+
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+              <span style="color: #6b7280; font-size: 14px;">Date & Time</span><br>
+              <strong style="color: #1f2937; font-size: 15px;">${formattedDate} at ${formattedTime}</strong>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+              <span style="color: #6b7280; font-size: 14px;">Pickup</span><br>
+              <strong style="color: #1f2937; font-size: 15px;">${data.pickupAddress}</strong>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+              <span style="color: #6b7280; font-size: 14px;">Drop-off</span><br>
+              <strong style="color: #1f2937; font-size: 15px;">${data.dropoffAddress}</strong>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+              <span style="color: #6b7280; font-size: 14px;">Vehicle</span><br>
+              <strong style="color: #1f2937; font-size: 15px;">${data.vehicleType} (${data.passengers} pax)</strong>
+            </td>
+          </tr>
+          ${data.flightNumber ? `
+          <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+              <span style="color: #6b7280; font-size: 14px;">Flight</span><br>
+              <strong style="color: #1f2937; font-size: 15px;">${data.flightNumber}</strong>
+            </td>
+          </tr>
+          ` : ''}
+        </table>
+
+        ${data.specialRequests ? `
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+          <span style="color: #6b7280; font-size: 14px;">Special Requests</span><br>
+          <span style="color: #1f2937; font-size: 14px;">${data.specialRequests}</span>
+        </div>
+        ` : ''}
+      </div>
+
+      <!-- Customer Info -->
+      <div style="background: #fef3c7; border-radius: 12px; padding: 20px; margin: 0 0 25px 0;">
+        <h3 style="color: #92400e; margin: 0 0 10px 0; font-size: 16px;">Customer Contact</h3>
+        <p style="color: #78350f; margin: 0; font-size: 15px;">
+          <strong>${data.customerName}</strong><br>
+          ${data.customerPhone}
+        </p>
+      </div>
+
+      <!-- Action Button -->
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${dashboardUrl}"
+           style="display: inline-block; background: linear-gradient(135deg, #059669 0%, #0d9488 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+          Assign Driver Now
+        </a>
+      </div>
+
+      <p style="font-size: 14px; color: #6b7280; margin: 25px 0 0 0; text-align: center;">
+        Please assign a driver as soon as possible to confirm this booking.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+      <p style="margin: 0;">&copy; ${new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to: data.supplierEmail,
+    subject: `New Booking ${data.publicCode} - ${formattedDate} | Action Required`,
+    html,
+    replyTo: 'suppliers@airporttransferportal.com',
+  });
+}

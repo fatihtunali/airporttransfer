@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne, transaction } from '@/lib/db';
-import { sendBookingConfirmationEmail } from '@/lib/email';
+import { sendBookingConfirmationEmail, sendSupplierNewBookingEmail } from '@/lib/email';
+
+// Minimum hours before pickup for booking (in GMT)
+const MIN_BOOKING_HOURS = 8;
 
 type BookingChannel = 'B2C' | 'B2B' | 'AGENCY_API';
 type VehicleType = 'SEDAN' | 'VAN' | 'MINIBUS' | 'BUS' | 'VIP';
@@ -81,6 +84,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate minimum booking time (8 hours in advance, GMT)
+    const pickupDateTime = new Date(body.pickupTime);
+    const nowGMT = new Date();
+    const minBookingTime = new Date(nowGMT.getTime() + MIN_BOOKING_HOURS * 60 * 60 * 1000);
+
+    if (pickupDateTime < minBookingTime) {
+      return NextResponse.json(
+        {
+          error: `Bookings must be made at least ${MIN_BOOKING_HOURS} hours in advance. The earliest available pickup time is ${minBookingTime.toISOString()}.`
+        },
+        { status: 400 }
+      );
+    }
+
     // Find a matching tariff for this route and vehicle type
     const tariff = await queryOne<{
       id: number;
@@ -156,7 +173,7 @@ export async function POST(request: NextRequest) {
           vehicle_type, currency, base_price,
           total_price, commission, supplier_payout,
           status, payment_status, customer_notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'UNPAID', ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', 'UNPAID', ?)`,
         [
           publicCode,
           tariff.supplier_id,
@@ -237,16 +254,26 @@ export async function POST(request: NextRequest) {
       [bookingId]
     );
 
-    // Send booking confirmation email (async, don't block response)
-    if (leadPassenger.email) {
-      const fullName = `${leadPassenger.firstName} ${leadPassenger.lastName}`.trim();
-      const pickupLocation = booking!.direction === 'FROM_AIRPORT'
-        ? booking!.airport_name
-        : (booking!.pickup_address || booking!.zone_name);
-      const dropoffLocation = booking!.direction === 'FROM_AIRPORT'
-        ? (booking!.dropoff_address || booking!.zone_name)
-        : booking!.airport_name;
+    // Get supplier details for notification
+    const supplier = await queryOne<{
+      id: number;
+      name: string;
+      email: string;
+    }>(
+      'SELECT id, name, email FROM suppliers WHERE id = ?',
+      [tariff.supplier_id]
+    );
 
+    const fullName = `${leadPassenger.firstName} ${leadPassenger.lastName}`.trim();
+    const pickupLocation = booking!.direction === 'FROM_AIRPORT'
+      ? booking!.airport_name
+      : (booking!.pickup_address || booking!.zone_name);
+    const dropoffLocation = booking!.direction === 'FROM_AIRPORT'
+      ? (booking!.dropoff_address || booking!.zone_name)
+      : booking!.airport_name;
+
+    // Send booking confirmation email to customer (async, don't block response)
+    if (leadPassenger.email) {
       sendBookingConfirmationEmail({
         publicCode: booking!.public_code,
         customerName: fullName,
@@ -263,6 +290,29 @@ export async function POST(request: NextRequest) {
         specialRequests: booking!.customer_notes || undefined,
       }).catch((err) => {
         console.error('Failed to send booking confirmation email:', err);
+      });
+    }
+
+    // Send new booking notification to supplier (async, don't block response)
+    if (supplier?.email) {
+      sendSupplierNewBookingEmail({
+        publicCode: booking!.public_code,
+        supplierName: supplier.name,
+        supplierEmail: supplier.email,
+        customerName: fullName,
+        customerPhone: leadPassenger.phone,
+        pickupDatetime: booking!.pickup_datetime,
+        pickupAddress: pickupLocation,
+        dropoffAddress: dropoffLocation,
+        vehicleType: booking!.vehicle_type,
+        passengers: booking!.pax_adults,
+        flightNumber: booking!.flight_number || undefined,
+        totalPrice: Number(booking!.total_price),
+        supplierPayout: supplierPayout,
+        currency: booking!.currency,
+        specialRequests: booking!.customer_notes || undefined,
+      }).catch((err) => {
+        console.error('Failed to send supplier notification email:', err);
       });
     }
 
