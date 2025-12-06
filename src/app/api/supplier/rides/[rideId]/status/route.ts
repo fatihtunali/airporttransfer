@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne, execute } from '@/lib/db';
+import { queryOne, execute, insert } from '@/lib/db';
 import { authenticateSupplier } from '@/lib/supplier-auth';
 
 type RideStatus = 'PENDING_ASSIGN' | 'ASSIGNED' | 'ON_WAY' | 'AT_PICKUP' | 'IN_RIDE' | 'FINISHED' | 'NO_SHOW' | 'CANCELLED';
@@ -11,8 +11,19 @@ interface UpdateStatusRequest {
 interface RideRow {
   id: number;
   supplier_id: number;
+  booking_id: number;
   status: RideStatus;
   driver_id: number | null;
+}
+
+interface BookingRow {
+  id: number;
+  total_price: number;
+  currency: string;
+}
+
+interface SupplierRow {
+  commission_rate: number;
 }
 
 // Valid status transitions
@@ -75,8 +86,8 @@ export async function POST(
     const isNumeric = /^\d+$/.test(rideId);
     const ride = await queryOne<RideRow>(
       isNumeric
-        ? `SELECT r.id, r.supplier_id, r.status, r.driver_id FROM rides r WHERE r.id = ? AND r.supplier_id = ?`
-        : `SELECT r.id, r.supplier_id, r.status, r.driver_id FROM rides r
+        ? `SELECT r.id, r.supplier_id, r.booking_id, r.status, r.driver_id FROM rides r WHERE r.id = ? AND r.supplier_id = ?`
+        : `SELECT r.id, r.supplier_id, r.booking_id, r.status, r.driver_id FROM rides r
            JOIN bookings b ON b.id = r.booking_id
            WHERE b.public_code = ? AND r.supplier_id = ?`,
       [rideId, payload.supplierId]
@@ -161,6 +172,43 @@ export async function POST(
             : `UPDATE bookings SET status = ?, updated_at = NOW() WHERE id = (SELECT booking_id FROM rides WHERE id = ?)`;
 
       await execute(bookingUpdateSql, [bookingStatus, numericRideId]);
+    }
+
+    // Create payout when ride is completed
+    if (body.status === 'FINISHED' && ride.booking_id) {
+      try {
+        // Get booking details
+        const booking = await queryOne<BookingRow>(
+          `SELECT id, total_price, currency FROM bookings WHERE id = ?`,
+          [ride.booking_id]
+        );
+
+        // Get supplier commission rate
+        const supplier = await queryOne<SupplierRow>(
+          `SELECT commission_rate FROM suppliers WHERE id = ?`,
+          [payload.supplierId]
+        );
+
+        if (booking && supplier) {
+          const commissionRate = supplier.commission_rate || 15; // Default 15%
+          const supplierAmount = booking.total_price * (1 - commissionRate / 100);
+
+          // Calculate due date (7 days from completion)
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 7);
+          const dueDateStr = dueDate.toISOString().split('T')[0];
+
+          // Create payout record
+          await insert(
+            `INSERT INTO supplier_payouts (supplier_id, booking_id, amount, currency, status, due_date)
+             VALUES (?, ?, ?, ?, 'PENDING', ?)`,
+            [payload.supplierId, ride.booking_id, supplierAmount.toFixed(2), booking.currency, dueDateStr]
+          );
+        }
+      } catch (payoutError) {
+        console.error('Error creating payout:', payoutError);
+        // Don't fail the request if payout creation fails
+      }
     }
 
     return NextResponse.json({

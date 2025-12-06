@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { query, queryOne } from '@/lib/db';
 import { authenticateAdmin } from '@/lib/admin-auth';
 
 type PayoutStatus = 'PENDING' | 'SCHEDULED' | 'PAID' | 'CANCELLED';
@@ -21,6 +21,12 @@ interface PayoutRow {
   supplier_name: string;
   // Booking info via JOIN
   public_code: string | null;
+}
+
+interface StatsRow {
+  status: PayoutStatus;
+  total: number;
+  count: number;
 }
 
 // GET /api/admin/payouts - List all supplier payouts
@@ -57,11 +63,42 @@ export async function GET(request: NextRequest) {
 
     const payouts = await query<PayoutRow>(sql, params);
 
-    return NextResponse.json(
-      payouts.map((p) => ({
+    // Get stats
+    const statsRows = await query<StatsRow>(`
+      SELECT status, SUM(amount) as total, COUNT(*) as count
+      FROM supplier_payouts
+      GROUP BY status
+    `, []);
+
+    const stats = {
+      totalPending: 0,
+      totalScheduled: 0,
+      totalPaid: 0,
+      countPending: 0,
+      countScheduled: 0,
+      countPaid: 0,
+    };
+
+    for (const row of statsRows) {
+      if (row.status === 'PENDING') {
+        stats.totalPending = Number(row.total) || 0;
+        stats.countPending = Number(row.count) || 0;
+      } else if (row.status === 'SCHEDULED') {
+        stats.totalScheduled = Number(row.total) || 0;
+        stats.countScheduled = Number(row.count) || 0;
+      } else if (row.status === 'PAID') {
+        stats.totalPaid = Number(row.total) || 0;
+        stats.countPaid = Number(row.count) || 0;
+      }
+    }
+
+    return NextResponse.json({
+      payouts: payouts.map((p) => ({
         id: p.id,
         supplierId: p.supplier_id,
+        supplierName: p.supplier_name,
         bookingId: p.booking_id,
+        bookingCode: p.public_code,
         amount: p.amount,
         currency: p.currency,
         status: p.status,
@@ -70,18 +107,10 @@ export async function GET(request: NextRequest) {
         dueDate: p.due_date,
         paidAt: p.paid_at,
         notes: p.notes,
-        supplier: {
-          id: p.supplier_id,
-          name: p.supplier_name,
-        },
-        booking: p.booking_id
-          ? {
-              id: p.booking_id,
-              publicCode: p.public_code,
-            }
-          : null,
-      }))
-    );
+        createdAt: p.created_at,
+      })),
+      stats,
+    });
   } catch (error) {
     console.error('Error fetching payouts:', error);
     return NextResponse.json(
