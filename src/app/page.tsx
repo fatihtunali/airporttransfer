@@ -614,10 +614,10 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { name: 'Economy', image: '/assets/sedan.webp', passengers: '1-3', luggage: '2', price: 'From $25', desc: 'Comfortable & affordable' },
-              { name: 'Business', image: '/assets/premiumsedan.png', passengers: '1-3', luggage: '2', price: 'From $45', desc: 'Premium sedans' },
-              { name: 'Minivan', image: '/assets/mercedesvito.webp', passengers: '4-6', luggage: '5', price: 'From $55', desc: 'Perfect for families' },
-              { name: 'Minibus', image: '/assets/mercedessprinterminibus.png', passengers: '7-16', luggage: '10', price: 'From $85', desc: 'Group travel' },
+              { name: 'Economy', image: '/assets/sedan.webp', passengers: '1-3', luggage: '2', price: 'From €25', desc: 'Comfortable & affordable' },
+              { name: 'Business', image: '/assets/premiumsedan.png', passengers: '1-3', luggage: '2', price: 'From €45', desc: 'Premium sedans' },
+              { name: 'Minivan', image: '/assets/mercedesvito.webp', passengers: '4-6', luggage: '5', price: 'From €55', desc: 'Perfect for families' },
+              { name: 'Minibus', image: '/assets/mercedessprinterminibus.png', passengers: '7-16', luggage: '10', price: 'From €85', desc: 'Group travel' },
             ].map((vehicle, idx) => (
               <div
                 key={idx}
