@@ -74,14 +74,25 @@ export async function GET(request: NextRequest) {
 
     const total = countResult[0]?.total || 0;
 
-    // Helper to safely parse JSON
-    const safeParseJson = (str: string | null): string[] => {
-      if (!str || !str.trim()) return [];
-      try {
-        return JSON.parse(str);
-      } catch {
-        return [];
+    // Helper to safely parse JSON or return as array
+    const safeParseLanguages = (val: unknown): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (!trimmed) return [];
+        // Try to parse as JSON
+        if (trimmed.startsWith('[')) {
+          try {
+            return JSON.parse(trimmed);
+          } catch {
+            return [];
+          }
+        }
+        // It's a plain string like "English", return as single-item array
+        return [trimmed];
       }
+      return [];
     };
 
     return NextResponse.json({
@@ -95,7 +106,7 @@ export async function GET(request: NextRequest) {
         licenseNumber: d.license_number,
         licenseExpiry: d.license_expiry,
         photoUrl: d.photo_url,
-        languages: safeParseJson(d.languages),
+        languages: safeParseLanguages(d.languages),
         isActive: d.is_active,
         ratingAvg: d.rating_avg,
         ratingCount: d.rating_count,
