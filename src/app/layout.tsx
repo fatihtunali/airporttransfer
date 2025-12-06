@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import WhatsAppButton from "./components/WhatsAppButton";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,6 +48,11 @@ export default function RootLayout({
       >
         {children}
         <WhatsAppButton />
+        <ExitIntentPopup
+          allowedPaths={['/search', '/booking']}
+          delay={5000}
+          dismissDays={1}
+        />
       </body>
     </html>
   );

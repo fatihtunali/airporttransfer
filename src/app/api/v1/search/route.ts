@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateApiKey } from '@/lib/agency-auth';
 import { query } from '@/lib/db';
+import { applyRateLimit, getRateLimitHeaders, RateLimits } from '@/lib/rate-limit';
 
 interface TariffRow {
   id: number;
@@ -18,9 +19,20 @@ interface TariffRow {
 }
 
 export async function GET(request: NextRequest) {
+  // Apply B2B rate limiting
+  const { response: rateLimitResponse, result: rateLimitResult } = applyRateLimit(request, RateLimits.B2B);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   // Authenticate API key
   const auth = await authenticateApiKey(request);
-  if (!auth.success) return auth.response;
+  if (!auth.success) {
+    return NextResponse.json(
+      { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+      { status: 401, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
 
   const { searchParams } = new URL(request.url);
   const airportCode = searchParams.get('airport');
@@ -81,6 +93,9 @@ export async function GET(request: NextRequest) {
       date,
       passengers,
       resultCount: tariffs.length,
+      apiVersion: 'v1',
     },
+  }, {
+    headers: getRateLimitHeaders(rateLimitResult),
   });
 }

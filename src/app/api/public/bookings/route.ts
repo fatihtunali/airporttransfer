@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne, transaction } from '@/lib/db';
 import { sendBookingConfirmationEmail, sendSupplierNewBookingEmail } from '@/lib/email';
 import { generateBookingCode } from '@/lib/booking-codes';
+import { applyRateLimit, getRateLimitHeaders, RateLimits } from '@/lib/rate-limit';
+import { BookingWebhooks } from '@/lib/webhooks';
 
 // Minimum hours before pickup for booking (in GMT)
 const MIN_BOOKING_HOURS = 8;
@@ -38,6 +40,9 @@ interface CreateBookingRequest {
   dropoffAddress?: string;
   specialRequests?: string;
 
+  // Promo code
+  promoCode?: string;
+
   // Legacy support
   channel?: BookingChannel;
   mainPassenger?: {
@@ -47,10 +52,29 @@ interface CreateBookingRequest {
   };
 }
 
+interface PromoCodeRow {
+  id: number;
+  code: string;
+  discount_type: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discount_value: number;
+  currency: string;
+  min_booking_amount: number;
+  max_discount_amount: number | null;
+  usage_limit: number | null;
+  usage_count: number;
+  per_user_limit: number;
+}
+
 // Note: Using generateBookingCode from @/lib/booking-codes for collision-safe codes
 
 // POST /api/public/bookings - Create a new booking
 export async function POST(request: NextRequest) {
+  // Apply rate limiting (stricter for booking creation)
+  const { response: rateLimitResponse, result: rateLimitResult } = applyRateLimit(request, RateLimits.BOOKING);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   try {
     const body: CreateBookingRequest = await request.json();
 
@@ -132,7 +156,65 @@ export async function POST(request: NextRequest) {
       totalPrice += Number(tariff.price_per_pax) * (paxAdults - 1);
     }
 
-    // Calculate commission
+    const originalPrice = totalPrice;
+    let discountAmount = 0;
+    let appliedPromoCode: PromoCodeRow | null = null;
+
+    // Validate and apply promo code
+    if (body.promoCode) {
+      const promoCode = await queryOne<PromoCodeRow>(
+        `SELECT id, code, discount_type, discount_value, currency, min_booking_amount,
+                max_discount_amount, usage_limit, usage_count, per_user_limit
+         FROM promo_codes
+         WHERE code = ?
+         AND is_active = TRUE
+         AND (valid_from IS NULL OR valid_from <= NOW())
+         AND (valid_until IS NULL OR valid_until >= NOW())`,
+        [body.promoCode.toUpperCase()]
+      );
+
+      if (promoCode) {
+        // Check usage limits
+        const withinUsageLimit = promoCode.usage_limit === null || promoCode.usage_count < promoCode.usage_limit;
+        const withinMinAmount = totalPrice >= Number(promoCode.min_booking_amount);
+
+        // Check per-user limit
+        let withinUserLimit = true;
+        if (leadPassenger.email && promoCode.per_user_limit > 0) {
+          const userUsage = await queryOne<{ count: number }>(
+            `SELECT COUNT(*) as count FROM promo_code_usage
+             WHERE promo_code_id = ? AND customer_email = ?`,
+            [promoCode.id, leadPassenger.email.toLowerCase()]
+          );
+          withinUserLimit = !userUsage || userUsage.count < promoCode.per_user_limit;
+        }
+
+        if (withinUsageLimit && withinMinAmount && withinUserLimit) {
+          // Calculate discount
+          if (promoCode.discount_type === 'PERCENTAGE') {
+            discountAmount = (totalPrice * Number(promoCode.discount_value)) / 100;
+          } else {
+            discountAmount = Number(promoCode.discount_value);
+          }
+
+          // Apply max discount cap
+          if (promoCode.max_discount_amount && discountAmount > Number(promoCode.max_discount_amount)) {
+            discountAmount = Number(promoCode.max_discount_amount);
+          }
+
+          // Don't exceed total price
+          if (discountAmount > totalPrice) {
+            discountAmount = totalPrice;
+          }
+
+          discountAmount = Math.round(discountAmount * 100) / 100;
+          totalPrice = Math.round((totalPrice - discountAmount) * 100) / 100;
+          appliedPromoCode = promoCode;
+        }
+      }
+    }
+
+    // Calculate commission (on discounted price)
     const commission = totalPrice * (Number(tariff.commission_rate) / 100);
     const supplierPayout = totalPrice - commission;
 
@@ -155,8 +237,9 @@ export async function POST(request: NextRequest) {
           pickup_datetime, pax_adults, pax_children,
           vehicle_type, currency, base_price,
           total_price, commission, supplier_payout,
+          promo_code_id, discount_amount, original_price,
           status, payment_status, customer_notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', 'UNPAID', ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', 'UNPAID', ?)`,
         [
           publicCode,
           tariff.supplier_id,
@@ -176,6 +259,9 @@ export async function POST(request: NextRequest) {
           totalPrice,
           commission,
           supplierPayout,
+          appliedPromoCode?.id || null,
+          discountAmount,
+          originalPrice,
           body.specialRequests || null,
         ]
       );
@@ -203,6 +289,21 @@ export async function POST(request: NextRequest) {
          VALUES (?, ?, ?, ?, 'PENDING')`,
         [tariff.supplier_id, newBookingId, supplierPayout, currency]
       );
+
+      // Track promo code usage
+      if (appliedPromoCode) {
+        await conn.execute(
+          `INSERT INTO promo_code_usage (promo_code_id, booking_id, customer_email, discount_amount)
+           VALUES (?, ?, ?, ?)`,
+          [appliedPromoCode.id, newBookingId, leadPassenger.email?.toLowerCase() || '', discountAmount]
+        );
+
+        // Increment usage count
+        await conn.execute(
+          `UPDATE promo_codes SET usage_count = usage_count + 1 WHERE id = ?`,
+          [appliedPromoCode.id]
+        );
+      }
 
       return newBookingId;
     });
@@ -241,9 +342,9 @@ export async function POST(request: NextRequest) {
     const supplier = await queryOne<{
       id: number;
       name: string;
-      email: string;
+      contact_email: string;
     }>(
-      'SELECT id, name, email FROM suppliers WHERE id = ?',
+      'SELECT id, name, contact_email FROM suppliers WHERE id = ?',
       [tariff.supplier_id]
     );
 
@@ -277,11 +378,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Send new booking notification to supplier (async, don't block response)
-    if (supplier?.email) {
+    if (supplier?.contact_email) {
       sendSupplierNewBookingEmail({
         publicCode: booking!.public_code,
         supplierName: supplier.name,
-        supplierEmail: supplier.email,
+        supplierEmail: supplier.contact_email,
         customerName: fullName,
         customerPhone: leadPassenger.phone,
         pickupDatetime: booking!.pickup_datetime,
@@ -299,6 +400,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Emit webhook event for booking creation
+    BookingWebhooks.created({
+      publicCode: booking!.public_code,
+      status: booking!.status,
+      customerName: fullName,
+      customerEmail: leadPassenger.email,
+      customerPhone: leadPassenger.phone,
+      pickupDatetime: booking!.pickup_datetime,
+      pickupAddress: pickupLocation,
+      dropoffAddress: dropoffLocation,
+      vehicleType: booking!.vehicle_type,
+      passengers: booking!.pax_adults,
+      flightNumber: booking!.flight_number,
+      totalPrice: Number(booking!.total_price),
+      currency: booking!.currency,
+    }, tariff.supplier_id).catch((err) => {
+      console.error('Failed to emit booking webhook:', err);
+    });
+
     return NextResponse.json(
       {
         bookingId: booking!.id,
@@ -309,7 +429,10 @@ export async function POST(request: NextRequest) {
         currency: booking!.currency,
         message: 'Booking created successfully',
       },
-      { status: 201 }
+      {
+        status: 201,
+        headers: getRateLimitHeaders(rateLimitResult),
+      }
     );
   } catch (error) {
     console.error('Error creating booking:', error);

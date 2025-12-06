@@ -479,4 +479,21 @@ INSERT INTO notifications (user_id, type, title, message, link, is_read, created
 (10, 'PAYMENT', 'Payment Received', 'Payment of €65.00 received for booking ATP-240001', '/supplier/payouts', TRUE, DATE_SUB(NOW(), INTERVAL 2 DAY)),
 (30, 'BOOKING', 'New Booking Received', 'You have a new booking ATP-240002 for Dec 5, 2024', '/supplier/bookings/2', FALSE, DATE_SUB(NOW(), INTERVAL 1 DAY));
 
+-- =====================================================
+-- 14. PROMO CODES
+-- =====================================================
+
+INSERT INTO promo_codes (id, code, description, discount_type, discount_value, currency, min_booking_amount, max_discount_amount, usage_limit, per_user_limit, valid_from, valid_until, is_active, is_exit_intent) VALUES
+-- Exit-intent promo code (10% off)
+(1, 'SAVE10', 'Save 10% on your first booking!', 'PERCENTAGE', 10.00, 'EUR', 20.00, 50.00, NULL, 1, NOW(), DATE_ADD(NOW(), INTERVAL 1 YEAR), TRUE, TRUE),
+
+-- Welcome promo code (15% off for new customers)
+(2, 'WELCOME15', 'Welcome discount - 15% off your first transfer', 'PERCENTAGE', 15.00, 'EUR', 30.00, 75.00, 1000, 1, NOW(), DATE_ADD(NOW(), INTERVAL 6 MONTH), TRUE, FALSE),
+
+-- Fixed discount code
+(3, 'FLAT20', 'Get €20 off any booking over €100', 'FIXED_AMOUNT', 20.00, 'EUR', 100.00, NULL, 500, 2, NOW(), DATE_ADD(NOW(), INTERVAL 3 MONTH), TRUE, FALSE),
+
+-- Seasonal promo
+(4, 'WINTER2025', 'Winter Special - 12% off all transfers', 'PERCENTAGE', 12.00, 'EUR', 25.00, 40.00, NULL, 3, NOW(), '2025-03-31 23:59:59', TRUE, FALSE);
+
 SELECT 'Seed data inserted successfully!' AS Result;

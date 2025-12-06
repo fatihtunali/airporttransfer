@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateApiKey } from '@/lib/agency-auth';
 import { query, queryOne } from '@/lib/db';
+import { applyRateLimit, getRateLimitHeaders, RateLimits } from '@/lib/rate-limit';
 
 interface TariffRow {
   id: number;
@@ -31,8 +32,19 @@ interface RequestedExtra {
 }
 
 export async function POST(request: NextRequest) {
+  // Apply B2B rate limiting
+  const { response: rateLimitResponse, result: rateLimitResult } = applyRateLimit(request, RateLimits.B2B);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const auth = await authenticateApiKey(request);
-  if (!auth.success) return auth.response;
+  if (!auth.success) {
+    return NextResponse.json(
+      { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+      { status: 401, headers: getRateLimitHeaders(rateLimitResult) }
+    );
+  }
 
   const { agencyId } = auth;
 
@@ -145,5 +157,10 @@ export async function POST(request: NextRequest) {
       time,
     },
     passengers: passengers || 1,
+    meta: {
+      apiVersion: 'v1',
+    },
+  }, {
+    headers: getRateLimitHeaders(rateLimitResult),
   });
 }

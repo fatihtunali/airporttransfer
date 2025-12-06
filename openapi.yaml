@@ -1,9 +1,15 @@
 openapi: 3.0.3
 info:
   title: Airport Transfer Marketplace API
-  version: 2.0.0
+  version: 2.1.0
   description: |
     Independent Airport Transfer Marketplace API.
+
+    ## What's New in v2.1.0
+    - **Promo Codes**: Create and manage discount codes with usage tracking
+    - **Customer Accounts**: Customer registration with Google OAuth support
+    - **Webhooks**: Real-time notifications for booking events
+    - **Rate Limiting**: All public endpoints include rate limit headers
     Covers authentication, suppliers, airports/zones/routes, pricing, bookings, rides, and payments.
 
     ## Role-Based Access Control
@@ -48,6 +54,12 @@ tags:
     description: Agency portal operations for B2B partners
   - name: V1 API
     description: Version 1 B2B API for agency integrations (API Key authentication)
+  - name: Promo Codes
+    description: Promo code management and validation
+  - name: Customer
+    description: Customer account management, authentication, and booking history
+  - name: Webhooks
+    description: Webhook subscriptions for real-time event notifications
 
 components:
   securitySchemes:
@@ -1383,6 +1395,262 @@ components:
           type: integer
         status:
           type: string
+
+    # Promo Code Schemas
+    PromoCode:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+          example: SAVE10
+        description:
+          type: string
+          nullable: true
+        discountType:
+          type: string
+          enum: [PERCENTAGE, FIXED_AMOUNT]
+        discountValue:
+          type: number
+          format: double
+        currency:
+          type: string
+          example: EUR
+        minBookingAmount:
+          type: number
+          format: double
+        maxDiscountAmount:
+          type: number
+          format: double
+          nullable: true
+        usageLimit:
+          type: integer
+          nullable: true
+        usageCount:
+          type: integer
+        perUserLimit:
+          type: integer
+        validFrom:
+          type: string
+          format: date-time
+        validUntil:
+          type: string
+          format: date-time
+          nullable: true
+        isActive:
+          type: boolean
+        isExitIntent:
+          type: boolean
+        applicableRoutes:
+          type: array
+          items:
+            type: integer
+          nullable: true
+        applicableVehicleTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/VehicleType'
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    PromoCodeValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        promoCode:
+          type: object
+          properties:
+            id:
+              type: integer
+            code:
+              type: string
+            description:
+              type: string
+            discountType:
+              type: string
+            discountValue:
+              type: number
+            currency:
+              type: string
+        discount:
+          type: object
+          properties:
+            amount:
+              type: number
+            currency:
+              type: string
+            displayText:
+              type: string
+        finalAmount:
+          type: number
+          nullable: true
+        error:
+          type: string
+
+    # Customer Schemas
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        isEmailVerified:
+          type: boolean
+        hasGoogleLinked:
+          type: boolean
+        preferredCurrency:
+          type: string
+          example: EUR
+        totalBookings:
+          type: integer
+        loyaltyPoints:
+          type: integer
+
+    CustomerAuthRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [register, login, google, logout]
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        marketingConsent:
+          type: boolean
+        credential:
+          type: string
+          description: Google OAuth credential token
+
+    CustomerAuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        customer:
+          $ref: '#/components/schemas/Customer'
+        token:
+          type: string
+          description: Session token for authenticated requests
+        isNewUser:
+          type: boolean
+          description: True if this is a new registration via Google
+        message:
+          type: string
+
+    # Webhook Schemas
+    WebhookEventType:
+      type: string
+      enum:
+        - booking.created
+        - booking.confirmed
+        - booking.cancelled
+        - booking.modified
+        - booking.assigned
+        - ride.started
+        - ride.completed
+        - ride.no_show
+        - payment.received
+        - payment.refunded
+
+    WebhookSubscription:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        endpointUrl:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookEventType'
+        isActive:
+          type: boolean
+        failureCount:
+          type: integer
+        lastSuccessAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastFailureAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    WebhookPayload:
+      type: object
+      properties:
+        event:
+          $ref: '#/components/schemas/WebhookEventType'
+        timestamp:
+          type: string
+          format: date-time
+        data:
+          type: object
+          additionalProperties: true
+
+    # Rate Limit Headers
+    RateLimitHeaders:
+      type: object
+      description: Rate limiting information returned in response headers
+      properties:
+        X-RateLimit-Limit:
+          type: integer
+          description: Maximum requests allowed in the window
+        X-RateLimit-Remaining:
+          type: integer
+          description: Remaining requests in current window
+        X-RateLimit-Reset:
+          type: integer
+          description: Unix timestamp when the rate limit resets
+        Retry-After:
+          type: integer
+          description: Seconds to wait before retrying (only on 429 responses)
+
+    RateLimitError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Too Many Requests
+        message:
+          type: string
+          example: Rate limit exceeded. Please try again in 30 seconds.
+        retryAfter:
+          type: integer
+          example: 30
 
 paths:
   /auth/register:
@@ -4476,3 +4744,1108 @@ paths:
                 properties:
                   success:
                     type: boolean
+
+  # =====================================================
+  # PROMO CODES - Admin Endpoints
+  # =====================================================
+
+  /admin/promo-codes:
+    get:
+      tags: [Promo Codes, Admin]
+      security:
+        - bearerAuth: []
+      summary: List all promo codes
+      description: Get all promo codes with usage statistics
+      responses:
+        '200':
+          description: List of promo codes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  promoCodes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PromoCode'
+    post:
+      tags: [Promo Codes, Admin]
+      security:
+        - bearerAuth: []
+      summary: Create a new promo code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - discountType
+                - discountValue
+              properties:
+                code:
+                  type: string
+                  example: SUMMER2025
+                description:
+                  type: string
+                discountType:
+                  type: string
+                  enum: [PERCENTAGE, FIXED_AMOUNT]
+                discountValue:
+                  type: number
+                currency:
+                  type: string
+                  default: EUR
+                minBookingAmount:
+                  type: number
+                  default: 0
+                maxDiscountAmount:
+                  type: number
+                usageLimit:
+                  type: integer
+                perUserLimit:
+                  type: integer
+                  default: 1
+                validFrom:
+                  type: string
+                  format: date-time
+                validUntil:
+                  type: string
+                  format: date-time
+                isActive:
+                  type: boolean
+                  default: true
+                isExitIntent:
+                  type: boolean
+                  default: false
+                applicableRoutes:
+                  type: array
+                  items:
+                    type: integer
+                applicableVehicleTypes:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Promo code created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  promoCodeId:
+                    type: integer
+                  code:
+                    type: string
+
+  /admin/promo-codes/{promoCodeId}:
+    get:
+      tags: [Promo Codes, Admin]
+      security:
+        - bearerAuth: []
+      summary: Get promo code details
+      parameters:
+        - name: promoCodeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Promo code details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  promoCode:
+                    $ref: '#/components/schemas/PromoCode'
+    put:
+      tags: [Promo Codes, Admin]
+      security:
+        - bearerAuth: []
+      summary: Update promo code
+      parameters:
+        - name: promoCodeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                discountValue:
+                  type: number
+                isActive:
+                  type: boolean
+                validUntil:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Promo code updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+    delete:
+      tags: [Promo Codes, Admin]
+      security:
+        - bearerAuth: []
+      summary: Delete promo code
+      description: Soft deletes (deactivates) if has usage history, hard deletes otherwise
+      parameters:
+        - name: promoCodeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Promo code deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  # =====================================================
+  # PROMO CODES - Public Endpoints
+  # =====================================================
+
+  /public/promo-codes/validate:
+    post:
+      tags: [Promo Codes, Public]
+      summary: Validate a promo code
+      description: |
+        Validates a promo code and calculates the discount amount.
+        Rate limited to 30 requests per minute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  example: SAVE10
+                bookingAmount:
+                  type: number
+                  description: Optional - if provided, returns calculated discount
+                customerEmail:
+                  type: string
+                  description: Optional - checks per-user limit
+                routeId:
+                  type: integer
+                vehicleType:
+                  type: string
+      responses:
+        '200':
+          description: Validation result
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromoCodeValidationResult'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+
+  /public/promo-codes/exit-intent:
+    get:
+      tags: [Promo Codes, Public]
+      summary: Get exit-intent promo code
+      description: Returns the active exit-intent promo code for showing in exit popups
+      responses:
+        '200':
+          description: Exit-intent promo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  available:
+                    type: boolean
+                  promo:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      description:
+                        type: string
+                      discountType:
+                        type: string
+                      discountValue:
+                        type: number
+                      currency:
+                        type: string
+                      displayText:
+                        type: string
+                        example: "10% OFF"
+                      headline:
+                        type: string
+                        example: "Wait! Get 10% Off Your Transfer"
+
+  # =====================================================
+  # CUSTOMER AUTHENTICATION
+  # =====================================================
+
+  /customer/auth:
+    post:
+      tags: [Customer]
+      summary: Customer authentication
+      description: |
+        Unified endpoint for customer authentication actions:
+        - **register**: Create new account with email/password
+        - **login**: Sign in with email/password
+        - **google**: Sign in or register with Google OAuth
+        - **logout**: End current session
+
+        Rate limited to 5 requests per minute for security.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerAuthRequest'
+            examples:
+              register:
+                summary: Register new account
+                value:
+                  action: register
+                  email: john@example.com
+                  password: securePassword123
+                  firstName: John
+                  lastName: Doe
+                  phone: "+1234567890"
+                  marketingConsent: true
+              login:
+                summary: Login with email/password
+                value:
+                  action: login
+                  email: john@example.com
+                  password: securePassword123
+              google:
+                summary: Login with Google
+                value:
+                  action: google
+                  credential: eyJhbGciOiJSUzI1NiIsInR5cCI6...
+              logout:
+                summary: Logout
+                value:
+                  action: logout
+      responses:
+        '200':
+          description: Authentication successful
+          headers:
+            Set-Cookie:
+              description: Session cookie (for login/register/google)
+              schema:
+                type: string
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAuthResponse'
+        '400':
+          description: Invalid request or validation error
+        '401':
+          description: Invalid credentials
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+
+  /customer/me:
+    get:
+      tags: [Customer]
+      summary: Get customer profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Customer profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    $ref: '#/components/schemas/Customer'
+        '401':
+          description: Not authenticated
+    patch:
+      tags: [Customer]
+      summary: Update customer profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+                preferredCurrency:
+                  type: string
+                marketingConsent:
+                  type: boolean
+                newsletterSubscribed:
+                  type: boolean
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  customer:
+                    type: object
+                    properties:
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
+                      phone:
+                        type: string
+                      preferredCurrency:
+                        type: string
+
+  /customer/bookings:
+    get:
+      tags: [Customer]
+      summary: Get customer booking history
+      security:
+        - bearerAuth: []
+      description: Returns upcoming and past bookings for the authenticated customer
+      responses:
+        '200':
+          description: Customer bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upcoming:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        publicCode:
+                          type: string
+                        pickupDatetime:
+                          type: string
+                          format: date-time
+                        pickupAddress:
+                          type: string
+                        dropoffAddress:
+                          type: string
+                        vehicleType:
+                          type: string
+                        totalPrice:
+                          type: number
+                        currency:
+                          type: string
+                        status:
+                          type: string
+                  past:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        publicCode:
+                          type: string
+                        pickupDatetime:
+                          type: string
+                          format: date-time
+                        pickupAddress:
+                          type: string
+                        dropoffAddress:
+                          type: string
+                        vehicleType:
+                          type: string
+                        totalPrice:
+                          type: number
+                        currency:
+                          type: string
+                        status:
+                          type: string
+                  stats:
+                    type: object
+                    properties:
+                      totalBookings:
+                        type: integer
+                      upcomingCount:
+                        type: integer
+                      pastCount:
+                        type: integer
+        '401':
+          description: Not authenticated
+
+  /customer/convert-guest:
+    post:
+      tags: [Customer]
+      summary: Convert guest booking to customer account
+      description: |
+        After completing a booking as a guest, customers can create an account to:
+        - Track all their bookings in one place
+        - Get faster checkout on future bookings
+        - Earn loyalty points
+
+        This endpoint supports both password-based registration and Google OAuth.
+        If an account with the email already exists, the customer must log in to link the booking.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingCode, email]
+              properties:
+                bookingCode:
+                  type: string
+                  description: The public booking code to link to the account
+                  example: TRF-ABC123
+                email:
+                  type: string
+                  format: email
+                  description: Email address (must match the booking's lead passenger email)
+                password:
+                  type: string
+                  minLength: 8
+                  description: Password for the new account (required if not using Google)
+                googleCredential:
+                  type: string
+                  description: Google OAuth JWT credential (alternative to password)
+                name:
+                  type: string
+                  description: Customer's full name (optional, uses booking passenger name if not provided)
+                linkToExisting:
+                  type: boolean
+                  default: false
+                  description: If true, attempts to log in to existing account and link booking
+      responses:
+        '200':
+          description: Account created or booking linked successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: HTTP-only session cookie for authentication
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      customerId:
+                        type: integer
+                      isNewUser:
+                        type: boolean
+                      linkedBookings:
+                        type: integer
+                        description: Number of bookings linked to the account
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: false
+                      accountExists:
+                        type: boolean
+                        example: true
+                      message:
+                        type: string
+                        example: An account with this email already exists. Please log in to link this booking.
+        '400':
+          description: Invalid request (missing fields, invalid password, email mismatch)
+        '401':
+          description: Invalid password when linking to existing account
+        '404':
+          description: Booking not found or email does not match
+        '429':
+          description: Too many requests
+
+  # =====================================================
+  # WEBHOOKS - V1 API
+  # =====================================================
+
+  /v1/webhooks:
+    get:
+      tags: [Webhooks, V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: List webhook subscriptions
+      description: Get all webhook subscriptions for the authenticated agency
+      responses:
+        '200':
+          description: List of webhook subscriptions
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscriptions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookSubscription'
+                  meta:
+                    type: object
+                    properties:
+                      availableEvents:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WebhookEventType'
+                      apiVersion:
+                        type: string
+        '401':
+          description: Invalid API key
+        '429':
+          description: Rate limit exceeded
+    post:
+      tags: [Webhooks, V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Create webhook subscription
+      description: |
+        Create a new webhook subscription. The secret is returned only once
+        and must be stored securely for signature verification.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - endpointUrl
+                - events
+              properties:
+                endpointUrl:
+                  type: string
+                  format: uri
+                  description: Must be HTTPS
+                  example: https://your-app.com/webhooks/airporttransfer
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/WebhookEventType'
+                  example: [booking.created, booking.confirmed, booking.cancelled]
+      responses:
+        '201':
+          description: Webhook subscription created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  subscription:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      endpointUrl:
+                        type: string
+                      events:
+                        type: array
+                        items:
+                          type: string
+                      isActive:
+                        type: boolean
+                  secret:
+                    type: string
+                    description: Store securely - only returned once
+                  warning:
+                    type: string
+        '400':
+          description: Invalid endpoint URL or events
+        '409':
+          description: Subscription already exists for this endpoint
+    patch:
+      tags: [Webhooks, V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Update webhook subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                  description: Subscription ID to update
+                endpointUrl:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/WebhookEventType'
+                isActive:
+                  type: boolean
+                regenerateSecret:
+                  type: boolean
+                  description: Set true to get a new secret
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  secret:
+                    type: string
+                    description: Only present if regenerateSecret was true
+                  warning:
+                    type: string
+        '404':
+          description: Subscription not found
+    delete:
+      tags: [Webhooks, V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Delete webhook subscription
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Subscription ID to delete
+      responses:
+        '200':
+          description: Subscription deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Subscription not found
+
+  # =====================================================
+  # V1 API - Search, Quote, Booking (with rate limits)
+  # =====================================================
+
+  /v1/search:
+    get:
+      tags: [V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Search transfer options
+      description: |
+        Search for available transfer options.
+        Rate limited to 200 requests per minute.
+      parameters:
+        - name: airport
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Airport IATA code (e.g., LHR, IST)
+          example: IST
+        - name: zone
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Zone ID
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Pickup date
+        - name: passengers
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Number of passengers
+      responses:
+        '200':
+          description: Search results
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+            X-RateLimit-Reset:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        quoteId:
+                          type: string
+                        supplierId:
+                          type: integer
+                        supplierName:
+                          type: string
+                        supplierRating:
+                          type: number
+                        vehicleType:
+                          type: string
+                        maxPassengers:
+                          type: integer
+                        price:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                            currency:
+                              type: string
+                        route:
+                          type: object
+                          properties:
+                            from:
+                              type: string
+                            to:
+                              type: string
+                            distanceKm:
+                              type: number
+                            durationMin:
+                              type: integer
+                  meta:
+                    type: object
+                    properties:
+                      airport:
+                        type: string
+                      zoneId:
+                        type: integer
+                      date:
+                        type: string
+                      passengers:
+                        type: integer
+                      resultCount:
+                        type: integer
+                      apiVersion:
+                        type: string
+        '401':
+          description: Invalid API key
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+
+  /v1/quote:
+    post:
+      tags: [V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Get detailed quote
+      description: Get detailed pricing for a specific route and vehicle type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - airportCode
+                - zoneId
+                - vehicleType
+              properties:
+                airportCode:
+                  type: string
+                  example: IST
+                zoneId:
+                  type: integer
+                vehicleType:
+                  $ref: '#/components/schemas/VehicleType'
+                date:
+                  type: string
+                  format: date
+                time:
+                  type: string
+                  example: "14:30"
+                passengers:
+                  type: integer
+                extras:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      quantity:
+                        type: integer
+      responses:
+        '200':
+          description: Detailed quote
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quoteId:
+                    type: string
+                  validUntil:
+                    type: string
+                    format: date-time
+                  route:
+                    type: object
+                    properties:
+                      from:
+                        type: string
+                      to:
+                        type: string
+                      distanceKm:
+                        type: number
+                      durationMin:
+                        type: integer
+                  vehicle:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      maxPassengers:
+                        type: integer
+                  pricing:
+                    type: object
+                    properties:
+                      basePrice:
+                        type: number
+                      extrasPrice:
+                        type: number
+                      extras:
+                        type: array
+                        items:
+                          type: object
+                      totalPrice:
+                        type: number
+                      agencyCommission:
+                        type: number
+                      netPrice:
+                        type: number
+                      currency:
+                        type: string
+                  meta:
+                    type: object
+                    properties:
+                      apiVersion:
+                        type: string
+        '404':
+          description: No tariff available
+        '429':
+          description: Rate limit exceeded
+
+  /v1/booking:
+    post:
+      tags: [V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Create agency booking
+      description: |
+        Create a new booking on behalf of the agency.
+        Deducts from agency credit balance.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - airportCode
+                - zoneId
+                - vehicleType
+                - pickupDate
+                - pickupTime
+                - customer
+              properties:
+                airportCode:
+                  type: string
+                  example: IST
+                zoneId:
+                  type: integer
+                vehicleType:
+                  $ref: '#/components/schemas/VehicleType'
+                pickupDate:
+                  type: string
+                  format: date
+                pickupTime:
+                  type: string
+                  example: "14:30"
+                direction:
+                  type: string
+                  enum: [FROM_AIRPORT, TO_AIRPORT]
+                  default: FROM_AIRPORT
+                passengers:
+                  type: object
+                  properties:
+                    adults:
+                      type: integer
+                    children:
+                      type: integer
+                    luggage:
+                      type: integer
+                flightNumber:
+                  type: string
+                pickupAddress:
+                  type: string
+                dropoffAddress:
+                  type: string
+                customer:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    phone:
+                      type: string
+                    email:
+                      type: string
+                agencyRef:
+                  type: string
+                  description: Your internal reference ID
+      responses:
+        '200':
+          description: Booking created
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  booking:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      publicCode:
+                        type: string
+                      status:
+                        type: string
+                      agencyRef:
+                        type: string
+                      pickup:
+                        type: object
+                        properties:
+                          date:
+                            type: string
+                          time:
+                            type: string
+                          address:
+                            type: string
+                      pricing:
+                        type: object
+                        properties:
+                          total:
+                            type: number
+                          commission:
+                            type: number
+                          net:
+                            type: number
+                          currency:
+                            type: string
+                  meta:
+                    type: object
+                    properties:
+                      apiVersion:
+                        type: string
+        '400':
+          description: Invalid request or insufficient credit
+        '404':
+          description: No service available
+        '429':
+          description: Rate limit exceeded

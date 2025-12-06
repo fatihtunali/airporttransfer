@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import crypto from 'crypto';
+import { applyRateLimit, getRateLimitHeaders, RateLimits } from '@/lib/rate-limit';
 
 type VehicleType = 'SEDAN' | 'VAN' | 'MINIBUS' | 'BUS' | 'VIP';
 type RouteDirection = 'FROM_AIRPORT' | 'TO_AIRPORT' | 'BOTH';
@@ -144,6 +145,12 @@ async function calculatePrice(
 
 // POST /api/public/search-transfers - Search transfer options
 export async function POST(request: NextRequest) {
+  // Apply rate limiting
+  const { response: rateLimitResponse, result: rateLimitResult } = applyRateLimit(request, RateLimits.SEARCH);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   try {
     const body: TransferSearchRequest = await request.json();
 
@@ -259,7 +266,9 @@ export async function POST(request: NextRequest) {
     // Sort by price
     options.sort((a, b) => a.totalPrice - b.totalPrice);
 
-    return NextResponse.json({ options });
+    return NextResponse.json({ options }, {
+      headers: getRateLimitHeaders(rateLimitResult),
+    });
   } catch (error) {
     console.error('Error searching transfers:', error);
     return NextResponse.json(

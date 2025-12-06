@@ -26,6 +26,7 @@ import {
   FaUniversity,
   FaMoneyBillWave,
 } from 'react-icons/fa';
+import PostBookingAccountPrompt from '@/components/PostBookingAccountPrompt';
 
 const vehicleIcons: Record<string, React.ReactNode> = {
   SEDAN: <FaCar className="w-8 h-8" />,
@@ -82,6 +83,9 @@ function BookingContent() {
     publicCode: string;
     status: string;
   } | null>(null);
+
+  // Account prompt state
+  const [accountPromptDismissed, setAccountPromptDismissed] = useState(false);
 
   // Payment state
   const [paymentMethod, setPaymentMethod] = useState<'pay_later' | 'card' | 'bank_transfer'>('pay_later');
@@ -737,6 +741,22 @@ function BookingContent() {
                     Book Another Transfer
                   </Link>
                 </div>
+
+                {/* Post-Booking Account Prompt */}
+                {!accountPromptDismissed && (
+                  <div className="mt-8">
+                    <PostBookingAccountPrompt
+                      bookingCode={bookingResult.publicCode}
+                      customerEmail={formData.leadPassenger.email}
+                      customerName={`${formData.leadPassenger.firstName} ${formData.leadPassenger.lastName}`}
+                      onAccountCreated={(customerId) => {
+                        console.log('Account created:', customerId);
+                        setAccountPromptDismissed(true);
+                      }}
+                      onSkip={() => setAccountPromptDismissed(true)}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
