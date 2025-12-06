@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -16,17 +16,22 @@ import {
   FaIdCard,
   FaCarAlt,
   FaCamera,
+  FaEdit,
+  FaTrash,
+  FaExternalLinkAlt,
+  FaCloudUploadAlt,
+  FaFile,
 } from 'react-icons/fa';
 
 interface Document {
   id: number;
-  driver_id: number;
-  doc_type: string;
-  doc_name: string;
-  file_url: string;
-  expiry_date: string | null;
-  is_verified: boolean;
-  created_at: string;
+  driverId: number;
+  docType: string;
+  docName: string;
+  fileUrl: string;
+  expiryDate: string | null;
+  isVerified: boolean;
+  createdAt: string;
 }
 
 interface Driver {
@@ -53,6 +58,7 @@ export default function DriverDocuments() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [formData, setFormData] = useState({
     docType: 'ID_CARD',
     docName: '',
@@ -60,7 +66,14 @@ export default function DriverDocuments() {
     expiryDate: '',
   });
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (driverId) {
@@ -97,31 +110,175 @@ export default function DriverDocuments() {
     }
   };
 
+  const openAddModal = () => {
+    setEditingDoc(null);
+    setFormData({ docType: 'ID_CARD', docName: '', fileUrl: '', expiryDate: '' });
+    setSelectedFile(null);
+    setError(null);
+    setShowModal(true);
+  };
+
+  const openEditModal = (doc: Document) => {
+    setEditingDoc(doc);
+    setFormData({
+      docType: doc.docType,
+      docName: doc.docName || '',
+      fileUrl: doc.fileUrl,
+      expiryDate: doc.expiryDate ? doc.expiryDate.split('T')[0] : '',
+    });
+    setSelectedFile(null);
+    setError(null);
+    setShowModal(true);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        setError('Invalid file type. Please upload PDF, JPEG, PNG, WebP, or GIF.');
+        return;
+      }
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('File too large. Maximum size is 10MB.');
+        return;
+      }
+      setSelectedFile(file);
+      setError(null);
+      // Auto-fill document name if empty
+      if (!formData.docName) {
+        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+        setFormData(prev => ({ ...prev, docName: nameWithoutExt }));
+      }
+    }
+  };
+
+  const uploadFile = async (): Promise<string | null> => {
+    if (!selectedFile) return formData.fileUrl || null;
+
+    setUploading(true);
+    setUploadProgress(10);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', selectedFile);
+      uploadFormData.append('folder', 'driver-docs');
+
+      setUploadProgress(30);
+
+      const res = await fetch('/api/supplier/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      setUploadProgress(80);
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      setUploadProgress(100);
+      return data.url;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
+    setError(null);
 
     try {
-      const res = await fetch(`/api/supplier/drivers/${driverId}/documents`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+      // Upload file first if selected
+      let fileUrl = formData.fileUrl;
+      if (selectedFile) {
+        const uploadedUrl = await uploadFile();
+        if (!uploadedUrl) {
+          setError('Failed to upload file');
+          setSaving(false);
+          return;
+        }
+        fileUrl = uploadedUrl;
+      }
+
+      if (!fileUrl) {
+        setError('Please select a file to upload');
+        setSaving(false);
+        return;
+      }
+
+      if (editingDoc) {
+        // Update existing document
+        const res = await fetch(`/api/supplier/drivers/${driverId}/documents`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingDoc.id, ...formData, fileUrl }),
+        });
+
+        if (res.ok) {
+          setShowModal(false);
+          setEditingDoc(null);
+          setSelectedFile(null);
+          fetchDocuments();
+        } else {
+          const data = await res.json();
+          setError(data.error || 'Failed to update document');
+        }
+      } else {
+        // Create new document
+        const res = await fetch(`/api/supplier/drivers/${driverId}/documents`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...formData, fileUrl }),
+        });
+
+        if (res.ok) {
+          setShowModal(false);
+          setFormData({ docType: 'ID_CARD', docName: '', fileUrl: '', expiryDate: '' });
+          setSelectedFile(null);
+          fetchDocuments();
+        } else {
+          const data = await res.json();
+          setError(data.error || 'Failed to upload document');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving document:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save document');
+    } finally {
+      setSaving(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleDelete = async (docId: number) => {
+    if (!confirm('Are you sure you want to delete this document?')) return;
+
+    setDeleting(docId);
+    try {
+      const res = await fetch(`/api/supplier/drivers/${driverId}/documents?id=${docId}`, {
+        method: 'DELETE',
       });
 
       if (res.ok) {
-        setShowModal(false);
-        setFormData({ docType: 'ID_CARD', docName: '', fileUrl: '', expiryDate: '' });
         fetchDocuments();
       } else {
         const data = await res.json();
-        setError(data.error || 'Failed to upload document');
+        alert(data.error || 'Failed to delete document');
       }
     } catch (error) {
-      console.error('Error uploading document:', error);
-      setError('Failed to upload document');
+      console.error('Error deleting document:', error);
+      alert('Failed to delete document');
     } finally {
-      setSaving(false);
+      setDeleting(null);
     }
   };
 
@@ -138,6 +295,12 @@ export default function DriverDocuments() {
 
   const getDocTypeInfo = (docType: string) => {
     return driverDocTypes.find(d => d.value === docType) || { label: docType, icon: FaFileAlt };
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   if (loading) {
@@ -171,7 +334,7 @@ export default function DriverDocuments() {
           </div>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={openAddModal}
           className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
         >
           <FaPlus /> Upload Document
@@ -183,18 +346,18 @@ export default function DriverDocuments() {
         <h2 className="font-semibold text-blue-900 mb-4">Required Documents Checklist</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {driverDocTypes.filter(d => d.required).map((docType) => {
-            const uploaded = documents.find(d => d.doc_type === docType.value);
+            const uploaded = documents.find(d => d.docType === docType.value);
             const IconComponent = docType.icon;
             return (
               <div key={docType.value} className="flex items-start gap-3">
                 <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                  uploaded?.is_verified
+                  uploaded?.isVerified
                     ? 'bg-green-500 text-white'
                     : uploaded
                       ? 'bg-yellow-500 text-white'
                       : 'bg-gray-300 text-gray-500'
                 }`}>
-                  {uploaded?.is_verified ? (
+                  {uploaded?.isVerified ? (
                     <FaCheck className="w-3 h-3" />
                   ) : uploaded ? (
                     <FaClock className="w-3 h-3" />
@@ -224,7 +387,7 @@ export default function DriverDocuments() {
             Upload the required documents for this driver
           </p>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openAddModal}
             className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700"
           >
             <FaUpload /> Upload First Document
@@ -233,8 +396,8 @@ export default function DriverDocuments() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {documents.map((doc) => {
-            const expiryStatus = getExpiryStatus(doc.expiry_date);
-            const docTypeInfo = getDocTypeInfo(doc.doc_type);
+            const expiryStatus = getExpiryStatus(doc.expiryDate);
+            const docTypeInfo = getDocTypeInfo(doc.docType);
             const IconComponent = docTypeInfo.icon || FaFileAlt;
             return (
               <div
@@ -247,7 +410,7 @@ export default function DriverDocuments() {
                       <IconComponent className="w-6 h-6 text-gray-500" />
                     </div>
                     <div className="flex items-center gap-2">
-                      {doc.is_verified ? (
+                      {doc.isVerified ? (
                         <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
                           <FaCheck /> Verified
                         </span>
@@ -262,13 +425,13 @@ export default function DriverDocuments() {
                   <h3 className="font-semibold text-gray-900 mb-1">
                     {docTypeInfo.label}
                   </h3>
-                  {doc.doc_name && (
-                    <p className="text-sm text-gray-600 mb-2">{doc.doc_name}</p>
+                  {doc.docName && (
+                    <p className="text-sm text-gray-600 mb-2">{doc.docName}</p>
                   )}
 
-                  {doc.expiry_date && (
+                  {doc.expiryDate && (
                     <p className="text-sm text-gray-500">
-                      Expires: {new Date(doc.expiry_date).toLocaleDateString()}
+                      Expires: {new Date(doc.expiryDate).toLocaleDateString()}
                     </p>
                   )}
 
@@ -283,16 +446,36 @@ export default function DriverDocuments() {
                 </div>
 
                 <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                  <a
-                    href={doc.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-sky-600 hover:text-sky-700"
-                  >
-                    View Document
-                  </a>
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={doc.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700"
+                    >
+                      <FaExternalLinkAlt className="w-3 h-3" /> View
+                    </a>
+                    <button
+                      onClick={() => openEditModal(doc)}
+                      className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      <FaEdit className="w-3 h-3" /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(doc.id)}
+                      disabled={deleting === doc.id}
+                      className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+                    >
+                      {deleting === doc.id ? (
+                        <FaSpinner className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <FaTrash className="w-3 h-3" />
+                      )}
+                      Delete
+                    </button>
+                  </div>
                   <span className="text-xs text-gray-400">
-                    Uploaded {new Date(doc.created_at).toLocaleDateString()}
+                    {new Date(doc.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -301,19 +484,16 @@ export default function DriverDocuments() {
         </div>
       )}
 
-      {/* Upload Modal */}
+      {/* Upload/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
-                Upload Driver Document
+                {editingDoc ? 'Edit Document' : 'Upload Driver Document'}
               </h2>
               <button
-                onClick={() => {
-                  setShowModal(false);
-                  setError('');
-                }}
+                onClick={() => { setShowModal(false); setEditingDoc(null); setSelectedFile(null); }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <FaTimes className="w-5 h-5" />
@@ -322,7 +502,7 @@ export default function DriverDocuments() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
                   {error}
                 </div>
               )}
@@ -361,23 +541,87 @@ export default function DriverDocuments() {
                 />
               </div>
 
+              {/* File Upload Area */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  File URL *
+                  Document File *
                 </label>
                 <input
-                  type="url"
-                  value={formData.fileUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fileUrl: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  placeholder="https://..."
-                  required
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
+                  onChange={handleFileSelect}
+                  className="hidden"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Upload the document to a cloud service and paste the URL here
-                </p>
+
+                {selectedFile ? (
+                  <div className="border-2 border-sky-200 bg-sky-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
+                        <FaFile className="w-5 h-5 text-sky-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{selectedFile.name}</p>
+                        <p className="text-sm text-gray-500">{formatFileSize(selectedFile.size)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFile(null)}
+                        className="p-2 text-gray-400 hover:text-red-500"
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                    {uploading && (
+                      <div className="mt-3">
+                        <div className="h-2 bg-sky-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-sky-600 transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-sky-600 mt-1">Uploading... {uploadProgress}%</p>
+                      </div>
+                    )}
+                  </div>
+                ) : editingDoc?.fileUrl ? (
+                  <div className="border-2 border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <FaFileAlt className="w-5 h-5 text-gray-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">Current document</p>
+                        <a
+                          href={editingDoc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-sky-600 hover:underline"
+                        >
+                          View current file
+                        </a>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-sky-400 hover:text-sky-600 transition-colors"
+                    >
+                      <FaCloudUploadAlt className="inline w-4 h-4 mr-2" />
+                      Replace with new file
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50 transition-all"
+                  >
+                    <FaCloudUploadAlt className="w-8 h-8 mx-auto mb-2" />
+                    <p className="font-medium">Click to select file</p>
+                    <p className="text-xs mt-1">PDF, JPEG, PNG, WebP, GIF (max 10MB)</p>
+                  </button>
+                )}
               </div>
 
               <div>
@@ -397,25 +641,27 @@ export default function DriverDocuments() {
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setError('');
-                  }}
+                  onClick={() => { setShowModal(false); setEditingDoc(null); setSelectedFile(null); }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={saving || uploading || (!selectedFile && !editingDoc?.fileUrl)}
                   className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50 flex items-center gap-2"
                 >
-                  {saving ? (
+                  {saving || uploading ? (
                     <>
-                      <FaSpinner className="animate-spin" /> Uploading...
+                      <FaSpinner className="animate-spin" />
+                      {uploading ? 'Uploading...' : 'Saving...'}
                     </>
+                  ) : editingDoc ? (
+                    'Update Document'
                   ) : (
-                    'Upload Document'
+                    <>
+                      <FaUpload /> Upload Document
+                    </>
                   )}
                 </button>
               </div>
