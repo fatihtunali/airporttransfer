@@ -66,6 +66,20 @@ export async function GET(
       return NextResponse.json({ error: 'Driver not found' }, { status: 404 });
     }
 
+    // Safe parse languages
+    let languages: string[] = [];
+    if (driver.languages) {
+      try {
+        if (driver.languages.startsWith('[')) {
+          languages = JSON.parse(driver.languages);
+        } else if (driver.languages.trim()) {
+          languages = [driver.languages.trim()];
+        }
+      } catch {
+        languages = [];
+      }
+    }
+
     return NextResponse.json({
       id: driver.id,
       supplierId: driver.supplier_id,
@@ -76,10 +90,10 @@ export async function GET(
       licenseNumber: driver.license_number,
       licenseExpiry: driver.license_expiry,
       photoUrl: driver.photo_url,
-      languages: driver.languages ? JSON.parse(driver.languages) : [],
+      languages,
       isActive: driver.is_active,
-      ratingAvg: driver.rating_avg,
-      ratingCount: driver.rating_count,
+      ratingAvg: Number(driver.rating_avg) || 0,
+      ratingCount: Number(driver.rating_count) || 0,
       createdAt: driver.created_at,
     });
   } catch (error) {
@@ -175,6 +189,20 @@ export async function PUT(
       [id]
     );
 
+    // Safe parse languages for response
+    let updatedLanguages: string[] = [];
+    if (updatedDriver!.languages) {
+      try {
+        if (updatedDriver!.languages.startsWith('[')) {
+          updatedLanguages = JSON.parse(updatedDriver!.languages);
+        } else if (updatedDriver!.languages.trim()) {
+          updatedLanguages = [updatedDriver!.languages.trim()];
+        }
+      } catch {
+        updatedLanguages = [];
+      }
+    }
+
     return NextResponse.json({
       id: updatedDriver!.id,
       supplierId: updatedDriver!.supplier_id,
@@ -185,10 +213,10 @@ export async function PUT(
       licenseNumber: updatedDriver!.license_number,
       licenseExpiry: updatedDriver!.license_expiry,
       photoUrl: updatedDriver!.photo_url,
-      languages: updatedDriver!.languages ? JSON.parse(updatedDriver!.languages) : [],
+      languages: updatedLanguages,
       isActive: updatedDriver!.is_active,
-      ratingAvg: updatedDriver!.rating_avg,
-      ratingCount: updatedDriver!.rating_count,
+      ratingAvg: Number(updatedDriver!.rating_avg) || 0,
+      ratingCount: Number(updatedDriver!.rating_count) || 0,
     });
   } catch (error) {
     console.error('Error updating driver:', error);

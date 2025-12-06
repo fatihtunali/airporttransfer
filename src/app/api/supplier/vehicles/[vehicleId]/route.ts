@@ -71,6 +71,16 @@ export async function GET(
       return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
     }
 
+    // Safe JSON parse helper
+    const safeParseJson = (str: string | null): string[] => {
+      if (!str || !str.trim()) return [];
+      try {
+        return JSON.parse(str);
+      } catch {
+        return [];
+      }
+    };
+
     return NextResponse.json({
       id: vehicle.id,
       supplierId: vehicle.supplier_id,
@@ -82,8 +92,8 @@ export async function GET(
       seatCount: vehicle.seat_count,
       luggageCount: vehicle.luggage_count,
       vehicleType: vehicle.vehicle_type,
-      features: vehicle.features ? JSON.parse(vehicle.features) : [],
-      images: vehicle.images ? JSON.parse(vehicle.images) : [],
+      features: safeParseJson(vehicle.features),
+      images: safeParseJson(vehicle.images),
       isActive: vehicle.is_active,
       createdAt: vehicle.created_at,
     });
@@ -199,6 +209,16 @@ export async function PUT(
       [id]
     );
 
+    // Safe JSON parse helper for response
+    const safeParseJsonRes = (str: string | null): string[] => {
+      if (!str || !str.trim()) return [];
+      try {
+        return JSON.parse(str);
+      } catch {
+        return [];
+      }
+    };
+
     return NextResponse.json({
       id: updatedVehicle!.id,
       supplierId: updatedVehicle!.supplier_id,
@@ -210,8 +230,8 @@ export async function PUT(
       seatCount: updatedVehicle!.seat_count,
       luggageCount: updatedVehicle!.luggage_count,
       vehicleType: updatedVehicle!.vehicle_type,
-      features: updatedVehicle!.features ? JSON.parse(updatedVehicle!.features) : [],
-      images: updatedVehicle!.images ? JSON.parse(updatedVehicle!.images) : [],
+      features: safeParseJsonRes(updatedVehicle!.features),
+      images: safeParseJsonRes(updatedVehicle!.images),
       isActive: updatedVehicle!.is_active,
     });
   } catch (error) {
