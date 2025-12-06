@@ -195,6 +195,7 @@ function BookingContent() {
           pickupAddress: formData.pickupAddress,
           dropoffAddress: formData.dropoffAddress,
           specialRequests: formData.specialRequests,
+          paymentMethod: paymentMethod.toUpperCase(),
         }),
       });
 

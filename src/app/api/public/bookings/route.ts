@@ -40,6 +40,9 @@ interface CreateBookingRequest {
   dropoffAddress?: string;
   specialRequests?: string;
 
+  // Payment method
+  paymentMethod?: 'PAY_LATER' | 'CARD' | 'BANK_TRANSFER';
+
   // Promo code
   promoCode?: string;
 
@@ -228,6 +231,7 @@ export async function POST(request: NextRequest) {
     // Create booking with transaction
     const bookingId = await transaction(async (conn) => {
       // Insert booking
+      const paymentMethod = body.paymentMethod || 'PAY_LATER';
       const [bookingResult] = await conn.execute(
         `INSERT INTO bookings (
           public_code, supplier_id, channel,
@@ -238,8 +242,8 @@ export async function POST(request: NextRequest) {
           vehicle_type, currency, base_price,
           total_price, commission, supplier_payout,
           promo_code_id, discount_amount, original_price,
-          status, payment_status, customer_notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', 'UNPAID', ?)`,
+          status, payment_status, payment_method, customer_notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', 'UNPAID', ?, ?)`,
         [
           publicCode,
           tariff.supplier_id,
@@ -262,6 +266,7 @@ export async function POST(request: NextRequest) {
           appliedPromoCode?.id || null,
           discountAmount,
           originalPrice,
+          paymentMethod,
           body.specialRequests || null,
         ]
       );

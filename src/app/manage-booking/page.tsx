@@ -31,6 +31,7 @@ interface BookingData {
   ref: string;
   status: string;
   paymentStatus: string;
+  paymentMethod?: string;
   date: string;
   time: string;
   pickupTime: string;
@@ -158,6 +159,7 @@ function ManageBookingContent() {
                   ref: bookingData.publicCode,
                   status: bookingData.status,
                   paymentStatus: bookingData.paymentStatus,
+                  paymentMethod: bookingData.paymentMethod,
                   date: pickupDate.toLocaleDateString('en-GB'),
                   time: pickupDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
                   pickupTime: bookingData.pickupTime,
@@ -238,6 +240,7 @@ function ManageBookingContent() {
         ref: data.publicCode,
         status: data.status,
         paymentStatus: data.paymentStatus,
+        paymentMethod: data.paymentMethod,
         date: pickupDate.toLocaleDateString('en-GB'),
         time: pickupDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
         pickupTime: data.pickupTime,
@@ -475,8 +478,13 @@ function ManageBookingContent() {
 
   const canCancelBooking = booking && !['CANCELLED', 'COMPLETED', 'IN_PROGRESS'].includes(booking.status.toUpperCase());
   const canModifyBooking = booking && !['CANCELLED', 'COMPLETED', 'IN_PROGRESS'].includes(booking.status.toUpperCase());
-  const needsPayment = booking && !['CANCELLED', 'COMPLETED'].includes(booking.status.toUpperCase()) &&
-    !['PAID', 'REFUNDED'].includes(booking.paymentStatus?.toUpperCase() || '');
+  // Only show "Payment Required" for bank transfer bookings that are unpaid
+  // PAY_LATER = pay driver directly, no online payment needed
+  // BANK_TRANSFER = requires bank transfer payment before service
+  const needsPayment = booking &&
+    !['CANCELLED', 'COMPLETED'].includes(booking.status.toUpperCase()) &&
+    !['PAID', 'REFUNDED'].includes(booking.paymentStatus?.toUpperCase() || '') &&
+    booking.paymentMethod?.toUpperCase() === 'BANK_TRANSFER';
 
   return (
     <div className="min-h-screen bg-white">

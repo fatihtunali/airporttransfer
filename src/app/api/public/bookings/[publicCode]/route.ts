@@ -49,6 +49,7 @@ export async function GET(
       total_price: number;
       status: string;
       payment_status: string;
+      payment_method: string | null;
       customer_notes: string | null;
       created_at: string;
     }>(
@@ -58,7 +59,7 @@ export async function GET(
               flight_number, flight_date, flight_time,
               pickup_datetime, pax_adults, pax_children,
               vehicle_type, currency, total_price,
-              status, payment_status, customer_notes, created_at
+              status, payment_status, payment_method, customer_notes, created_at
        FROM bookings WHERE public_code = ?`,
       [publicCode.toUpperCase()]
     );
@@ -203,6 +204,7 @@ export async function GET(
       totalPrice: Number(booking.total_price),
       status: booking.status,
       paymentStatus: booking.payment_status,
+      paymentMethod: booking.payment_method,
       customerNotes: booking.customer_notes,
       supplier: supplier ? {
         name: supplier.name,
