@@ -105,7 +105,7 @@ export default function PayoutsPage() {
     }
     acc[key].payouts.push(payout);
     if (payout.status !== 'PAID' && payout.status !== 'CANCELLED') {
-      acc[key].total += payout.amount;
+      acc[key].total += Number(payout.amount) || 0;
     }
     return acc;
   }, {} as Record<string, { payouts: Payout[]; total: number; currency: string }>);
@@ -242,7 +242,7 @@ export default function PayoutsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className="font-medium">
-                            {payout.currency} {payout.amount?.toFixed(2)}
+                            {payout.currency} {Number(payout.amount).toFixed(2)}
                           </span>
                         </td>
                         <td className="px-4 py-3">
