@@ -1,15 +1,22 @@
 openapi: 3.0.3
 info:
   title: Airport Transfer Marketplace API
-  version: 2.1.0
+  version: 2.2.0
   description: |
     Independent Airport Transfer Marketplace API.
+
+    ## What's New in v2.2.0
+    - **Cryptocurrency Payments**: Accept Bitcoin, Ethereum, and XRP payments
+    - **Live Crypto Rates**: Real-time EUR to crypto conversion via CoinGecko
+    - **Driver Assignment Reminders**: Automated supplier notifications 5 hours before pickup
+    - **Enhanced Tracking**: Fixed real-time booking tracking API
 
     ## What's New in v2.1.0
     - **Promo Codes**: Create and manage discount codes with usage tracking
     - **Customer Accounts**: Customer registration with Google OAuth support
     - **Webhooks**: Real-time notifications for booking events
     - **Rate Limiting**: All public endpoints include rate limit headers
+
     Covers authentication, suppliers, airports/zones/routes, pricing, bookings, rides, and payments.
 
     ## Role-Based Access Control
@@ -60,6 +67,10 @@ tags:
     description: Customer account management, authentication, and booking history
   - name: Webhooks
     description: Webhook subscriptions for real-time event notifications
+  - name: Crypto
+    description: Cryptocurrency payment endpoints (BTC, ETH, XRP)
+  - name: Cron
+    description: Scheduled job endpoints (internal use)
 
 components:
   securitySchemes:
@@ -96,7 +107,21 @@ components:
 
     PaymentStatus:
       type: string
-      enum: [UNPAID, PARTIALLY_PAID, PAID, REFUNDED]
+      enum: [UNPAID, PENDING, PENDING_VERIFICATION, PARTIALLY_PAID, PAID, REFUNDED, CANCELLED]
+
+    PaymentMethod:
+      type: string
+      enum: [PAY_LATER, CARD, BANK_TRANSFER, CRYPTO]
+      description: |
+        - PAY_LATER: Pay driver directly at pickup
+        - CARD: Online card payment
+        - BANK_TRANSFER: Bank transfer before service
+        - CRYPTO: Cryptocurrency payment (BTC, ETH, XRP)
+
+    CryptoCurrency:
+      type: string
+      enum: [BTC, ETH, XRP]
+      description: Supported cryptocurrencies for payment
 
     RideStatus:
       type: string
@@ -5018,6 +5043,138 @@ paths:
                         example: "Wait! Get 10% Off Your Transfer"
 
   # =====================================================
+  # CRYPTOCURRENCY PAYMENTS
+  # =====================================================
+
+  /public/crypto-rates:
+    get:
+      tags: [Crypto, Public]
+      summary: Get live cryptocurrency rates
+      description: |
+        Returns live EUR-to-crypto exchange rates for supported cryptocurrencies.
+        Rates are fetched from CoinGecko API and cached for 60 seconds.
+      responses:
+        '200':
+          description: Current crypto rates in EUR
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  BTC:
+                    type: number
+                    format: float
+                    description: Bitcoin price in EUR
+                    example: 95432.15
+                  ETH:
+                    type: number
+                    format: float
+                    description: Ethereum price in EUR
+                    example: 3521.42
+                  XRP:
+                    type: number
+                    format: float
+                    description: Ripple price in EUR
+                    example: 2.15
+        '500':
+          description: Failed to fetch rates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /public/payments/crypto:
+    post:
+      tags: [Crypto, Public]
+      summary: Submit crypto payment details
+      description: |
+        Submit cryptocurrency payment details after sending payment.
+        The booking will be marked as PENDING_VERIFICATION until payment is confirmed.
+
+        **Supported cryptocurrencies:**
+        - BTC (Bitcoin)
+        - ETH (Ethereum)
+        - XRP (Ripple) - requires destination memo/tag
+
+        After submission, the admin team will verify the transaction on the blockchain.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bookingCode
+                - currency
+                - txHash
+              properties:
+                bookingCode:
+                  type: string
+                  description: The booking's public code
+                  example: ATP6QYYC7
+                currency:
+                  $ref: '#/components/schemas/CryptoCurrency'
+                amount:
+                  type: number
+                  format: float
+                  description: Amount sent in crypto
+                  example: 0.00125
+                txHash:
+                  type: string
+                  description: Transaction hash/ID from the blockchain
+                  example: "0x1234567890abcdef..."
+                walletAddress:
+                  type: string
+                  description: Wallet address payment was sent to
+                  example: "0x36E444aa90a9515f6AC2062202a64D4486B9746F"
+      responses:
+        '200':
+          description: Payment details submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Crypto payment details submitted. We will verify and confirm your booking shortly."
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing required fields: bookingCode, currency, txHash"
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Booking not found"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  # =====================================================
   # CUSTOMER AUTHENTICATION
   # =====================================================
 
@@ -5849,3 +6006,77 @@ paths:
           description: No service available
         '429':
           description: Rate limit exceeded
+
+  # =====================================================
+  # CRON / SCHEDULED JOBS
+  # =====================================================
+
+  /cron/driver-reminders:
+    get:
+      tags: [Cron]
+      summary: Send driver assignment reminders
+      description: |
+        **Internal cron endpoint** - Sends email reminders to suppliers who haven't assigned drivers to bookings.
+
+        This endpoint is called by a scheduled cron job every hour. It finds bookings where:
+        - Pickup is within 5-6 hours
+        - No driver has been assigned yet
+        - Reminder hasn't already been sent
+
+        Sends an urgent email to the supplier with booking details and a link to assign a driver.
+
+        **Security:** Requires CRON_SECRET header for authentication.
+      parameters:
+        - name: x-cron-secret
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Secret key for cron job authentication
+      responses:
+        '200':
+          description: Reminders sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Processed 3 pending driver assignments"
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        rideId:
+                          type: integer
+                        bookingCode:
+                          type: string
+                        status:
+                          type: string
+                          enum: [sent, failed]
+                        error:
+                          type: string
+        '401':
+          description: Invalid or missing CRON_SECRET
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
