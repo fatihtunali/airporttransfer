@@ -64,6 +64,12 @@ export async function GET(
   const { rideId } = await params;
 
   try {
+    // Support lookup by either ride ID (numeric) or booking public code (alphanumeric)
+    const isNumeric = /^\d+$/.test(rideId);
+    const whereClause = isNumeric
+      ? 'r.id = ? AND r.supplier_id = ?'
+      : 'b.public_code = ? AND r.supplier_id = ?';
+
     // Get ride with full details
     const ride = await queryOne<RideRow>(
       `SELECT r.id, r.booking_id, r.supplier_id, r.vehicle_id, r.driver_id,
@@ -85,7 +91,7 @@ export async function GET(
        LEFT JOIN booking_passengers bp ON bp.booking_id = b.id AND bp.is_lead = TRUE
        LEFT JOIN drivers d ON d.id = r.driver_id
        LEFT JOIN vehicles v ON v.id = r.vehicle_id
-       WHERE r.id = ? AND r.supplier_id = ?`,
+       WHERE ${whereClause}`,
       [rideId, payload.supplierId]
     );
 
