@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import WhatsAppButton from "./components/WhatsAppButton";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
@@ -52,6 +53,11 @@ export default function RootLayout({
           allowedPaths={['/search', '/booking']}
           delay={5000}
           dismissDays={1}
+        />
+        {/* Google Sign-In Script */}
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="lazyOnload"
         />
       </body>
     </html>

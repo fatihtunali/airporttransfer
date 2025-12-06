@@ -70,12 +70,14 @@ export default function PostBookingAccountPrompt({
     }
   };
 
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
   const handleGoogleSignIn = async () => {
     // Load Google Sign-In
-    if (typeof window !== 'undefined' && (window as unknown as { google?: { accounts?: { id?: { initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void; prompt: () => void } } } }).google?.accounts?.id) {
+    if (typeof window !== 'undefined' && googleClientId && (window as unknown as { google?: { accounts?: { id?: { initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void; prompt: () => void } } } }).google?.accounts?.id) {
       const google = (window as unknown as { google: { accounts: { id: { initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void; prompt: () => void } } } }).google;
       google.accounts.id.initialize({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+        client_id: googleClientId,
         callback: async (response: { credential: string }) => {
           setLoading(true);
           try {
@@ -199,13 +201,15 @@ export default function PostBookingAccountPrompt({
             Create Account with Password
           </button>
 
-          <button
-            onClick={handleGoogleSignIn}
-            className="w-full py-3 px-4 bg-white text-gray-700 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <FaGoogle className="w-4 h-4 text-red-500" />
-            Continue with Google
-          </button>
+          {googleClientId && (
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full py-3 px-4 bg-white text-gray-700 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <FaGoogle className="w-4 h-4 text-red-500" />
+              Continue with Google
+            </button>
+          )}
 
           <button
             onClick={onSkip}
@@ -337,13 +341,15 @@ export default function PostBookingAccountPrompt({
             {loading ? 'Linking...' : 'Log In & Link Booking'}
           </button>
 
-          <button
-            onClick={handleGoogleSignIn}
-            className="w-full py-3 px-4 bg-white text-gray-700 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <FaGoogle className="w-4 h-4 text-red-500" />
-            Log in with Google
-          </button>
+          {googleClientId && (
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full py-3 px-4 bg-white text-gray-700 font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <FaGoogle className="w-4 h-4 text-red-500" />
+              Log in with Google
+            </button>
+          )}
 
           <button
             onClick={onSkip}
