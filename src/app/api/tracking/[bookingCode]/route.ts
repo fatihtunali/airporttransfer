@@ -74,9 +74,9 @@ export async function GET(
               d.full_name as driver_name,
               d.phone as driver_phone,
               d.photo_url as driver_photo,
-              d.vehicle_plate,
-              d.vehicle_model,
-              d.vehicle_color,
+              v.plate_number as vehicle_plate,
+              CONCAT(v.brand, ' ', v.model) as vehicle_model,
+              v.color as vehicle_color,
               dl.latitude as driver_lat,
               dl.longitude as driver_lng,
               dl.heading as driver_heading,
@@ -96,6 +96,7 @@ export async function GET(
             FROM bookings b
             JOIN rides r ON r.booking_id = b.id
             LEFT JOIN drivers d ON d.id = r.driver_id
+            LEFT JOIN vehicles v ON v.id = r.vehicle_id
             LEFT JOIN driver_locations dl ON dl.driver_id = r.driver_id
             LEFT JOIN airports a ON a.id = b.airport_id
             LEFT JOIN zones z ON z.id = b.zone_id
