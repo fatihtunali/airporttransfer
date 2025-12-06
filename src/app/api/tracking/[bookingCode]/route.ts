@@ -91,21 +91,14 @@ export async function GET(
               b.dropoff_address,
               a.name as airport_name,
               z.name as zone_name,
-              rt.event_type as last_event,
-              rt.created_at as last_event_time
+              (SELECT event_type FROM ride_tracking WHERE ride_id = r.id ORDER BY created_at DESC LIMIT 1) as last_event,
+              (SELECT created_at FROM ride_tracking WHERE ride_id = r.id ORDER BY created_at DESC LIMIT 1) as last_event_time
             FROM bookings b
             JOIN rides r ON r.booking_id = b.id
             LEFT JOIN drivers d ON d.id = r.driver_id
             LEFT JOIN driver_locations dl ON dl.driver_id = r.driver_id
             LEFT JOIN airports a ON a.id = b.airport_id
             LEFT JOIN zones z ON z.id = b.zone_id
-            LEFT JOIN (
-              SELECT ride_id, event_type, created_at
-              FROM ride_tracking
-              WHERE ride_id = r.id
-              ORDER BY created_at DESC
-              LIMIT 1
-            ) rt ON rt.ride_id = r.id
             WHERE b.public_code = ?
           `, [bookingCode]);
 
