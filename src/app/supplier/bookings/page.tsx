@@ -76,7 +76,43 @@ export default function SupplierBookings() {
       const res = await fetch(`/api/supplier/rides?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setBookings(data.rides || []);
+        // Map from API format to component format
+        const rides = data.items || [];
+        setBookings(rides.map((r: {
+          id: number;
+          status: string;
+          booking: {
+            publicCode: string;
+            pickupDatetime: string;
+            direction: string;
+            airportCode: string;
+            zoneName: string;
+            paxAdults: number;
+            flightNumber: string | null;
+          };
+          passenger: { name: string | null; phone: string | null };
+          driver: { name: string | null } | null;
+          vehicle: { vehicleType: string | null } | null;
+        }) => ({
+          id: r.id,
+          publicCode: r.booking.publicCode,
+          customerName: r.passenger.name || 'Unknown',
+          customerPhone: r.passenger.phone || '',
+          pickupDatetime: r.booking.pickupDatetime,
+          direction: r.booking.direction,
+          airportName: r.booking.airportCode,
+          zoneName: r.booking.zoneName,
+          pickupAddress: '',
+          dropoffAddress: '',
+          vehicleType: r.vehicle?.vehicleType || 'SEDAN',
+          paxAdults: r.booking.paxAdults,
+          luggageCount: 0,
+          status: r.status,
+          totalPrice: 0,
+          currency: 'EUR',
+          flightNumber: r.booking.flightNumber,
+          driverName: r.driver?.name || null,
+        })));
       }
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -301,7 +337,7 @@ export default function SupplierBookings() {
                       </>
                     )}
                     <Link
-                      href={`/supplier/bookings/${booking.publicCode}`}
+                      href={`/supplier/bookings/${booking.id}`}
                       className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       View Details
