@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   FaFileAlt,
   FaPlus,
@@ -13,6 +13,8 @@ import {
   FaTrash,
   FaEdit,
   FaExternalLinkAlt,
+  FaCloudUploadAlt,
+  FaFile,
 } from 'react-icons/fa';
 
 interface Document {
@@ -37,9 +39,7 @@ const companyDocTypes = [
 ];
 
 // All doc types for the dropdown
-const docTypes = [
-  ...companyDocTypes,
-];
+const docTypes = [...companyDocTypes];
 
 export default function SupplierDocuments() {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -55,6 +55,12 @@ export default function SupplierDocuments() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -77,6 +83,7 @@ export default function SupplierDocuments() {
   const openAddModal = () => {
     setEditingDoc(null);
     setFormData({ docType: 'BUSINESS_LICENSE', docName: '', fileUrl: '', expiryDate: '' });
+    setSelectedFile(null);
     setError(null);
     setShowModal(true);
   };
@@ -89,8 +96,69 @@ export default function SupplierDocuments() {
       fileUrl: doc.fileUrl,
       expiryDate: doc.expiryDate ? doc.expiryDate.split('T')[0] : '',
     });
+    setSelectedFile(null);
     setError(null);
     setShowModal(true);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        setError('Invalid file type. Please upload PDF, JPEG, PNG, WebP, or GIF.');
+        return;
+      }
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('File too large. Maximum size is 10MB.');
+        return;
+      }
+      setSelectedFile(file);
+      setError(null);
+      // Auto-fill document name if empty
+      if (!formData.docName) {
+        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+        setFormData(prev => ({ ...prev, docName: nameWithoutExt }));
+      }
+    }
+  };
+
+  const uploadFile = async (): Promise<string | null> => {
+    if (!selectedFile) return formData.fileUrl || null;
+
+    setUploading(true);
+    setUploadProgress(10);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', selectedFile);
+      uploadFormData.append('folder', 'supplier-docs');
+
+      setUploadProgress(30);
+
+      const res = await fetch('/api/supplier/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      setUploadProgress(80);
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      setUploadProgress(100);
+      return data.url;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,17 +167,36 @@ export default function SupplierDocuments() {
     setError(null);
 
     try {
+      // Upload file first if selected
+      let fileUrl = formData.fileUrl;
+      if (selectedFile) {
+        const uploadedUrl = await uploadFile();
+        if (!uploadedUrl) {
+          setError('Failed to upload file');
+          setSaving(false);
+          return;
+        }
+        fileUrl = uploadedUrl;
+      }
+
+      if (!fileUrl) {
+        setError('Please select a file to upload');
+        setSaving(false);
+        return;
+      }
+
       if (editingDoc) {
         // Update existing document
         const res = await fetch('/api/supplier/documents', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editingDoc.id, ...formData }),
+          body: JSON.stringify({ id: editingDoc.id, ...formData, fileUrl }),
         });
 
         if (res.ok) {
           setShowModal(false);
           setEditingDoc(null);
+          setSelectedFile(null);
           fetchDocuments();
         } else {
           const data = await res.json();
@@ -120,12 +207,13 @@ export default function SupplierDocuments() {
         const res = await fetch('/api/supplier/documents', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ ...formData, fileUrl }),
         });
 
         if (res.ok) {
           setShowModal(false);
           setFormData({ docType: 'BUSINESS_LICENSE', docName: '', fileUrl: '', expiryDate: '' });
+          setSelectedFile(null);
           fetchDocuments();
         } else {
           const data = await res.json();
@@ -134,9 +222,10 @@ export default function SupplierDocuments() {
       }
     } catch (error) {
       console.error('Error saving document:', error);
-      setError('Failed to save document');
+      setError(error instanceof Error ? error.message : 'Failed to save document');
     } finally {
       setSaving(false);
+      setUploadProgress(0);
     }
   };
 
@@ -172,6 +261,12 @@ export default function SupplierDocuments() {
     if (daysUntil <= 7) return { status: 'critical', label: 'Expiring Soon', color: 'text-orange-600 bg-orange-50' };
     if (daysUntil <= 30) return { status: 'warning', label: 'Expiring', color: 'text-yellow-600 bg-yellow-50' };
     return null;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   return (
@@ -340,13 +435,13 @@ export default function SupplierDocuments() {
       {/* Upload/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
                 {editingDoc ? 'Edit Document' : 'Upload Document'}
               </h2>
               <button
-                onClick={() => { setShowModal(false); setEditingDoc(null); }}
+                onClick={() => { setShowModal(false); setEditingDoc(null); setSelectedFile(null); }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <FaTimes className="w-5 h-5" />
@@ -394,23 +489,87 @@ export default function SupplierDocuments() {
                 />
               </div>
 
+              {/* File Upload Area */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  File URL *
+                  Document File *
                 </label>
                 <input
-                  type="url"
-                  value={formData.fileUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, fileUrl: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  placeholder="https://..."
-                  required
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
+                  onChange={handleFileSelect}
+                  className="hidden"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Upload your document to a cloud service and paste the URL here
-                </p>
+
+                {selectedFile ? (
+                  <div className="border-2 border-sky-200 bg-sky-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
+                        <FaFile className="w-5 h-5 text-sky-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{selectedFile.name}</p>
+                        <p className="text-sm text-gray-500">{formatFileSize(selectedFile.size)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFile(null)}
+                        className="p-2 text-gray-400 hover:text-red-500"
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                    {uploading && (
+                      <div className="mt-3">
+                        <div className="h-2 bg-sky-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-sky-600 transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-sky-600 mt-1">Uploading... {uploadProgress}%</p>
+                      </div>
+                    )}
+                  </div>
+                ) : editingDoc?.fileUrl ? (
+                  <div className="border-2 border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <FaFileAlt className="w-5 h-5 text-gray-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">Current document</p>
+                        <a
+                          href={editingDoc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-sky-600 hover:underline"
+                        >
+                          View current file
+                        </a>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-sky-400 hover:text-sky-600 transition-colors"
+                    >
+                      <FaCloudUploadAlt className="inline w-4 h-4 mr-2" />
+                      Replace with new file
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-8 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50 transition-all"
+                  >
+                    <FaCloudUploadAlt className="w-8 h-8 mx-auto mb-2" />
+                    <p className="font-medium">Click to select file</p>
+                    <p className="text-xs mt-1">PDF, JPEG, PNG, WebP, GIF (max 10MB)</p>
+                  </button>
+                )}
               </div>
 
               <div>
@@ -430,24 +589,27 @@ export default function SupplierDocuments() {
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => { setShowModal(false); setEditingDoc(null); }}
+                  onClick={() => { setShowModal(false); setEditingDoc(null); setSelectedFile(null); }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={saving || uploading || (!selectedFile && !editingDoc?.fileUrl)}
                   className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50 flex items-center gap-2"
                 >
-                  {saving ? (
+                  {saving || uploading ? (
                     <>
-                      <FaSpinner className="animate-spin" /> Saving...
+                      <FaSpinner className="animate-spin" />
+                      {uploading ? 'Uploading...' : 'Saving...'}
                     </>
                   ) : editingDoc ? (
                     'Update Document'
                   ) : (
-                    'Upload Document'
+                    <>
+                      <FaUpload /> Upload Document
+                    </>
                   )}
                 </button>
               </div>
