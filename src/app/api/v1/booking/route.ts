@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateApiKey } from '@/lib/agency-auth';
 import { query, queryOne, insert } from '@/lib/db';
-import crypto from 'crypto';
+import { generateBookingCode } from '@/lib/booking-codes';
 
 interface TariffRow {
   id: number;
@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
   const commission = tariff.base_price * (agency.commission_rate / 100);
   const supplierPayout = tariff.base_price - commission;
 
-  // Generate booking code
-  const publicCode = `B${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+  // Generate unique booking code (collision-safe)
+  const publicCode = await generateBookingCode();
 
   // Create pickup datetime
   const pickupDatetime = `${pickupDate} ${pickupTime}:00`;

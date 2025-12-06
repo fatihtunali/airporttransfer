@@ -25,6 +25,13 @@ interface SupplierRow {
   address: string | null;
   logo_url: string | null;
   description: string | null;
+  bank_name: string | null;
+  bank_account_name: string | null;
+  bank_iban: string | null;
+  bank_swift: string | null;
+  bank_country: string | null;
+  payment_email: string | null;
+  preferred_payment_method: string | null;
   is_verified: boolean;
   is_active: boolean;
   commission_rate: number;
@@ -54,8 +61,9 @@ export async function GET(request: NextRequest) {
     const supplier = await queryOne<SupplierRow>(
       `SELECT id, name, legal_name, tax_number, contact_name, contact_email,
               contact_phone, whatsapp, country, city, address, logo_url,
-              description, is_verified, is_active, commission_rate,
-              rating_avg, rating_count
+              description, bank_name, bank_account_name, bank_iban, bank_swift,
+              bank_country, payment_email, preferred_payment_method,
+              is_verified, is_active, commission_rate, rating_avg, rating_count
        FROM suppliers WHERE id = ?`,
       [payload.supplierId]
     );
@@ -90,6 +98,13 @@ export async function GET(request: NextRequest) {
         address: supplier.address,
         logoUrl: supplier.logo_url,
         description: supplier.description,
+        bankName: supplier.bank_name,
+        bankAccountName: supplier.bank_account_name,
+        bankIban: supplier.bank_iban,
+        bankSwift: supplier.bank_swift,
+        bankCountry: supplier.bank_country,
+        paymentEmail: supplier.payment_email,
+        preferredPaymentMethod: supplier.preferred_payment_method,
         isVerified: supplier.is_verified,
         isActive: supplier.is_active,
         commissionRate: supplier.commission_rate,

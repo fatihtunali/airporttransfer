@@ -14,6 +14,14 @@ interface Payout {
   dueDate: string;
   paidAt: string;
   createdAt: string;
+  // Bank details
+  bankName: string | null;
+  bankAccountName: string | null;
+  bankIban: string | null;
+  bankSwift: string | null;
+  bankCountry: string | null;
+  paymentEmail: string | null;
+  preferredPaymentMethod: string | null;
 }
 
 interface PayoutStats {
@@ -25,6 +33,21 @@ interface PayoutStats {
   countPaid: number;
 }
 
+interface SupplierGroup {
+  payouts: Payout[];
+  total: number;
+  currency: string;
+  bankInfo: {
+    bankName: string | null;
+    bankAccountName: string | null;
+    bankIban: string | null;
+    bankSwift: string | null;
+    bankCountry: string | null;
+    paymentEmail: string | null;
+    preferredPaymentMethod: string | null;
+  };
+}
+
 export default function PayoutsPage() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [stats, setStats] = useState<PayoutStats | null>(null);
@@ -32,6 +55,7 @@ export default function PayoutsPage() {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [processing, setProcessing] = useState<number | null>(null);
+  const [expandedSupplier, setExpandedSupplier] = useState<string | null>(null);
 
   useEffect(() => {
     loadPayouts();
@@ -92,23 +116,49 @@ export default function PayoutsPage() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const getPaymentMethodIcon = (method: string | null) => {
+    switch (method) {
+      case 'BANK_TRANSFER': return '🏦';
+      case 'PAYPAL': return '💳';
+      case 'WISE': return '💱';
+      default: return '💰';
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   const filteredPayouts = payouts.filter(p =>
     p.supplierName?.toLowerCase().includes(search.toLowerCase()) ||
     p.bookingCode?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Group by supplier
+  // Group by supplier with bank info
   const groupedBySupplier = filteredPayouts.reduce((acc, payout) => {
     const key = payout.supplierName || 'Unknown';
     if (!acc[key]) {
-      acc[key] = { payouts: [], total: 0, currency: payout.currency };
+      acc[key] = {
+        payouts: [],
+        total: 0,
+        currency: payout.currency,
+        bankInfo: {
+          bankName: payout.bankName,
+          bankAccountName: payout.bankAccountName,
+          bankIban: payout.bankIban,
+          bankSwift: payout.bankSwift,
+          bankCountry: payout.bankCountry,
+          paymentEmail: payout.paymentEmail,
+          preferredPaymentMethod: payout.preferredPaymentMethod,
+        },
+      };
     }
     acc[key].payouts.push(payout);
     if (payout.status !== 'PAID' && payout.status !== 'CANCELLED') {
       acc[key].total += Number(payout.amount) || 0;
     }
     return acc;
-  }, {} as Record<string, { payouts: Payout[]; total: number; currency: string }>);
+  }, {} as Record<string, SupplierGroup>);
 
   return (
     <div className="space-y-6">
@@ -125,7 +175,7 @@ export default function PayoutsPage() {
             onClick={loadPayouts}
             className="px-4 py-2 text-sm bg-white border rounded-lg hover:bg-gray-50"
           >
-            ↻ Refresh
+            Refresh
           </button>
         </div>
       </div>
@@ -208,20 +258,126 @@ export default function PayoutsPage() {
         <div className="space-y-6">
           {Object.entries(groupedBySupplier).map(([supplierName, data]) => (
             <div key={supplierName} className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-gray-900">🏢 {supplierName}</h3>
-                  <p className="text-sm text-gray-500">{data.payouts.length} payouts</p>
+              {/* Supplier Header */}
+              <div className="bg-gray-50 px-4 py-3 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{getPaymentMethodIcon(data.bankInfo.preferredPaymentMethod)}</span>
+                    <div>
+                      <h3 className="font-medium text-gray-900">{supplierName}</h3>
+                      <p className="text-sm text-gray-500">{data.payouts.length} payouts</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {data.total > 0 && (
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">Outstanding</p>
+                        <p className="text-xl font-bold text-blue-600">
+                          {data.currency} {data.total.toFixed(2)}
+                        </p>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setExpandedSupplier(expandedSupplier === supplierName ? null : supplierName)}
+                      className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    >
+                      {expandedSupplier === supplierName ? 'Hide Bank Info' : 'Show Bank Info'}
+                    </button>
+                  </div>
                 </div>
-                {data.total > 0 && (
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Outstanding</p>
-                    <p className="text-xl font-bold text-blue-600">
-                      {data.currency} {data.total.toFixed(2)}
-                    </p>
+
+                {/* Bank Details Panel */}
+                {expandedSupplier === supplierName && (
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-blue-900 mb-3">Payment Details</h4>
+                    {data.bankInfo.bankIban || data.bankInfo.paymentEmail ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {data.bankInfo.preferredPaymentMethod === 'BANK_TRANSFER' || data.bankInfo.bankIban ? (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-blue-800">Bank Transfer</p>
+                            {data.bankInfo.bankName && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">Bank:</span>
+                                <span className="text-sm font-mono">{data.bankInfo.bankName}</span>
+                              </div>
+                            )}
+                            {data.bankInfo.bankAccountName && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">Account Name:</span>
+                                <span className="text-sm font-mono">{data.bankInfo.bankAccountName}</span>
+                              </div>
+                            )}
+                            {data.bankInfo.bankIban && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm text-gray-600">IBAN:</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-mono bg-white px-2 py-1 rounded">
+                                    {data.bankInfo.bankIban}
+                                  </span>
+                                  <button
+                                    onClick={() => copyToClipboard(data.bankInfo.bankIban || '')}
+                                    className="text-blue-600 hover:text-blue-800 text-sm"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            {data.bankInfo.bankSwift && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm text-gray-600">SWIFT/BIC:</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-mono bg-white px-2 py-1 rounded">
+                                    {data.bankInfo.bankSwift}
+                                  </span>
+                                  <button
+                                    onClick={() => copyToClipboard(data.bankInfo.bankSwift || '')}
+                                    className="text-blue-600 hover:text-blue-800 text-sm"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            {data.bankInfo.bankCountry && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">Country:</span>
+                                <span className="text-sm">{data.bankInfo.bankCountry}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : null}
+
+                        {data.bankInfo.paymentEmail && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-blue-800">PayPal / Wise</p>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm text-gray-600">Email:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-mono bg-white px-2 py-1 rounded">
+                                  {data.bankInfo.paymentEmail}
+                                </span>
+                                <button
+                                  onClick={() => copyToClipboard(data.bankInfo.paymentEmail || '')}
+                                  className="text-blue-600 hover:text-blue-800 text-sm"
+                                >
+                                  Copy
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">
+                        No payment details provided. Please ask the supplier to update their bank information in Settings.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
+
+              {/* Payouts Table */}
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">

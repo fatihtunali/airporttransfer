@@ -19,6 +19,13 @@ interface PayoutRow {
   created_at: Date;
   // Supplier info via JOIN
   supplier_name: string;
+  bank_name: string | null;
+  bank_account_name: string | null;
+  bank_iban: string | null;
+  bank_swift: string | null;
+  bank_country: string | null;
+  payment_email: string | null;
+  preferred_payment_method: string | null;
   // Booking info via JOIN
   public_code: string | null;
 }
@@ -47,6 +54,8 @@ export async function GET(request: NextRequest) {
              sp.status, sp.payout_method, sp.reference, sp.due_date,
              sp.paid_at, sp.notes, sp.created_at,
              s.name as supplier_name,
+             s.bank_name, s.bank_account_name, s.bank_iban, s.bank_swift,
+             s.bank_country, s.payment_email, s.preferred_payment_method,
              b.public_code
       FROM supplier_payouts sp
       JOIN suppliers s ON s.id = sp.supplier_id
@@ -108,6 +117,14 @@ export async function GET(request: NextRequest) {
         paidAt: p.paid_at,
         notes: p.notes,
         createdAt: p.created_at,
+        // Bank details for payment
+        bankName: p.bank_name,
+        bankAccountName: p.bank_account_name,
+        bankIban: p.bank_iban,
+        bankSwift: p.bank_swift,
+        bankCountry: p.bank_country,
+        paymentEmail: p.payment_email,
+        preferredPaymentMethod: p.preferred_payment_method,
       })),
       stats,
     });

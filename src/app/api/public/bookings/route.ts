@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne, transaction } from '@/lib/db';
 import { sendBookingConfirmationEmail, sendSupplierNewBookingEmail } from '@/lib/email';
+import { generateBookingCode } from '@/lib/booking-codes';
 
 // Minimum hours before pickup for booking (in GMT)
 const MIN_BOOKING_HOURS = 8;
@@ -46,15 +47,7 @@ interface CreateBookingRequest {
   };
 }
 
-// Generate unique public booking code
-function generatePublicCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = 'ATP';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
+// Note: Using generateBookingCode from @/lib/booking-codes for collision-safe codes
 
 // POST /api/public/bookings - Create a new booking
 export async function POST(request: NextRequest) {
@@ -143,18 +136,8 @@ export async function POST(request: NextRequest) {
     const commission = totalPrice * (Number(tariff.commission_rate) / 100);
     const supplierPayout = totalPrice - commission;
 
-    // Generate unique public code
-    let publicCode = generatePublicCode();
-    let attempts = 0;
-    while (attempts < 10) {
-      const existing = await queryOne<{ id: number }>(
-        'SELECT id FROM bookings WHERE public_code = ?',
-        [publicCode]
-      );
-      if (!existing) break;
-      publicCode = generatePublicCode();
-      attempts++;
-    }
+    // Generate unique public code (collision-safe)
+    const publicCode = await generateBookingCode();
 
     const direction = body.direction || 'FROM_AIRPORT';
     const currency = body.currency || tariff.currency || 'EUR';
