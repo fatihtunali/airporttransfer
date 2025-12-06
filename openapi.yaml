@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Airport Transfer Marketplace API
-  version: 1.1.0
+  version: 2.0.0
   description: |
     Independent Airport Transfer Marketplace API.
     Covers authentication, suppliers, airports/zones/routes, pricing, bookings, rides, and payments.
@@ -44,6 +44,10 @@ tags:
     description: Admin-level management endpoints
   - name: Dispatch
     description: Dispatch operations for driver tracking, flight monitoring, and issue management
+  - name: Agency
+    description: Agency portal operations for B2B partners
+  - name: V1 API
+    description: Version 1 B2B API for agency integrations (API Key authentication)
 
 components:
   securitySchemes:
@@ -51,6 +55,11 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for agency integrations
 
   schemas:
     Role:
@@ -835,6 +844,210 @@ components:
           type: string
         message:
           type: string
+
+    # Document Schemas
+    DocumentType:
+      type: string
+      enum: [BUSINESS_LICENSE, TAX_CERTIFICATE, INSURANCE, TRANSPORT_LICENSE, COMPANY_REGISTRATION, OTHER]
+
+    DriverDocumentType:
+      type: string
+      enum: [ID_CARD, LICENSE, PHOTO, CRIMINAL_RECORD, MEDICAL, OTHER]
+
+    VehicleDocumentType:
+      type: string
+      enum: [REGISTRATION, INSURANCE, INSPECTION, PERMIT, OTHER]
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        supplierId:
+          type: integer
+        docType:
+          $ref: '#/components/schemas/DocumentType'
+        docName:
+          type: string
+        fileUrl:
+          type: string
+        expiryDate:
+          type: string
+          format: date
+          nullable: true
+        isVerified:
+          type: boolean
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    DriverDocument:
+      type: object
+      properties:
+        id:
+          type: integer
+        driverId:
+          type: integer
+        docType:
+          $ref: '#/components/schemas/DriverDocumentType'
+        docName:
+          type: string
+        fileUrl:
+          type: string
+        expiryDate:
+          type: string
+          format: date
+          nullable: true
+        isVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    VehicleDocument:
+      type: object
+      properties:
+        id:
+          type: integer
+        vehicleId:
+          type: integer
+        docType:
+          $ref: '#/components/schemas/VehicleDocumentType'
+        docName:
+          type: string
+        fileUrl:
+          type: string
+        expiryDate:
+          type: string
+          format: date
+          nullable: true
+        isVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    # Bank/Payment Schemas
+    PaymentMethod:
+      type: string
+      enum: [BANK_TRANSFER, PAYPAL, WISE, OTHER]
+
+    BankDetails:
+      type: object
+      properties:
+        bankName:
+          type: string
+          nullable: true
+        bankAccountName:
+          type: string
+          nullable: true
+        bankIban:
+          type: string
+          nullable: true
+        bankSwift:
+          type: string
+          nullable: true
+        bankCountry:
+          type: string
+          nullable: true
+        paymentEmail:
+          type: string
+          nullable: true
+        preferredPaymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+
+    # Review Schemas
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookingId:
+          type: integer
+        supplierId:
+          type: integer
+        customerId:
+          type: integer
+          nullable: true
+        customerName:
+          type: string
+        ratingOverall:
+          type: number
+          minimum: 1
+          maximum: 5
+        ratingPunctuality:
+          type: number
+          minimum: 1
+          maximum: 5
+          nullable: true
+        ratingVehicle:
+          type: number
+          minimum: 1
+          maximum: 5
+          nullable: true
+        ratingDriver:
+          type: number
+          minimum: 1
+          maximum: 5
+          nullable: true
+        reviewText:
+          type: string
+          nullable: true
+        supplierResponse:
+          type: string
+          nullable: true
+        respondedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # Agency Schemas
+    Agency:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        creditBalance:
+          type: number
+        currency:
+          type: string
+        commissionRate:
+          type: number
+        isActive:
+          type: boolean
+
+    # Service Zone Schema
+    ServiceZone:
+      type: object
+      properties:
+        id:
+          type: integer
+        supplierId:
+          type: integer
+        airportId:
+          type: integer
+        airportCode:
+          type: string
+        airportName:
+          type: string
+        maxDistanceKm:
+          type: number
+          nullable: true
+        isActive:
+          type: boolean
 
     # Dispatch Schemas
     DriverLocationStatus:
@@ -2831,6 +3044,1431 @@ paths:
       responses:
         '200':
           description: Notification updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  # ============================
+  # V1 B2B API Endpoints (Agency Integration)
+  # ============================
+
+  /v1/search:
+    get:
+      tags: [V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Search available transfers
+      description: Search for available transfer options between airport and zone
+      parameters:
+        - name: airport
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Airport IATA code (e.g., IST, AYT)
+        - name: zone
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Zone ID
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Pickup date (YYYY-MM-DD)
+        - name: time
+          in: query
+          schema:
+            type: string
+          description: Pickup time (HH:MM)
+        - name: passengers
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Number of passengers
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [FROM_AIRPORT, TO_AIRPORT]
+      responses:
+        '200':
+          description: Available transfer options
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  options:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        vehicleType:
+                          type: string
+                        price:
+                          type: number
+                        currency:
+                          type: string
+                        maxPassengers:
+                          type: integer
+                        luggageCapacity:
+                          type: integer
+
+  /v1/quote:
+    post:
+      tags: [V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Get detailed quote with pricing
+      description: Get a detailed price quote with extras and validity period
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [airportCode, zoneId, vehicleType, date, time, passengers]
+              properties:
+                airportCode:
+                  type: string
+                zoneId:
+                  type: integer
+                vehicleType:
+                  $ref: '#/components/schemas/VehicleType'
+                date:
+                  type: string
+                  format: date
+                time:
+                  type: string
+                passengers:
+                  type: integer
+                direction:
+                  type: string
+                  enum: [FROM_AIRPORT, TO_AIRPORT]
+                extras:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Quote details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quoteId:
+                    type: string
+                  price:
+                    type: number
+                  currency:
+                    type: string
+                  validUntil:
+                    type: string
+                    format: date-time
+
+  /v1/booking:
+    post:
+      tags: [V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Create booking from quote
+      description: Create a new booking using a quote or direct parameters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [airportCode, zoneId, vehicleType, pickupDate, pickupTime, direction, passengers, customer]
+              properties:
+                quoteId:
+                  type: string
+                  description: Quote ID from /v1/quote (optional)
+                airportCode:
+                  type: string
+                zoneId:
+                  type: integer
+                vehicleType:
+                  $ref: '#/components/schemas/VehicleType'
+                pickupDate:
+                  type: string
+                  format: date
+                pickupTime:
+                  type: string
+                direction:
+                  type: string
+                  enum: [FROM_AIRPORT, TO_AIRPORT]
+                passengers:
+                  type: integer
+                flightNumber:
+                  type: string
+                pickupAddress:
+                  type: string
+                dropoffAddress:
+                  type: string
+                customer:
+                  type: object
+                  required: [name, email, phone]
+                  properties:
+                    name:
+                      type: string
+                    email:
+                      type: string
+                    phone:
+                      type: string
+                agencyRef:
+                  type: string
+                  description: Agency's internal reference
+                specialRequests:
+                  type: string
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  booking:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      publicCode:
+                        type: string
+                      status:
+                        type: string
+                      totalPrice:
+                        type: number
+                      currency:
+                        type: string
+
+  /v1/booking/{bookingId}:
+    get:
+      tags: [V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Get booking details
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+
+  /v1/booking/{bookingId}/cancel:
+    post:
+      tags: [V1 API]
+      security:
+        - apiKeyAuth: []
+      summary: Cancel booking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  refundAmount:
+                    type: number
+                  refundCurrency:
+                    type: string
+
+  # ============================
+  # Agency Portal Endpoints
+  # ============================
+
+  /agency/me:
+    get:
+      tags: [Agency]
+      security:
+        - bearerAuth: []
+      summary: Get agency profile
+      responses:
+        '200':
+          description: Agency profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agency'
+
+  /agency/bookings:
+    get:
+      tags: [Agency]
+      security:
+        - bearerAuth: []
+      summary: List agency bookings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/BookingStatus'
+        - name: dateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of agency bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+
+  /agency/dashboard:
+    get:
+      tags: [Agency]
+      security:
+        - bearerAuth: []
+      summary: Get agency dashboard
+      responses:
+        '200':
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalBookings:
+                    type: integer
+                  monthlyBookings:
+                    type: integer
+                  creditBalance:
+                    type: number
+                  pendingBookings:
+                    type: integer
+
+  /agency/credits:
+    get:
+      tags: [Agency]
+      security:
+        - bearerAuth: []
+      summary: Get credit balance and history
+      responses:
+        '200':
+          description: Credit information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+                  currency:
+                    type: string
+                  transactions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        amount:
+                          type: number
+                        type:
+                          type: string
+                        description:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+
+  # ============================
+  # Supplier Settings Endpoints
+  # ============================
+
+  /supplier/settings/profile:
+    put:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /supplier/settings/company:
+    put:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Update company details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                legalName:
+                  type: string
+                taxNumber:
+                  type: string
+                contactName:
+                  type: string
+                contactEmail:
+                  type: string
+                contactPhone:
+                  type: string
+                whatsapp:
+                  type: string
+                country:
+                  type: string
+                city:
+                  type: string
+                address:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Company updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /supplier/settings/bank:
+    put:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Update bank/payment details
+      description: Update supplier's bank account and payment method preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bankName:
+                  type: string
+                bankAccountName:
+                  type: string
+                bankIban:
+                  type: string
+                bankSwift:
+                  type: string
+                bankCountry:
+                  type: string
+                paymentEmail:
+                  type: string
+                  description: PayPal or Wise email
+                preferredPaymentMethod:
+                  $ref: '#/components/schemas/PaymentMethod'
+      responses:
+        '200':
+          description: Bank details updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /supplier/settings/password:
+    put:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  # ============================
+  # Supplier Document Management
+  # ============================
+
+  /supplier/documents:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: List company documents
+      responses:
+        '200':
+          description: Company documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Upload company document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [docType, fileUrl]
+              properties:
+                docType:
+                  $ref: '#/components/schemas/DocumentType'
+                docName:
+                  type: string
+                fileUrl:
+                  type: string
+                expiryDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  documentId:
+                    type: integer
+
+  /supplier/upload:
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Upload file to storage
+      description: Upload a file to cloud storage (DigitalOcean Spaces)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                folder:
+                  type: string
+                  description: Destination folder
+      responses:
+        '200':
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  key:
+                    type: string
+                  filename:
+                    type: string
+                  size:
+                    type: integer
+                  type:
+                    type: string
+
+  /supplier/drivers/{driverId}/documents:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: List driver documents
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Driver documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DriverDocument'
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Upload driver document
+      parameters:
+        - name: driverId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [docType, fileUrl]
+              properties:
+                docType:
+                  $ref: '#/components/schemas/DriverDocumentType'
+                docName:
+                  type: string
+                fileUrl:
+                  type: string
+                expiryDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  documentId:
+                    type: integer
+
+  /supplier/vehicles/{vehicleId}/documents:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: List vehicle documents
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Vehicle documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VehicleDocument'
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Upload vehicle document
+      parameters:
+        - name: vehicleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [docType, fileUrl]
+              properties:
+                docType:
+                  $ref: '#/components/schemas/VehicleDocumentType'
+                docName:
+                  type: string
+                fileUrl:
+                  type: string
+                expiryDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  documentId:
+                    type: integer
+
+  # ============================
+  # Supplier Zones & Routes
+  # ============================
+
+  /supplier/zones:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: List service zones
+      responses:
+        '200':
+          description: Service zones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceZone'
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Add service zones
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [airportIds]
+              properties:
+                airportIds:
+                  type: array
+                  items:
+                    type: integer
+                maxDistanceKm:
+                  type: number
+      responses:
+        '200':
+          description: Zones added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  added:
+                    type: integer
+
+  /supplier/routes:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: List supplier routes
+      responses:
+        '200':
+          description: Supplier routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Route'
+
+  /supplier/routes/for-pricing:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Get routes available for pricing
+      description: Returns routes that the supplier can set tariffs for based on their service zones
+      responses:
+        '200':
+          description: Routes for pricing
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    airportCode:
+                      type: string
+                    airportName:
+                      type: string
+                    zoneName:
+                      type: string
+
+  # ============================
+  # Supplier Reviews
+  # ============================
+
+  /supplier/reviews:
+    get:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: List supplier reviews
+      parameters:
+        - name: responded
+          in: query
+          schema:
+            type: boolean
+          description: Filter by response status
+      responses:
+        '200':
+          description: Reviews with stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+                  stats:
+                    type: object
+                    properties:
+                      totalReviews:
+                        type: integer
+                      pendingResponse:
+                        type: integer
+                      avgRating:
+                        type: number
+
+  /supplier/reviews/{reviewId}/respond:
+    post:
+      tags: [Supplier]
+      security:
+        - bearerAuth: []
+      summary: Respond to review
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [response]
+              properties:
+                response:
+                  type: string
+      responses:
+        '200':
+          description: Response added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  # ============================
+  # Public Booking Modifications
+  # ============================
+
+  /public/bookings/{publicCode}/cancel:
+    get:
+      tags: [Public]
+      summary: Preview cancellation
+      parameters:
+        - name: publicCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cancellation preview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  canCancel:
+                    type: boolean
+                  refundAmount:
+                    type: number
+                  refundPercentage:
+                    type: number
+                  policy:
+                    type: string
+    post:
+      tags: [Public]
+      summary: Cancel booking
+      parameters:
+        - name: publicCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  refundAmount:
+                    type: number
+
+  /public/bookings/{publicCode}/modify:
+    get:
+      tags: [Public]
+      summary: Preview modification options
+      parameters:
+        - name: publicCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Modification options
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  canModify:
+                    type: boolean
+                  modifiableFields:
+                    type: array
+                    items:
+                      type: string
+                  hoursUntilPickup:
+                    type: number
+    post:
+      tags: [Public]
+      summary: Modify booking
+      parameters:
+        - name: publicCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                pickupTime:
+                  type: string
+                  format: date-time
+                flightNumber:
+                  type: string
+                pickupAddress:
+                  type: string
+                dropoffAddress:
+                  type: string
+                specialRequests:
+                  type: string
+                passengerName:
+                  type: string
+                passengerPhone:
+                  type: string
+                passengerEmail:
+                  type: string
+      responses:
+        '200':
+          description: Booking modified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  modifications:
+                    type: array
+                    items:
+                      type: string
+
+  # ============================
+  # Public Currency & Reviews
+  # ============================
+
+  /public/currency:
+    get:
+      tags: [Public]
+      summary: Get exchange rates
+      responses:
+        '200':
+          description: Currency rates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  baseCurrency:
+                    type: string
+                  rates:
+                    type: object
+                    additionalProperties:
+                      type: number
+                  lastUpdated:
+                    type: string
+                    format: date-time
+    post:
+      tags: [Public]
+      summary: Convert currency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, from, to]
+              properties:
+                amount:
+                  type: number
+                from:
+                  type: string
+                to:
+                  type: string
+      responses:
+        '200':
+          description: Conversion result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  original:
+                    type: number
+                  converted:
+                    type: number
+                  rate:
+                    type: number
+
+  /public/reviews:
+    get:
+      tags: [Public]
+      summary: Get supplier reviews
+      parameters:
+        - name: supplierId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Supplier reviews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+                  stats:
+                    type: object
+                    properties:
+                      avgRating:
+                        type: number
+                      totalReviews:
+                        type: integer
+    post:
+      tags: [Public]
+      summary: Submit review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingCode, customerEmail, ratingOverall]
+              properties:
+                bookingCode:
+                  type: string
+                customerEmail:
+                  type: string
+                ratingOverall:
+                  type: number
+                  minimum: 1
+                  maximum: 5
+                ratingPunctuality:
+                  type: number
+                  minimum: 1
+                  maximum: 5
+                ratingVehicle:
+                  type: number
+                  minimum: 1
+                  maximum: 5
+                ratingDriver:
+                  type: number
+                  minimum: 1
+                  maximum: 5
+                reviewText:
+                  type: string
+      responses:
+        '201':
+          description: Review submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  reviewId:
+                    type: integer
+
+  # ============================
+  # Real-Time Tracking
+  # ============================
+
+  /tracking/{bookingCode}:
+    get:
+      tags: [Public]
+      summary: Real-time ride tracking (SSE)
+      description: Server-Sent Events stream for real-time driver location updates
+      parameters:
+        - name: bookingCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: SSE stream with location updates
+          content:
+            text/event-stream:
+              schema:
+                type: object
+                properties:
+                  event:
+                    type: string
+                    example: location_update
+                  data:
+                    type: object
+                    properties:
+                      lat:
+                        type: number
+                      lng:
+                        type: number
+                      heading:
+                        type: number
+                      status:
+                        type: string
+                      eta:
+                        type: integer
+                        description: ETA in minutes
+
+  # ============================
+  # Admin Additional Endpoints
+  # ============================
+
+  /admin/me:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      summary: Get admin profile
+      responses:
+        '200':
+          description: Admin user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /admin/impersonate:
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      summary: Impersonate supplier
+      description: Login as a supplier user for support purposes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [supplierId]
+              properties:
+                supplierId:
+                  type: integer
+      responses:
+        '200':
+          description: Impersonation started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  redirectUrl:
+                    type: string
+    delete:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      summary: Stop impersonation
+      responses:
+        '200':
+          description: Impersonation ended
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  redirectUrl:
+                    type: string
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      summary: List admin users
+      responses:
+        '200':
+          description: Admin users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      summary: Create admin user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /admin/documents:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      summary: List all supplier documents
+      parameters:
+        - name: supplierId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, verified, rejected]
+      responses:
+        '200':
+          description: Documents list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Document'
+
+  /admin/documents/{documentId}/verify:
+    post:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      summary: Verify document
+      parameters:
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                verified:
+                  type: boolean
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Document verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /admin/settings:
+    get:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      summary: Get system settings
+      responses:
+        '200':
+          description: System settings
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+    put:
+      tags: [Admin]
+      security:
+        - bearerAuth: []
+      summary: Update system settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Settings updated
           content:
             application/json:
               schema:

@@ -20,6 +20,8 @@ import {
   FaChevronDown,
   FaShieldAlt,
   FaSearch,
+  FaHeadset,
+  FaBook,
 } from 'react-icons/fa';
 
 interface AdminUser {
@@ -32,12 +34,14 @@ interface AdminUser {
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: FaHome },
   { name: 'Bookings', href: '/admin/bookings', icon: FaCalendarAlt },
+  { name: 'Dispatch', href: '/dispatch', icon: FaHeadset, external: true },
   { name: 'Suppliers', href: '/admin/suppliers', icon: FaBuilding },
   { name: 'Airports', href: '/admin/airports', icon: FaPlane },
   { name: 'Zones', href: '/admin/zones', icon: FaMapMarkerAlt },
   { name: 'Routes', href: '/admin/routes', icon: FaRoute },
   { name: 'Payouts', href: '/admin/payouts', icon: FaMoneyBillWave },
   { name: 'Users', href: '/admin/users', icon: FaUsers },
+  { name: 'API Docs', href: '/api-docs', icon: FaBook, external: true },
   { name: 'Settings', href: '/admin/settings', icon: FaCog },
 ];
 
@@ -114,13 +118,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
             {navigation.map((item) => {
-              const isActive = pathname === item.href ||
-                (item.href !== '/admin' && pathname.startsWith(item.href));
+              const isExternal = 'external' in item && item.external;
+              const isActive = !isExternal && (pathname === item.href ||
+                (item.href !== '/admin' && pathname.startsWith(item.href)));
               const Icon = item.icon;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
+                  target={isExternal ? '_blank' : undefined}
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                     isActive
@@ -138,6 +144,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <span className="font-medium">{item.name}</span>
                   {isActive && (
                     <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white"></div>
+                  )}
+                  {isExternal && (
+                    <svg className="ml-auto w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
                   )}
                 </Link>
               );
