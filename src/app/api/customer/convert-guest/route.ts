@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     // Verify booking exists and matches email
     const booking = await queryOne<BookingPassenger>(
-      `SELECT bp.booking_id, bp.email, bp.full_name
+      `SELECT b.id as booking_id, bp.email, bp.full_name
        FROM bookings b
        INNER JOIN booking_passengers bp ON bp.booking_id = b.id AND bp.is_lead = TRUE
        WHERE b.public_code = ? AND LOWER(bp.email) = LOWER(?)`,
