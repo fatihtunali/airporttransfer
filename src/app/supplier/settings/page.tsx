@@ -14,6 +14,9 @@ import {
   FaLock,
   FaEye,
   FaEyeSlash,
+  FaUniversity,
+  FaCreditCard,
+  FaMoneyBillWave,
 } from 'react-icons/fa';
 
 interface ProfileData {
@@ -36,6 +39,13 @@ interface ProfileData {
     city: string | null;
     address: string | null;
     description: string | null;
+    bankName: string | null;
+    bankAccountName: string | null;
+    bankIban: string | null;
+    bankSwift: string | null;
+    bankCountry: string | null;
+    paymentEmail: string | null;
+    preferredPaymentMethod: string | null;
   };
 }
 
@@ -44,7 +54,7 @@ export default function SupplierSettings() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'profile' | 'company' | 'password'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'company' | 'finance' | 'password'>('profile');
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
@@ -65,6 +75,17 @@ export default function SupplierSettings() {
     city: '',
     address: '',
     description: '',
+  });
+
+  // Finance/Bank form
+  const [financeForm, setFinanceForm] = useState({
+    bankName: '',
+    bankAccountName: '',
+    bankIban: '',
+    bankSwift: '',
+    bankCountry: '',
+    paymentEmail: '',
+    preferredPaymentMethod: 'BANK_TRANSFER',
   });
 
   // Password form
@@ -104,6 +125,15 @@ export default function SupplierSettings() {
           city: data.supplier.city || '',
           address: data.supplier.address || '',
           description: data.supplier.description || '',
+        });
+        setFinanceForm({
+          bankName: data.supplier.bankName || '',
+          bankAccountName: data.supplier.bankAccountName || '',
+          bankIban: data.supplier.bankIban || '',
+          bankSwift: data.supplier.bankSwift || '',
+          bankCountry: data.supplier.bankCountry || '',
+          paymentEmail: data.supplier.paymentEmail || '',
+          preferredPaymentMethod: data.supplier.preferredPaymentMethod || 'BANK_TRANSFER',
         });
       }
     } catch (error) {
@@ -159,6 +189,33 @@ export default function SupplierSettings() {
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to update company details');
+      }
+    } catch (error) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFinanceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/supplier/settings/bank', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(financeForm),
+      });
+
+      if (res.ok) {
+        setSuccess('Bank details updated successfully!');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to update bank details');
       }
     } catch (error) {
       setError('An error occurred. Please try again.');
@@ -242,10 +299,10 @@ export default function SupplierSettings() {
       {/* Tabs */}
       <div className="bg-white rounded-xl shadow-sm">
         <div className="border-b border-gray-200">
-          <nav className="flex -mb-px">
+          <nav className="flex -mb-px overflow-x-auto">
             <button
               onClick={() => setActiveTab('profile')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'profile'
                   ? 'border-sky-500 text-sky-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -256,7 +313,7 @@ export default function SupplierSettings() {
             </button>
             <button
               onClick={() => setActiveTab('company')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'company'
                   ? 'border-sky-500 text-sky-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -266,8 +323,19 @@ export default function SupplierSettings() {
               Company
             </button>
             <button
+              onClick={() => setActiveTab('finance')}
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === 'finance'
+                  ? 'border-sky-500 text-sky-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FaUniversity className="inline-block mr-2" />
+              Finance
+            </button>
+            <button
               onClick={() => setActiveTab('password')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'password'
                   ? 'border-sky-500 text-sky-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -478,6 +546,162 @@ export default function SupplierSettings() {
               >
                 {saving ? <FaSpinner className="animate-spin" /> : <FaCheck />}
                 Save Company Details
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Finance Tab */}
+        {activeTab === 'finance' && (
+          <form onSubmit={handleFinanceSubmit} className="p-6 space-y-6">
+            {/* Info Banner */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <FaUniversity className="inline-block mr-2" />
+                Your bank details are used for receiving payments. Please ensure the information is accurate.
+              </p>
+            </div>
+
+            {/* Preferred Payment Method */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Preferred Payment Method
+              </label>
+              <div className="flex flex-wrap gap-4">
+                {[
+                  { value: 'BANK_TRANSFER', label: 'Bank Transfer', icon: FaUniversity },
+                  { value: 'PAYPAL', label: 'PayPal', icon: FaCreditCard },
+                  { value: 'WISE', label: 'Wise', icon: FaMoneyBillWave },
+                ].map((method) => (
+                  <label
+                    key={method.value}
+                    className={`flex items-center gap-3 px-4 py-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                      financeForm.preferredPaymentMethod === method.value
+                        ? 'border-sky-500 bg-sky-50 text-sky-700'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value={method.value}
+                      checked={financeForm.preferredPaymentMethod === method.value}
+                      onChange={(e) => setFinanceForm({ ...financeForm, preferredPaymentMethod: e.target.value })}
+                      className="hidden"
+                    />
+                    <method.icon className="w-5 h-5" />
+                    <span className="font-medium">{method.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Bank Details Section */}
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                <FaUniversity className="text-gray-400" />
+                Bank Account Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bank Name
+                  </label>
+                  <input
+                    type="text"
+                    value={financeForm.bankName}
+                    onChange={(e) => setFinanceForm({ ...financeForm, bankName: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    placeholder="e.g., Deutsche Bank, ING, etc."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Account Holder Name
+                  </label>
+                  <input
+                    type="text"
+                    value={financeForm.bankAccountName}
+                    onChange={(e) => setFinanceForm({ ...financeForm, bankAccountName: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    placeholder="Name as it appears on the account"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    IBAN
+                  </label>
+                  <input
+                    type="text"
+                    value={financeForm.bankIban}
+                    onChange={(e) => setFinanceForm({ ...financeForm, bankIban: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono"
+                    placeholder="e.g., DE89370400440532013000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    SWIFT / BIC Code
+                  </label>
+                  <input
+                    type="text"
+                    value={financeForm.bankSwift}
+                    onChange={(e) => setFinanceForm({ ...financeForm, bankSwift: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono"
+                    placeholder="e.g., DEUTDEDB"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bank Country
+                  </label>
+                  <input
+                    type="text"
+                    value={financeForm.bankCountry}
+                    onChange={(e) => setFinanceForm({ ...financeForm, bankCountry: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    placeholder="e.g., Germany, Netherlands, etc."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* PayPal/Wise Section */}
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                <FaCreditCard className="text-gray-400" />
+                PayPal / Wise
+              </h3>
+              <div className="max-w-md">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FaEnvelope className="inline-block mr-2 text-gray-400" />
+                  Payment Email
+                </label>
+                <input
+                  type="email"
+                  value={financeForm.paymentEmail}
+                  onChange={(e) => setFinanceForm({ ...financeForm, paymentEmail: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  placeholder="Email for PayPal or Wise payments"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  This email will be used for PayPal or Wise transfers
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-6 py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {saving ? <FaSpinner className="animate-spin" /> : <FaCheck />}
+                Save Finance Details
               </button>
             </div>
           </form>
