@@ -113,9 +113,40 @@ CREATE TABLE IF NOT EXISTS customer_verification_tokens (
 
 -- Add customer_id column to bookings if not exists
 -- This links bookings to registered customer accounts
-ALTER TABLE bookings ADD COLUMN IF NOT EXISTS customer_account_id BIGINT NULL;
-ALTER TABLE bookings ADD CONSTRAINT fk_booking_customer_account
-  FOREIGN KEY (customer_account_id) REFERENCES customers(id) ON DELETE SET NULL;
+-- Note: Using stored procedure to handle IF NOT EXISTS for column
+DELIMITER $$
+CREATE PROCEDURE add_customer_account_column()
+BEGIN
+  IF NOT EXISTS (
+    SELECT * FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'bookings'
+    AND COLUMN_NAME = 'customer_account_id'
+  ) THEN
+    ALTER TABLE bookings ADD COLUMN customer_account_id BIGINT NULL;
+  END IF;
+END$$
+DELIMITER ;
+
+CALL add_customer_account_column();
+DROP PROCEDURE add_customer_account_column;
+
+-- Add foreign key constraint if it doesn't exist
+SET @constraint_exists = (
+  SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+  WHERE TABLE_SCHEMA = DATABASE()
+  AND TABLE_NAME = 'bookings'
+  AND CONSTRAINT_NAME = 'fk_booking_customer_account'
+);
+
+SET @sql = IF(@constraint_exists = 0,
+  'ALTER TABLE bookings ADD CONSTRAINT fk_booking_customer_account FOREIGN KEY (customer_account_id) REFERENCES customers(id) ON DELETE SET NULL',
+  'SELECT "Constraint already exists" AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- =====================================================
 -- CUSTOMER LOYALTY/POINTS TRANSACTIONS
