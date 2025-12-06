@@ -89,14 +89,14 @@ export async function GET(request: NextRequest) {
       [payload.supplierId]
     );
 
-    // Get recent bookings
+    // Get recent bookings (using ride status for supplier-relevant info)
     const recentBookings = await query<BookingRow>(
       `SELECT
          b.id,
          b.public_code,
          COALESCE(bp.full_name, 'Guest') as customer_name,
          b.pickup_datetime,
-         b.status,
+         r.status,
          b.vehicle_type,
          b.total_price,
          b.currency

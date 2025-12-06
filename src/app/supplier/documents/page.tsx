@@ -82,7 +82,7 @@ export default function SupplierDocuments() {
 
       if (res.ok) {
         setShowModal(false);
-        setFormData({ docType: 'LICENSE', docName: '', fileUrl: '', expiryDate: '' });
+        setFormData({ docType: 'BUSINESS_LICENSE', docName: '', fileUrl: '', expiryDate: '' });
         fetchDocuments();
       }
     } catch (error) {
