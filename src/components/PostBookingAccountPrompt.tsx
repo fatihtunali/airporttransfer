@@ -72,14 +72,46 @@ export default function PostBookingAccountPrompt({
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
+  const loadGoogleScript = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if ((window as unknown as { google?: unknown }).google) {
+        resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Google Sign-In'));
+      document.head.appendChild(script);
+    });
+  };
+
   const handleGoogleSignIn = async () => {
-    // Load Google Sign-In
-    if (typeof window !== 'undefined' && googleClientId && (window as unknown as { google?: { accounts?: { id?: { initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void; prompt: () => void } } } }).google?.accounts?.id) {
-      const google = (window as unknown as { google: { accounts: { id: { initialize: (config: { client_id: string; callback: (response: { credential: string }) => void }) => void; prompt: () => void } } } }).google;
+    if (!googleClientId) {
+      setError('Google Sign-In is not configured.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Load Google script if not already loaded
+      await loadGoogleScript();
+
+      const google = (window as unknown as { google: { accounts: { id: { initialize: (config: { client_id: string; callback: (response: { credential: string }) => void; auto_select?: boolean }) => void; prompt: (callback?: (notification: { isNotDisplayed: () => boolean; isSkippedMoment: () => boolean; getNotDisplayedReason: () => string }) => void) => void } } } }).google;
+
+      if (!google?.accounts?.id) {
+        setError('Google Sign-In failed to load. Please use password instead.');
+        setLoading(false);
+        return;
+      }
+
       google.accounts.id.initialize({
         client_id: googleClientId,
         callback: async (response: { credential: string }) => {
-          setLoading(true);
           try {
             const res = await fetch('/api/customer/convert-guest', {
               method: 'POST',
@@ -108,10 +140,16 @@ export default function PostBookingAccountPrompt({
           }
         },
       });
-      google.accounts.id.prompt();
-    } else {
-      // Fallback: redirect to Google OAuth
-      setError('Google Sign-In not available. Please use password instead.');
+
+      google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          setError(`Google Sign-In unavailable: ${notification.getNotDisplayedReason?.() || 'popup blocked or dismissed'}. Please use password instead.`);
+          setLoading(false);
+        }
+      });
+    } catch {
+      setError('Failed to load Google Sign-In. Please use password instead.');
+      setLoading(false);
     }
   };
 
