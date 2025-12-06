@@ -11,6 +11,8 @@ import {
   FaSpinner,
   FaTimes,
   FaTrash,
+  FaEdit,
+  FaExternalLinkAlt,
 } from 'react-icons/fa';
 
 interface Document {
@@ -43,6 +45,7 @@ export default function SupplierDocuments() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<Document | null>(null);
   const [formData, setFormData] = useState({
     docType: 'BUSINESS_LICENSE',
     docName: '',
@@ -50,6 +53,8 @@ export default function SupplierDocuments() {
     expiryDate: '',
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -69,26 +74,92 @@ export default function SupplierDocuments() {
     }
   };
 
+  const openAddModal = () => {
+    setEditingDoc(null);
+    setFormData({ docType: 'BUSINESS_LICENSE', docName: '', fileUrl: '', expiryDate: '' });
+    setError(null);
+    setShowModal(true);
+  };
+
+  const openEditModal = (doc: Document) => {
+    setEditingDoc(doc);
+    setFormData({
+      docType: doc.docType,
+      docName: doc.docName || '',
+      fileUrl: doc.fileUrl,
+      expiryDate: doc.expiryDate ? doc.expiryDate.split('T')[0] : '',
+    });
+    setError(null);
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
 
     try {
-      const res = await fetch('/api/supplier/documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+      if (editingDoc) {
+        // Update existing document
+        const res = await fetch('/api/supplier/documents', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingDoc.id, ...formData }),
+        });
+
+        if (res.ok) {
+          setShowModal(false);
+          setEditingDoc(null);
+          fetchDocuments();
+        } else {
+          const data = await res.json();
+          setError(data.error || 'Failed to update document');
+        }
+      } else {
+        // Create new document
+        const res = await fetch('/api/supplier/documents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+
+        if (res.ok) {
+          setShowModal(false);
+          setFormData({ docType: 'BUSINESS_LICENSE', docName: '', fileUrl: '', expiryDate: '' });
+          fetchDocuments();
+        } else {
+          const data = await res.json();
+          setError(data.error || 'Failed to upload document');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving document:', error);
+      setError('Failed to save document');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (docId: number) => {
+    if (!confirm('Are you sure you want to delete this document?')) return;
+
+    setDeleting(docId);
+    try {
+      const res = await fetch(`/api/supplier/documents?id=${docId}`, {
+        method: 'DELETE',
       });
 
       if (res.ok) {
-        setShowModal(false);
-        setFormData({ docType: 'BUSINESS_LICENSE', docName: '', fileUrl: '', expiryDate: '' });
         fetchDocuments();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete document');
       }
     } catch (error) {
-      console.error('Error uploading document:', error);
+      console.error('Error deleting document:', error);
+      alert('Failed to delete document');
     } finally {
-      setSaving(false);
+      setDeleting(null);
     }
   };
 
@@ -112,7 +183,7 @@ export default function SupplierDocuments() {
           <p className="text-gray-600">Upload required documents for verification</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={openAddModal}
           className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
         >
           <FaPlus /> Upload Document
@@ -171,7 +242,7 @@ export default function SupplierDocuments() {
             Upload your business documents for verification
           </p>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openAddModal}
             className="inline-flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700"
           >
             <FaUpload /> Upload Your First Document
@@ -228,16 +299,36 @@ export default function SupplierDocuments() {
                 </div>
 
                 <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                  <a
-                    href={doc.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-sky-600 hover:text-sky-700"
-                  >
-                    View Document
-                  </a>
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={doc.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-sky-600 hover:text-sky-700"
+                    >
+                      <FaExternalLinkAlt className="w-3 h-3" /> View
+                    </a>
+                    <button
+                      onClick={() => openEditModal(doc)}
+                      className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      <FaEdit className="w-3 h-3" /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(doc.id)}
+                      disabled={deleting === doc.id}
+                      className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700 disabled:opacity-50"
+                    >
+                      {deleting === doc.id ? (
+                        <FaSpinner className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <FaTrash className="w-3 h-3" />
+                      )}
+                      Delete
+                    </button>
+                  </div>
                   <span className="text-xs text-gray-400">
-                    Uploaded {new Date(doc.createdAt).toLocaleDateString()}
+                    {new Date(doc.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -246,16 +337,16 @@ export default function SupplierDocuments() {
         </div>
       )}
 
-      {/* Upload Modal */}
+      {/* Upload/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">
-                Upload Document
+                {editingDoc ? 'Edit Document' : 'Upload Document'}
               </h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setEditingDoc(null); }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <FaTimes className="w-5 h-5" />
@@ -263,6 +354,12 @@ export default function SupplierDocuments() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Document Type *
@@ -333,7 +430,7 @@ export default function SupplierDocuments() {
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => { setShowModal(false); setEditingDoc(null); }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
                   Cancel
@@ -345,8 +442,10 @@ export default function SupplierDocuments() {
                 >
                   {saving ? (
                     <>
-                      <FaSpinner className="animate-spin" /> Uploading...
+                      <FaSpinner className="animate-spin" /> Saving...
                     </>
+                  ) : editingDoc ? (
+                    'Update Document'
                   ) : (
                     'Upload Document'
                   )}
