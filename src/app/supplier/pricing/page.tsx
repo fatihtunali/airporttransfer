@@ -52,6 +52,7 @@ export default function SupplierPricing() {
     maxPax: '',
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTariffs();
@@ -75,7 +76,8 @@ export default function SupplierPricing() {
 
   const fetchRoutes = async () => {
     try {
-      const res = await fetch('/api/supplier/routes');
+      // Fetch system routes available for pricing (based on supplier's service zones)
+      const res = await fetch('/api/supplier/routes/for-pricing');
       if (res.ok) {
         const data = await res.json();
         // Handle both array and paginated response formats
@@ -123,6 +125,7 @@ export default function SupplierPricing() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
 
     try {
       const url = editingTariff
@@ -142,10 +145,15 @@ export default function SupplierPricing() {
 
       if (res.ok) {
         setShowModal(false);
+        setError(null);
         fetchTariffs();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to save tariff');
       }
-    } catch (error) {
-      console.error('Error saving tariff:', error);
+    } catch (err) {
+      console.error('Error saving tariff:', err);
+      setError('Failed to save tariff. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -324,7 +332,7 @@ export default function SupplierPricing() {
                 {editingTariff ? 'Edit Tariff' : 'Add Tariff'}
               </h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setError(null); }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <FaTimes className="w-5 h-5" />
@@ -332,10 +340,21 @@ export default function SupplierPricing() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Route *
                 </label>
+                {routes.length === 0 ? (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+                    No routes available. Please contact the administrator to add routes to the system.
+                  </div>
+                ) : null}
                 <select
                   value={formData.routeId}
                   onChange={(e) =>
@@ -471,7 +490,7 @@ export default function SupplierPricing() {
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => { setShowModal(false); setError(null); }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
                   Cancel

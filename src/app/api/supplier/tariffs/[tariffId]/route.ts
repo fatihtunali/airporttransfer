@@ -142,3 +142,144 @@ export async function GET(
     );
   }
 }
+
+interface TariffUpdateRequest {
+  currency?: string;
+  basePrice?: number;
+  pricePerPax?: number | null;
+  minPax?: number;
+  maxPax?: number | null;
+  validFrom?: string | null;
+  validTo?: string | null;
+  isActive?: boolean;
+}
+
+// PUT /api/supplier/tariffs/[tariffId] - Update tariff
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ tariffId: string }> }
+) {
+  const authResult = await authenticateSupplier(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+
+  const { payload } = authResult;
+
+  if (!canManageFleet(payload.role)) {
+    return NextResponse.json(
+      { error: 'Access denied. Fleet management role required.' },
+      { status: 403 }
+    );
+  }
+
+  const { tariffId } = await params;
+
+  try {
+    // Verify tariff belongs to supplier
+    const existingTariff = await queryOne<{ id: number }>(
+      `SELECT id FROM tariffs WHERE id = ? AND supplier_id = ?`,
+      [tariffId, payload.supplierId]
+    );
+
+    if (!existingTariff) {
+      return NextResponse.json({ error: 'Tariff not found' }, { status: 404 });
+    }
+
+    const body: TariffUpdateRequest = await request.json();
+
+    const updates: string[] = [];
+    const values: (string | number | boolean | null)[] = [];
+
+    if (body.currency !== undefined) {
+      updates.push('currency = ?');
+      values.push(body.currency.toUpperCase());
+    }
+    if (body.basePrice !== undefined) {
+      updates.push('base_price = ?');
+      values.push(body.basePrice);
+    }
+    if (body.pricePerPax !== undefined) {
+      updates.push('price_per_pax = ?');
+      values.push(body.pricePerPax);
+    }
+    if (body.minPax !== undefined) {
+      updates.push('min_pax = ?');
+      values.push(body.minPax);
+    }
+    if (body.maxPax !== undefined) {
+      updates.push('max_pax = ?');
+      values.push(body.maxPax);
+    }
+    if (body.validFrom !== undefined) {
+      updates.push('valid_from = ?');
+      values.push(body.validFrom);
+    }
+    if (body.validTo !== undefined) {
+      updates.push('valid_to = ?');
+      values.push(body.validTo);
+    }
+    if (body.isActive !== undefined) {
+      updates.push('is_active = ?');
+      values.push(body.isActive);
+    }
+
+    if (updates.length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
+    values.push(parseInt(tariffId));
+
+    await query(`UPDATE tariffs SET ${updates.join(', ')} WHERE id = ?`, values);
+
+    return NextResponse.json({ success: true, message: 'Tariff updated successfully' });
+  } catch (error) {
+    console.error('Error updating tariff:', error);
+    return NextResponse.json({ error: 'Failed to update tariff' }, { status: 500 });
+  }
+}
+
+// DELETE /api/supplier/tariffs/[tariffId] - Delete tariff
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ tariffId: string }> }
+) {
+  const authResult = await authenticateSupplier(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+
+  const { payload } = authResult;
+
+  if (!canManageFleet(payload.role)) {
+    return NextResponse.json(
+      { error: 'Access denied. Fleet management role required.' },
+      { status: 403 }
+    );
+  }
+
+  const { tariffId } = await params;
+
+  try {
+    // Verify tariff belongs to supplier
+    const existingTariff = await queryOne<{ id: number }>(
+      `SELECT id FROM tariffs WHERE id = ? AND supplier_id = ?`,
+      [tariffId, payload.supplierId]
+    );
+
+    if (!existingTariff) {
+      return NextResponse.json({ error: 'Tariff not found' }, { status: 404 });
+    }
+
+    // Delete associated rules first
+    await query(`DELETE FROM tariff_rules WHERE tariff_id = ?`, [tariffId]);
+
+    // Delete the tariff
+    await query(`DELETE FROM tariffs WHERE id = ?`, [tariffId]);
+
+    return NextResponse.json({ success: true, message: 'Tariff deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting tariff:', error);
+    return NextResponse.json({ error: 'Failed to delete tariff' }, { status: 500 });
+  }
+}

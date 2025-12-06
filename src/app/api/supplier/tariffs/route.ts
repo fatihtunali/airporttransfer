@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify route exists
+    // Verify system route exists and is active
     const route = await queryOne<{ id: number }>(
       `SELECT id FROM routes WHERE id = ? AND is_active = TRUE`,
       [body.routeId]
