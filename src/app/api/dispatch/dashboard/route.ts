@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
+import { authenticateAdmin } from '@/lib/admin-auth';
 
 interface StatsRow {
   active_rides: number;
@@ -43,15 +44,22 @@ interface AvgResponseRow {
   avg_response_minutes: number | null;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Authenticate admin
+  const authResult = await authenticateAdmin(request);
+  if (!authResult.success) {
+    return authResult.response;
+  }
+
   try {
     // Get ride stats
+    // Ride statuses: PENDING_ASSIGN, ASSIGNED, ON_WAY, AT_PICKUP, IN_RIDE, FINISHED, NO_SHOW, CANCELLED
     const stats = await queryOne<StatsRow>(`
       SELECT
-        COUNT(CASE WHEN r.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 END) as active_rides,
-        COUNT(CASE WHEN r.status NOT IN ('COMPLETED', 'CANCELLED')
+        COUNT(CASE WHEN r.status NOT IN ('FINISHED', 'NO_SHOW', 'CANCELLED') THEN 1 END) as active_rides,
+        COUNT(CASE WHEN r.status NOT IN ('FINISHED', 'NO_SHOW', 'CANCELLED')
               AND b.pickup_datetime BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 4 HOUR) THEN 1 END) as upcoming_rides,
-        COUNT(CASE WHEN r.status = 'COMPLETED' AND DATE(r.completed_at) = CURDATE() THEN 1 END) as completed_today
+        COUNT(CASE WHEN r.status = 'FINISHED' AND DATE(r.completed_at) = CURDATE() THEN 1 END) as completed_today
       FROM rides r
       JOIN bookings b ON b.id = r.booking_id
       WHERE b.pickup_datetime >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
@@ -84,8 +92,8 @@ export async function GET() {
       SELECT
         r.id,
         b.public_code,
-        bp.full_name as customer_name,
-        bp.phone as customer_phone,
+        b.passenger_name as customer_name,
+        b.passenger_phone as customer_phone,
         b.pickup_datetime,
         b.pickup_address,
         b.dropoff_address,
@@ -96,9 +104,8 @@ export async function GET() {
         r.driver_eta_minutes
       FROM rides r
       JOIN bookings b ON b.id = r.booking_id
-      LEFT JOIN booking_passengers bp ON bp.booking_id = b.id AND bp.is_lead = TRUE
       LEFT JOIN drivers d ON d.id = r.driver_id
-      WHERE r.status NOT IN ('COMPLETED', 'CANCELLED')
+      WHERE r.status NOT IN ('FINISHED', 'NO_SHOW', 'CANCELLED')
         AND b.pickup_datetime >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
       ORDER BY b.pickup_datetime ASC
       LIMIT 10

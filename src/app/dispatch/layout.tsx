@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   FaHome,
   FaMapMarkerAlt,
@@ -15,7 +15,16 @@ import {
   FaHeadset,
   FaClock,
   FaBell,
+  FaSignOutAlt,
+  FaArrowLeft,
 } from 'react-icons/fa';
+
+interface AdminUser {
+  id: number;
+  email: string;
+  fullName: string;
+  role: string;
+}
 
 const navigation = [
   { name: 'Dashboard', href: '/dispatch', icon: FaHome },
@@ -32,7 +41,49 @@ export default function DispatchLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/admin/me');
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        } else {
+          router.push('/admin/login?redirect=/dispatch');
+        }
+      } catch {
+        router.push('/admin/login?redirect=/dispatch');
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/admin/login');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading Dispatch Center...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-teal-950 to-gray-900">
@@ -146,13 +197,31 @@ export default function DispatchLayout({
                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
 
+              {/* Back to Admin */}
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <FaArrowLeft className="w-4 h-4" />
+                <span className="text-sm hidden sm:block">Admin Panel</span>
+              </Link>
+
               {/* User */}
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">D</span>
+                  <span className="text-white text-sm font-medium">{user?.fullName?.charAt(0) || 'A'}</span>
                 </div>
-                <span className="text-sm text-white hidden sm:block">Dispatcher</span>
+                <span className="text-sm text-white hidden sm:block">{user?.fullName || 'Admin'}</span>
               </div>
+
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded-lg transition-colors"
+                title="Logout"
+              >
+                <FaSignOutAlt className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </header>

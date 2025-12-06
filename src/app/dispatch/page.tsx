@@ -52,21 +52,23 @@ interface DashboardStats {
 
 const statusColors: Record<string, string> = {
   PENDING_ASSIGN: 'bg-yellow-500',
-  DRIVER_ASSIGNED: 'bg-blue-500',
-  DRIVER_EN_ROUTE: 'bg-cyan-500',
-  DRIVER_ARRIVED: 'bg-green-500',
-  IN_PROGRESS: 'bg-purple-500',
-  COMPLETED: 'bg-gray-500',
+  ASSIGNED: 'bg-blue-500',
+  ON_WAY: 'bg-cyan-500',
+  AT_PICKUP: 'bg-green-500',
+  IN_RIDE: 'bg-purple-500',
+  FINISHED: 'bg-gray-500',
+  NO_SHOW: 'bg-orange-500',
   CANCELLED: 'bg-red-500',
 };
 
 const statusLabels: Record<string, string> = {
   PENDING_ASSIGN: 'Pending Assignment',
-  DRIVER_ASSIGNED: 'Driver Assigned',
-  DRIVER_EN_ROUTE: 'Driver En Route',
-  DRIVER_ARRIVED: 'Driver Arrived',
-  IN_PROGRESS: 'In Progress',
-  COMPLETED: 'Completed',
+  ASSIGNED: 'Driver Assigned',
+  ON_WAY: 'Driver En Route',
+  AT_PICKUP: 'Driver Arrived',
+  IN_RIDE: 'In Progress',
+  FINISHED: 'Completed',
+  NO_SHOW: 'No Show',
   CANCELLED: 'Cancelled',
 };
 
