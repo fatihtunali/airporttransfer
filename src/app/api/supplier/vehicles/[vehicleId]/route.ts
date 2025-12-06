@@ -72,8 +72,12 @@ export async function GET(
     }
 
     // Safe JSON parse helper
-    const safeParseJson = (str: string | null): string[] => {
-      if (!str || !str.trim()) return [];
+    const safeParseJson = (val: unknown): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val;
+      if (typeof val !== 'string') return [];
+      const str = val.trim();
+      if (!str) return [];
       try {
         return JSON.parse(str);
       } catch {
@@ -210,8 +214,12 @@ export async function PUT(
     );
 
     // Safe JSON parse helper for response
-    const safeParseJsonRes = (str: string | null): string[] => {
-      if (!str || !str.trim()) return [];
+    const safeParseJsonRes = (val: unknown): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val;
+      if (typeof val !== 'string') return [];
+      const str = val.trim();
+      if (!str) return [];
       try {
         return JSON.parse(str);
       } catch {

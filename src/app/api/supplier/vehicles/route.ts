@@ -80,8 +80,12 @@ export async function GET(request: NextRequest) {
     const total = countResult[0]?.total || 0;
 
     // Helper to safely parse JSON
-    const safeParseJson = (str: string | null): string[] => {
-      if (!str || !str.trim()) return [];
+    const safeParseJson = (val: unknown): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val;
+      if (typeof val !== 'string') return [];
+      const str = val.trim();
+      if (!str) return [];
       try {
         return JSON.parse(str);
       } catch {
