@@ -18,6 +18,9 @@ import {
   FaPlus,
   FaArrowUp,
   FaEye,
+  FaCheck,
+  FaTimes,
+  FaSpinner,
 } from 'react-icons/fa';
 
 interface DashboardData {
@@ -48,35 +51,81 @@ interface DashboardData {
 }
 
 const statusColors: Record<string, { bg: string; text: string; dot: string }> = {
+  PENDING_ASSIGN: { bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
   PENDING: { bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
   CONFIRMED: { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
   ASSIGNED: { bg: 'bg-purple-50', text: 'text-purple-700', dot: 'bg-purple-500' },
+  ON_WAY: { bg: 'bg-indigo-50', text: 'text-indigo-700', dot: 'bg-indigo-500' },
+  AT_PICKUP: { bg: 'bg-cyan-50', text: 'text-cyan-700', dot: 'bg-cyan-500' },
+  IN_RIDE: { bg: 'bg-sky-50', text: 'text-sky-700', dot: 'bg-sky-500' },
   IN_PROGRESS: { bg: 'bg-sky-50', text: 'text-sky-700', dot: 'bg-sky-500' },
+  FINISHED: { bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' },
   COMPLETED: { bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' },
+  NO_SHOW: { bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
   CANCELLED: { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
 };
 
 export default function SupplierDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await fetch('/api/supplier/dashboard');
+      if (res.ok) {
+        const dashboardData = await res.json();
+        setData(dashboardData);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await fetch('/api/supplier/dashboard');
-        if (res.ok) {
-          const dashboardData = await res.json();
-          setData(dashboardData);
-        }
-      } catch (error) {
-        console.error('Error fetching dashboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDashboard();
   }, []);
+
+  const handleAccept = async (publicCode: string) => {
+    setActionLoading(`accept-${publicCode}`);
+    try {
+      const res = await fetch(`/api/supplier/rides/${publicCode}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ASSIGNED' }),
+      });
+      if (res.ok) {
+        fetchDashboard();
+      }
+    } catch (error) {
+      console.error('Error accepting booking:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDecline = async (publicCode: string) => {
+    const reason = prompt('Please provide a reason for declining:');
+    if (!reason) return;
+
+    setActionLoading(`decline-${publicCode}`);
+    try {
+      const res = await fetch(`/api/supplier/rides/${publicCode}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED', reason }),
+      });
+      if (res.ok) {
+        fetchDashboard();
+      }
+    } catch (error) {
+      console.error('Error declining booking:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -349,16 +398,45 @@ export default function SupplierDashboard() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <div className="text-right">
                         <p className="text-xl font-bold text-gray-900">
                           {booking.currency} {booking.totalPrice.toFixed(2)}
                         </p>
                         <p className="text-sm text-gray-500">Total</p>
                       </div>
+                      {booking.status === 'PENDING_ASSIGN' && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleAccept(booking.publicCode)}
+                            disabled={actionLoading !== null}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                          >
+                            {actionLoading === `accept-${booking.publicCode}` ? (
+                              <FaSpinner className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <FaCheck className="w-3.5 h-3.5" />
+                            )}
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleDecline(booking.publicCode)}
+                            disabled={actionLoading !== null}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                          >
+                            {actionLoading === `decline-${booking.publicCode}` ? (
+                              <FaSpinner className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <FaTimes className="w-3.5 h-3.5" />
+                            )}
+                            Decline
+                          </button>
+                        </div>
+                      )}
                       <Link
                         href={`/supplier/bookings/${booking.publicCode}`}
                         className="p-3 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                        title="View Details"
                       >
                         <FaEye className="w-5 h-5" />
                       </Link>
