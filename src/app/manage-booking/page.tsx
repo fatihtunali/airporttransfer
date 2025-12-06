@@ -131,13 +131,69 @@ function ManageBookingContent() {
         const res = await fetch('/api/customer/me');
         if (res.ok) {
           const data = await res.json();
+          const customerEmail = data.customer.email;
           setIsLoggedIn(true);
-          setUserEmail(data.customer.email);
-          setSearchForm(prev => ({ ...prev, email: data.customer.email }));
+          setUserEmail(customerEmail);
+          setSearchForm(prev => ({ ...prev, email: customerEmail }));
 
           // Auto-load booking if ref in URL
           if (refFromUrl) {
-            handleSearch(refFromUrl, data.customer.email);
+            setLoading(true);
+            try {
+              const bookingRes = await fetch(`/api/public/bookings/${encodeURIComponent(refFromUrl)}?email=${encodeURIComponent(customerEmail)}`);
+              const bookingData = await bookingRes.json();
+
+              if (bookingRes.ok) {
+                const pickupDate = new Date(bookingData.pickupTime);
+                const from = bookingData.direction === 'from_airport' || bookingData.direction === 'FROM_AIRPORT'
+                  ? `${bookingData.airport?.name} (${bookingData.airport?.code})`
+                  : bookingData.pickupAddress || bookingData.zone?.name;
+                const to = bookingData.direction === 'from_airport' || bookingData.direction === 'FROM_AIRPORT'
+                  ? bookingData.dropoffAddress || bookingData.zone?.name
+                  : `${bookingData.airport?.name} (${bookingData.airport?.code})`;
+
+                const leadPassenger = bookingData.passengers?.find((p: { isMain: boolean }) => p.isMain);
+
+                setBooking({
+                  ref: bookingData.publicCode,
+                  status: bookingData.status,
+                  paymentStatus: bookingData.paymentStatus,
+                  date: pickupDate.toLocaleDateString('en-GB'),
+                  time: pickupDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                  pickupTime: bookingData.pickupTime,
+                  from: from || 'N/A',
+                  to: to || 'N/A',
+                  vehicle: bookingData.vehicleType,
+                  passengers: bookingData.paxAdults + bookingData.paxChildren,
+                  price: `${bookingData.currency} ${bookingData.totalPrice.toFixed(2)}`,
+                  currency: bookingData.currency,
+                  totalPrice: bookingData.totalPrice,
+                  driver: bookingData.ride?.driver?.name,
+                  driverPhone: bookingData.ride?.driver?.phone,
+                  flightNumber: bookingData.flightNumber,
+                  pickupAddress: bookingData.pickupAddress,
+                  dropoffAddress: bookingData.dropoffAddress,
+                  specialRequests: bookingData.customerNotes,
+                  passengerName: leadPassenger?.fullName,
+                  passengerPhone: leadPassenger?.phone,
+                  passengerEmail: leadPassenger?.email,
+                });
+
+                setModifyForm({
+                  pickupTime: bookingData.pickupTime?.slice(0, 16) || '',
+                  flightNumber: bookingData.flightNumber || '',
+                  pickupAddress: bookingData.pickupAddress || '',
+                  dropoffAddress: bookingData.dropoffAddress || '',
+                  specialRequests: bookingData.customerNotes || '',
+                  passengerName: leadPassenger?.fullName || '',
+                  passengerPhone: leadPassenger?.phone || '',
+                });
+              }
+            } catch (err) {
+              console.error('Failed to auto-load booking:', err);
+            } finally {
+              setLoading(false);
+            }
           }
         }
       } catch {
@@ -145,7 +201,6 @@ function ManageBookingContent() {
       }
     };
     checkLoginAndLoad();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refFromUrl]);
 
   const handleSearch = useCallback(async (ref?: string, email?: string) => {
