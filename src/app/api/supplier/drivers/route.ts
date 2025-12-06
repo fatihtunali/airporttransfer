@@ -74,6 +74,16 @@ export async function GET(request: NextRequest) {
 
     const total = countResult[0]?.total || 0;
 
+    // Helper to safely parse JSON
+    const safeParseJson = (str: string | null): string[] => {
+      if (!str || !str.trim()) return [];
+      try {
+        return JSON.parse(str);
+      } catch {
+        return [];
+      }
+    };
+
     return NextResponse.json({
       items: drivers.map((d) => ({
         id: d.id,
@@ -85,7 +95,7 @@ export async function GET(request: NextRequest) {
         licenseNumber: d.license_number,
         licenseExpiry: d.license_expiry,
         photoUrl: d.photo_url,
-        languages: d.languages ? JSON.parse(d.languages) : [],
+        languages: safeParseJson(d.languages),
         isActive: d.is_active,
         ratingAvg: d.rating_avg,
         ratingCount: d.rating_count,

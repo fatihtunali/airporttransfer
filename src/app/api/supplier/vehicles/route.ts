@@ -79,6 +79,16 @@ export async function GET(request: NextRequest) {
 
     const total = countResult[0]?.total || 0;
 
+    // Helper to safely parse JSON
+    const safeParseJson = (str: string | null): string[] => {
+      if (!str || !str.trim()) return [];
+      try {
+        return JSON.parse(str);
+      } catch {
+        return [];
+      }
+    };
+
     return NextResponse.json({
       items: vehicles.map((v) => ({
         id: v.id,
@@ -91,8 +101,8 @@ export async function GET(request: NextRequest) {
         seatCount: v.seat_count,
         luggageCount: v.luggage_count,
         vehicleType: v.vehicle_type,
-        features: v.features ? JSON.parse(v.features) : [],
-        images: v.images ? JSON.parse(v.images) : [],
+        features: safeParseJson(v.features),
+        images: safeParseJson(v.images),
         isActive: v.is_active,
       })),
       total,
