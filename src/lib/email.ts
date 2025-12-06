@@ -492,3 +492,129 @@ export async function sendSupplierNewBookingEmail(data: SupplierNewBookingData) 
     replyTo: 'suppliers@airporttransferportal.com',
   });
 }
+
+// Driver assignment reminder email (sent 5 hours before pickup if no driver assigned)
+interface DriverReminderData {
+  publicCode: string;
+  supplierName: string;
+  supplierEmail: string;
+  customerName: string;
+  customerPhone: string;
+  pickupDatetime: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  vehicleType: string;
+  passengers: number;
+  hoursUntilPickup: number;
+}
+
+export async function sendDriverAssignmentReminder(data: DriverReminderData) {
+  const pickupDate = new Date(data.pickupDatetime);
+  const formattedDate = pickupDate.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const formattedTime = pickupDate.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const dashboardUrl = `${BASE_URL}/supplier/bookings`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background-color: #f5f7fa;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <div style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); border-radius: 16px 16px 0 0; padding: 30px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ URGENT: Driver Assignment Required</h1>
+      <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Booking ${data.publicCode}</p>
+    </div>
+
+    <div style="background: white; padding: 40px 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <div style="background: #fef2f2; border: 2px solid #fecaca; border-radius: 12px; padding: 20px; margin: 0 0 25px 0; text-align: center;">
+        <p style="color: #991b1b; margin: 0; font-size: 18px; font-weight: bold;">
+          ⏰ Only ${Math.round(data.hoursUntilPickup)} hours until pickup!
+        </p>
+        <p style="color: #b91c1c; margin: 10px 0 0 0; font-size: 14px;">
+          No driver has been assigned yet. Please assign a driver immediately.
+        </p>
+      </div>
+
+      <p style="font-size: 16px; color: #1f2937; margin: 0 0 20px 0;">
+        Hi ${data.supplierName},
+      </p>
+
+      <p style="font-size: 16px; color: #4b5563; line-height: 1.6; margin: 0 0 25px 0;">
+        This is an urgent reminder that booking <strong>${data.publicCode}</strong> has no driver assigned and pickup is in approximately <strong>${Math.round(data.hoursUntilPickup)} hours</strong>.
+      </p>
+
+      <!-- Booking Details -->
+      <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin: 0 0 25px 0;">
+        <h3 style="color: #374151; margin: 0 0 15px 0; font-size: 16px;">Booking Details</h3>
+
+        <div style="margin: 0 0 12px 0;">
+          <span style="color: #6b7280; font-size: 14px;">Pickup Time</span><br>
+          <span style="color: #1f2937; font-size: 16px; font-weight: 600;">${formattedDate} at ${formattedTime}</span>
+        </div>
+
+        <div style="margin: 0 0 12px 0;">
+          <span style="color: #6b7280; font-size: 14px;">From</span><br>
+          <span style="color: #1f2937; font-size: 14px;">${data.pickupAddress}</span>
+        </div>
+
+        <div style="margin: 0 0 12px 0;">
+          <span style="color: #6b7280; font-size: 14px;">To</span><br>
+          <span style="color: #1f2937; font-size: 14px;">${data.dropoffAddress}</span>
+        </div>
+
+        <div style="margin: 0 0 12px 0;">
+          <span style="color: #6b7280; font-size: 14px;">Vehicle & Passengers</span><br>
+          <span style="color: #1f2937; font-size: 14px;">${data.vehicleType} • ${data.passengers} passenger(s)</span>
+        </div>
+      </div>
+
+      <!-- Customer Info -->
+      <div style="background: #fef3c7; border-radius: 12px; padding: 20px; margin: 0 0 25px 0;">
+        <h3 style="color: #92400e; margin: 0 0 10px 0; font-size: 16px;">Customer Contact</h3>
+        <p style="color: #78350f; margin: 0; font-size: 15px;">
+          <strong>${data.customerName}</strong><br>
+          ${data.customerPhone}
+        </p>
+      </div>
+
+      <!-- Action Button -->
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${dashboardUrl}"
+           style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); color: white; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+          Assign Driver Now
+        </a>
+      </div>
+
+      <p style="font-size: 14px; color: #dc2626; margin: 25px 0 0 0; text-align: center; font-weight: 500;">
+        Please assign a driver immediately to avoid service disruption.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+      <p style="margin: 0;">&copy; ${new Date().getFullYear()} Airport Transfer Portal. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to: data.supplierEmail,
+    subject: `⚠️ URGENT: Assign Driver for ${data.publicCode} - Pickup in ${Math.round(data.hoursUntilPickup)} hours`,
+    html,
+    replyTo: 'suppliers@airporttransferportal.com',
+  });
+}
