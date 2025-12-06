@@ -49,9 +49,14 @@ export async function POST(
       );
     }
 
-    // Get ride and verify ownership
+    // Support lookup by either ride ID (numeric) or booking public code (alphanumeric)
+    const isNumeric = /^\d+$/.test(rideId);
     const ride = await queryOne<RideRow>(
-      `SELECT id, supplier_id, status FROM rides WHERE id = ? AND supplier_id = ?`,
+      isNumeric
+        ? `SELECT r.id, r.supplier_id, r.status FROM rides r WHERE r.id = ? AND r.supplier_id = ?`
+        : `SELECT r.id, r.supplier_id, r.status FROM rides r
+           JOIN bookings b ON b.id = r.booking_id
+           WHERE b.public_code = ? AND r.supplier_id = ?`,
       [rideId, payload.supplierId]
     );
 
@@ -61,6 +66,9 @@ export async function POST(
         { status: 404 }
       );
     }
+
+    // Use numeric ride ID for all subsequent operations
+    const numericRideId = ride.id;
 
     // Check ride status allows assignment
     if (!['PENDING_ASSIGN', 'ASSIGNED'].includes(ride.status)) {
@@ -104,7 +112,7 @@ export async function POST(
       `UPDATE rides
        SET driver_id = ?, vehicle_id = ?, status = 'ASSIGNED', assigned_at = NOW(), updated_at = NOW()
        WHERE id = ?`,
-      [body.driverId, body.vehicleId || null, rideId]
+      [body.driverId, body.vehicleId || null, numericRideId]
     );
 
     // Also update booking status to ASSIGNED if it was CONFIRMED
@@ -112,11 +120,11 @@ export async function POST(
       `UPDATE bookings SET status = 'ASSIGNED', updated_at = NOW()
        WHERE id = (SELECT booking_id FROM rides WHERE id = ?)
        AND status = 'CONFIRMED'`,
-      [rideId]
+      [numericRideId]
     );
 
     return NextResponse.json({
-      id: parseInt(rideId),
+      id: numericRideId,
       status: 'ASSIGNED',
       driverId: body.driverId,
       vehicleId: body.vehicleId || null,

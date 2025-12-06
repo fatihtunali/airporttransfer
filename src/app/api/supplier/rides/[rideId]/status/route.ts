@@ -71,9 +71,14 @@ export async function POST(
       );
     }
 
-    // Get ride and verify ownership
+    // Support lookup by either ride ID (numeric) or booking public code (alphanumeric)
+    const isNumeric = /^\d+$/.test(rideId);
     const ride = await queryOne<RideRow>(
-      `SELECT id, supplier_id, status, driver_id FROM rides WHERE id = ? AND supplier_id = ?`,
+      isNumeric
+        ? `SELECT r.id, r.supplier_id, r.status, r.driver_id FROM rides r WHERE r.id = ? AND r.supplier_id = ?`
+        : `SELECT r.id, r.supplier_id, r.status, r.driver_id FROM rides r
+           JOIN bookings b ON b.id = r.booking_id
+           WHERE b.public_code = ? AND r.supplier_id = ?`,
       [rideId, payload.supplierId]
     );
 
@@ -83,6 +88,9 @@ export async function POST(
         { status: 404 }
       );
     }
+
+    // Use numeric ride ID for all subsequent operations
+    const numericRideId = ride.id;
 
     // Check if transition is valid
     const allowedTransitions = validTransitions[ride.status];
@@ -124,7 +132,7 @@ export async function POST(
     }
 
     updateSql += ` WHERE id = ?`;
-    updateParams.push(parseInt(rideId));
+    updateParams.push(numericRideId);
 
     await execute(updateSql, updateParams);
 
@@ -152,11 +160,11 @@ export async function POST(
             ? `UPDATE bookings SET status = ?, cancelled_at = NOW(), updated_at = NOW() WHERE id = (SELECT booking_id FROM rides WHERE id = ?)`
             : `UPDATE bookings SET status = ?, updated_at = NOW() WHERE id = (SELECT booking_id FROM rides WHERE id = ?)`;
 
-      await execute(bookingUpdateSql, [bookingStatus, rideId]);
+      await execute(bookingUpdateSql, [bookingStatus, numericRideId]);
     }
 
     return NextResponse.json({
-      id: parseInt(rideId),
+      id: numericRideId,
       status: body.status,
       updatedAt: new Date().toISOString(),
     });
