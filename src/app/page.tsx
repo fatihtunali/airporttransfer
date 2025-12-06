@@ -614,17 +614,23 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { name: 'Economy', icon: FaCar, passengers: '1-3', luggage: '2', price: 'From $25', desc: 'Comfortable & affordable' },
-              { name: 'Business', icon: FaUserTie, passengers: '1-3', luggage: '2', price: 'From $45', desc: 'Premium sedans' },
-              { name: 'Minivan', icon: FaShuttleVan, passengers: '4-6', luggage: '5', price: 'From $55', desc: 'Perfect for families' },
-              { name: 'Minibus', icon: FaBus, passengers: '7-16', luggage: '10', price: 'From $85', desc: 'Group travel' },
+              { name: 'Economy', image: '/assets/sedan.webp', passengers: '1-3', luggage: '2', price: 'From $25', desc: 'Comfortable & affordable' },
+              { name: 'Business', image: '/assets/premiumsedan.png', passengers: '1-3', luggage: '2', price: 'From $45', desc: 'Premium sedans' },
+              { name: 'Minivan', image: '/assets/mercedesvito.webp', passengers: '4-6', luggage: '5', price: 'From $55', desc: 'Perfect for families' },
+              { name: 'Minibus', image: '/assets/mercedessprinterminibus.png', passengers: '7-16', luggage: '10', price: 'From $85', desc: 'Group travel' },
             ].map((vehicle, idx) => (
               <div
                 key={idx}
                 className="bg-white rounded-3xl overflow-hidden border-2 border-gray-100 hover:border-teal-400 transition-all duration-300 hover:shadow-xl hover:-translate-y-2 group cursor-pointer"
               >
-                <div className="h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:from-teal-50 group-hover:to-cyan-50 transition-colors">
-                  <vehicle.icon className="text-7xl text-gray-300 group-hover:text-teal-500 transition-colors" />
+                <div className="h-48 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center group-hover:from-teal-50 group-hover:to-cyan-50 transition-colors overflow-hidden">
+                  <Image
+                    src={vehicle.image}
+                    alt={vehicle.name}
+                    width={280}
+                    height={160}
+                    className="object-contain w-full h-full p-4 group-hover:scale-105 transition-transform duration-300"
+                  />
                 </div>
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
