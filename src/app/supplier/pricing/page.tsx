@@ -61,7 +61,8 @@ export default function SupplierPricing() {
 
   const fetchTariffs = async () => {
     try {
-      const res = await fetch('/api/supplier/tariffs');
+      // Fetch with higher page size to get all tariffs
+      const res = await fetch('/api/supplier/tariffs?pageSize=500');
       if (res.ok) {
         const data = await res.json();
         // Handle both array and paginated response formats
