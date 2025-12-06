@@ -25,8 +25,11 @@ import {
   FaInfoCircle,
   FaUniversity,
   FaMoneyBillWave,
+  FaBitcoin,
+  FaEthereum,
 } from 'react-icons/fa';
 import PostBookingAccountPrompt from '@/components/PostBookingAccountPrompt';
+import CryptoPayment from '@/components/CryptoPayment';
 
 const vehicleIcons: Record<string, React.ReactNode> = {
   SEDAN: <FaCar className="w-8 h-8" />,
@@ -88,7 +91,8 @@ function BookingContent() {
   const [accountPromptDismissed, setAccountPromptDismissed] = useState(false);
 
   // Payment state
-  const [paymentMethod, setPaymentMethod] = useState<'pay_later' | 'card' | 'bank_transfer'>('pay_later');
+  const [paymentMethod, setPaymentMethod] = useState<'pay_later' | 'card' | 'bank_transfer' | 'crypto'>('pay_later');
+  const [showCryptoPayment, setShowCryptoPayment] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [bankDetails, setBankDetails] = useState<{
     bankName: string;
@@ -246,6 +250,9 @@ function BookingContent() {
           const paymentData = await paymentRes.json();
           setBankDetails(paymentData.bankDetails);
         }
+      } else if (paymentMethod === 'crypto') {
+        // Show crypto payment modal
+        setShowCryptoPayment(true);
       }
 
       setStep(3);
@@ -597,6 +604,37 @@ function BookingContent() {
                         </p>
                       </div>
                     </label>
+
+                    {/* Cryptocurrency Option */}
+                    <label className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      paymentMethod === 'crypto'
+                        ? 'border-teal-500 bg-teal-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="crypto"
+                        checked={paymentMethod === 'crypto'}
+                        onChange={() => setPaymentMethod('crypto')}
+                        className="mt-1 w-5 h-5 text-teal-600 focus:ring-teal-500"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <FaBitcoin className="text-orange-500" />
+                          <span className="font-semibold text-gray-900">Cryptocurrency</span>
+                          <span className="px-2 py-0.5 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-bold rounded-full">NEW</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Pay with Bitcoin, Ethereum, or XRP. Fast and secure blockchain payments.
+                        </p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-orange-500 text-lg">₿</span>
+                          <FaEthereum className="text-blue-500" />
+                          <span className="text-gray-700 font-bold text-sm">XRP</span>
+                        </div>
+                      </div>
+                    </label>
                   </div>
                 </div>
 
@@ -704,6 +742,52 @@ function BookingContent() {
                     <p className="text-xs text-purple-600 mt-4">
                       * Please use the reference number exactly as shown when making the transfer.
                     </p>
+                  </div>
+                )}
+
+                {/* Crypto Payment */}
+                {showCryptoPayment && paymentMethod === 'crypto' && (
+                  <div className="mb-6">
+                    <CryptoPayment
+                      amountEUR={parseFloat(totalPrice)}
+                      onPaymentSubmit={async (cryptoData) => {
+                        try {
+                          // Save crypto payment details
+                          await fetch('/api/public/payments/crypto', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              bookingCode: bookingResult?.publicCode,
+                              ...cryptoData,
+                            }),
+                          });
+                          setShowCryptoPayment(false);
+                          alert('Payment submitted! We will verify your transaction and confirm shortly.');
+                        } catch (error) {
+                          console.error('Failed to submit crypto payment:', error);
+                        }
+                      }}
+                      onCancel={() => setShowCryptoPayment(false)}
+                    />
+                  </div>
+                )}
+
+                {/* Crypto Pending Info - After submission */}
+                {paymentMethod === 'crypto' && !showCryptoPayment && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 text-left">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FaBitcoin className="text-orange-500" />
+                      <h3 className="font-bold text-orange-900">Crypto Payment Pending</h3>
+                    </div>
+                    <p className="text-sm text-orange-700">
+                      Your cryptocurrency payment is being verified. We will confirm your booking once the transaction is confirmed on the blockchain (usually within 30 minutes).
+                    </p>
+                    <button
+                      onClick={() => setShowCryptoPayment(true)}
+                      className="mt-3 text-sm text-orange-600 font-semibold hover:underline"
+                    >
+                      Submit Transaction Details
+                    </button>
                   </div>
                 )}
 
